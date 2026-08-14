@@ -1,0 +1,792 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  VISITOR
+  INDIVIDUAL
+  BUSINESS_OWNER
+  MODERATOR
+  ADMIN
+}
+
+enum MemberType {
+  INDIVIDUAL
+  BUSINESS
+}
+
+enum BusinessListingTier {
+  FREE_BASIC
+  PRO
+  SELLER
+}
+
+enum IndividualMemberTier {
+  FREE
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  TRIALING
+  INCOMPLETE
+  PAUSED
+}
+
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+}
+
+enum PromoCodeType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_TRIAL_DAYS
+}
+
+enum ListingStatus {
+  DRAFT
+  PENDING_REVIEW
+  CHANGES_REQUESTED
+  APPROVED
+  PUBLISHED
+  REJECTED
+  SUSPENDED
+  ARCHIVED
+}
+
+enum ModerationActionType {
+  SUBMIT
+  APPROVE
+  REJECT
+  REQUEST_CHANGES
+  PUBLISH
+  UNPUBLISH
+  SUSPEND
+  ARCHIVE
+  VERIFY
+  FEATURE
+  EDIT
+  TRANSFER_OWNERSHIP
+}
+
+enum CampaignStatus {
+  DRAFT
+  PENDING_APPROVAL
+  ACTIVE
+  PAUSED
+  REJECTED
+  EXPIRED
+  COMPLETED
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  AD_SPEND
+  REFUND
+  CREDIT
+  SUBSCRIPTION
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  CLOSED
+  SPAM
+}
+
+enum LeadSource {
+  CONTACT_PAGE
+  BUSINESS_PROFILE
+  BUSINESS_ENQUIRY
+  NEWSLETTER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}
+
+enum NotificationType {
+  LISTING_APPROVED
+  LISTING_REJECTED
+  CHANGES_REQUESTED
+  CAMPAIGN_APPROVED
+  CAMPAIGN_REJECTED
+  LOW_BALANCE
+  NEW_LEAD
+  SYSTEM
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum ImageType {
+  LOGO
+  COVER
+  GALLERY
+  PRODUCT
+}
+
+enum SocialPlatform {
+  FACEBOOK
+  INSTAGRAM
+  LINKEDIN
+  TWITTER
+  TIKTOK
+  YOUTUBE
+}
+
+enum TargetType {
+  ALL
+  KEYWORD
+  CATEGORY
+  LOCATION
+}
+
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  email         String    @unique
+  emailVerified DateTime?
+  passwordHash  String?
+  name          String?
+  image         String?
+  role          UserRole  @default(BUSINESS_OWNER)
+  memberType    MemberType @default(BUSINESS)
+  individualTier IndividualMemberTier @default(FREE)
+  phone         String?
+  lgbEmail      String?
+  lgbEmailForwardTo String?
+  stripeCustomerId String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  accounts       Account[]
+  sessions       Session[]
+  businesses     Business[]
+  searchQueries  SearchQuery[]
+  savedBusinesses SavedBusiness[]
+  reports        Report[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+  wallet         Wallet?
+  transactions   Transaction[]
+  campaigns      AdvertisingCampaign[]
+  subscriptions  Subscription[]
+  promoRedemptions PromoCodeRedemption[]
+
+  @@index([role])
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String   @db.ObjectId
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+model Category {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  slug            String   @unique
+  description     String?
+  icon            String?
+  image           String?
+  seoTitle        String?
+  seoDescription  String?
+  sortOrder       Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  subcategories Subcategory[]
+  businesses    Business[]
+
+  @@index([isActive, sortOrder])
+}
+
+model Subcategory {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  slug        String
+  description String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  categoryId  String   @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category   Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  businesses Business[]
+
+  @@unique([categoryId, slug])
+  @@index([categoryId, isActive])
+}
+
+model Location {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  city      String
+  state     String   @default("NY")
+  region    String   @default("Western New York")
+  zipCode   String?
+  slug      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  businesses Business[]
+
+  @@index([city])
+}
+
+model Business {
+  id                  String        @id @default(auto()) @map("_id") @db.ObjectId
+  name                String
+  slug                String        @unique
+  description         String?
+  shortDescription    String?
+  status              ListingStatus @default(DRAFT)
+  isVerified          Boolean       @default(false)
+  isFeatured          Boolean       @default(false)
+  listingTier         BusinessListingTier @default(FREE_BASIC)
+  couponText          String?
+  discountCode        String?
+  videoUrl            String?
+  searchKeywords      String[]            @default([])
+  lgbEmail            String?
+  maxDescriptionChars Int                 @default(120)
+  suggestedCategory   String?
+  adminFeedback       String?
+  rejectionReason     String?
+  address             String?
+  addressLine2        String?
+  city                String?
+  state               String        @default("NY")
+  zipCode             String?
+  latitude            Float?
+  longitude           Float?
+  phone               String?
+  publicEmail         String?
+  website             String?
+  services            String[]      @default([])
+  tags                String[]      @default([])
+  viewCount           Int           @default(0)
+  searchImpressions   Int           @default(0)
+  websiteClicks       Int           @default(0)
+  phoneClicks         Int           @default(0)
+  socialClicks        Int           @default(0)
+  popularityScore     Float         @default(0)
+  requiresReReview    Boolean       @default(false)
+  publishedAt         DateTime?
+  ownerId             String        @db.ObjectId
+  categoryId          String?       @db.ObjectId
+  subcategoryId       String?       @db.ObjectId
+  locationId          String?       @db.ObjectId
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  deletedAt           DateTime?
+
+  owner           User                  @relation(fields: [ownerId], references: [id])
+  category        Category?             @relation(fields: [categoryId], references: [id])
+  subcategory     Subcategory?          @relation(fields: [subcategoryId], references: [id])
+  location        Location?             @relation(fields: [locationId], references: [id])
+  hours           BusinessHour[]
+  images          BusinessImage[]
+  socialLinks     SocialLink[]
+  moderationActions ModerationAction[]
+  submissions     ListingSubmission[]
+  campaigns       AdvertisingCampaign[]
+  adImpressions   AdImpression[]
+  adClicks        AdClick[]
+  views           BusinessView[]
+  leads           Lead[]
+  savedBy         SavedBusiness[]
+  reports         Report[]
+  sellerProducts  SellerProduct[]
+  subscription    Subscription?
+
+  @@index([listingTier])
+  @@index([status])
+  @@index([ownerId])
+  @@index([categoryId])
+  @@index([subcategoryId])
+  @@index([locationId])
+  @@index([city])
+  @@index([isFeatured])
+  @@index([isVerified])
+  @@index([publishedAt])
+  @@index([name])
+}
+
+model BusinessHour {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  businessId String    @db.ObjectId
+  dayOfWeek  DayOfWeek
+  openTime   String?
+  closeTime  String?
+  isClosed   Boolean   @default(false)
+  is24Hours  Boolean   @default(false)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, dayOfWeek])
+}
+
+model BusinessImage {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  businessId String    @db.ObjectId
+  url        String
+  publicId   String?
+  type       ImageType @default(GALLERY)
+  alt        String?
+  sortOrder  Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, type])
+}
+
+model SocialLink {
+  id         String         @id @default(auto()) @map("_id") @db.ObjectId
+  businessId String         @db.ObjectId
+  platform   SocialPlatform
+  url        String
+  clickCount Int            @default(0)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, platform])
+}
+
+model ListingSubmission {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  businessId  String        @db.ObjectId
+  status      ListingStatus
+  submittedAt DateTime      @default(now())
+  reviewedAt  DateTime?
+  notes       String?
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, status])
+}
+
+model ModerationAction {
+  id         String               @id @default(auto()) @map("_id") @db.ObjectId
+  businessId String               @db.ObjectId
+  adminId    String?
+  action     ModerationActionType
+  message    String?
+  metadata   Json?
+  createdAt  DateTime             @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([createdAt])
+}
+
+model Wallet {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @unique @db.ObjectId
+  balance   Float    @default(0)
+  currency  String   @default("USD")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AdvertisingCampaign {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  businessId      String         @db.ObjectId
+  ownerId         String         @db.ObjectId
+  status          CampaignStatus @default(DRAFT)
+  dailyBid        Float
+  totalBudget     Float?
+  spentAmount     Float        @default(0)
+  startDate       DateTime
+  endDate         DateTime?
+  rejectionReason String?
+  impressions     Int            @default(0)
+  clicks          Int            @default(0)
+  leads           Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  business Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  owner    User              @relation(fields: [ownerId], references: [id])
+  targets  CampaignTarget[]
+  bids     Bid[]
+  adImpressions AdImpression[]
+  adClicks      AdClick[]
+
+  @@index([status])
+  @@index([businessId])
+  @@index([ownerId])
+  @@index([startDate, endDate])
+}
+
+model Bid {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId String   @db.ObjectId
+  amount     Float
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  campaign AdvertisingCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, isActive])
+  @@index([amount])
+}
+
+model CampaignTarget {
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId String     @db.ObjectId
+  targetType TargetType
+  value      String?
+
+  campaign AdvertisingCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, targetType])
+}
+
+model Transaction {
+  id              String            @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String            @db.ObjectId
+  type            TransactionType
+  status          TransactionStatus @default(PENDING)
+  amount          Float
+  currency        String            @default("USD")
+  stripePaymentId String?
+  description     String?
+  metadata        Json?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([stripePaymentId])
+}
+
+model SearchQuery {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  query     String
+  userId    String?  @db.ObjectId
+  results   Int      @default(0)
+  city      String?
+  category  String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([query])
+  @@index([createdAt])
+}
+
+model AdImpression {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId String   @db.ObjectId
+  businessId String   @db.ObjectId
+  query      String?
+  position   Int
+  createdAt  DateTime @default(now())
+
+  campaign AdvertisingCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  business Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, createdAt])
+  @@index([businessId])
+}
+
+model AdClick {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId String   @db.ObjectId
+  businessId String   @db.ObjectId
+  query      String?
+  position   Int
+  createdAt  DateTime @default(now())
+
+  campaign AdvertisingCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  business Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, createdAt])
+}
+
+model BusinessView {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  businessId String   @db.ObjectId
+  source     String?
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, createdAt])
+}
+
+model Lead {
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  email      String
+  phone      String?
+  message    String
+  source     LeadSource
+  status     LeadStatus @default(NEW)
+  businessId String?    @db.ObjectId
+  consent    Boolean    @default(false)
+  metadata   Json?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  business Business? @relation(fields: [businessId], references: [id])
+
+  @@index([status])
+  @@index([businessId])
+  @@index([createdAt])
+}
+
+model SavedBusiness {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  businessId String   @db.ObjectId
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, businessId])
+}
+
+model Report {
+  id         String       @id @default(auto()) @map("_id") @db.ObjectId
+  businessId String       @db.ObjectId
+  userId     String?      @db.ObjectId
+  reason     String
+  details    String?
+  status     ReportStatus @default(PENDING)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId], references: [id])
+
+  @@index([status])
+}
+
+model Notification {
+  id        String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String           @db.ObjectId
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  link      String?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
+
+model SiteSetting {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model MembershipPlan {
+  id                   String               @id @default(auto()) @map("_id") @db.ObjectId
+  slug                 String               @unique
+  name                 String
+  memberType           MemberType
+  businessTier         BusinessListingTier?
+  individualTier       IndividualMemberTier?
+  description          String?
+  features             Json                 @default("[]")
+  monthlyPrice         Float
+  yearlyPrice          Float
+  stripeMonthlyPriceId String?
+  stripeYearlyPriceId  String?
+  isActive             Boolean              @default(true)
+  isPreLaunchPricing   Boolean              @default(true)
+  sortOrder            Int                  @default(0)
+  maxImages            Int                  @default(0)
+  maxDescriptionChars  Int                  @default(120)
+  allowsVideo          Boolean              @default(false)
+  allowsCoupon         Boolean              @default(false)
+  allowsSocialLinks    Boolean              @default(false)
+  allowsSearchKeywords Boolean              @default(false)
+  allowsLgbEmail       Boolean              @default(false)
+  allowsSellerProducts Boolean              @default(false)
+  maxSellerProducts    Int                  @default(0)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  subscriptions Subscription[]
+
+  @@index([memberType, isActive])
+}
+
+model Subscription {
+  id                   String             @id @default(auto()) @map("_id") @db.ObjectId
+  userId               String             @db.ObjectId
+  planId               String             @db.ObjectId
+  businessId           String?            @unique @db.ObjectId
+  status               SubscriptionStatus @default(INCOMPLETE)
+  billingInterval      BillingInterval
+  stripeSubscriptionId String?
+  stripeCustomerId     String?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  canceledAt           DateTime?
+  promoCodeId          String?            @db.ObjectId
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan      MembershipPlan @relation(fields: [planId], references: [id])
+  business  Business?      @relation(fields: [businessId], references: [id])
+  promoCode PromoCode?     @relation(fields: [promoCodeId], references: [id])
+
+  @@index([userId, status])
+}
+
+model PromoCode {
+  id                String        @id @default(auto()) @map("_id") @db.ObjectId
+  code              String        @unique
+  description       String?
+  type              PromoCodeType
+  value             Float
+  applicablePlanIds String[]      @default([])
+  maxRedemptions    Int?
+  redemptionCount   Int           @default(0)
+  validFrom         DateTime?
+  validUntil        DateTime?
+  isActive          Boolean       @default(true)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  subscriptions Subscription[]
+  redemptions   PromoCodeRedemption[]
+
+  @@index([code, isActive])
+}
+
+model PromoCodeRedemption {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  promoCodeId String   @db.ObjectId
+  userId      String   @db.ObjectId
+  createdAt   DateTime @default(now())
+
+  promoCode PromoCode @relation(fields: [promoCodeId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([promoCodeId, userId])
+}
+
+model SellerProduct {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  businessId  String   @db.ObjectId
+  name        String
+  description String?
+  price       Float
+  currency    String   @default("USD")
+  purchaseUrl String
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, isActive])
+}
+
+model AuditLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?  @db.ObjectId
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}

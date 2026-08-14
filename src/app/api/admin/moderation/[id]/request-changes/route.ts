@@ -1,0 +1,66 @@
+import { NextResponse } from "next/server";
+import { ListingStatus, ModerationActionType } from "@prisma/client";
+import { z } from "zod";
+import { db } from "@/lib/db";
+import { requireAdminApi, logAdminAction } from "@/lib/admin-utils";
+import { notifyBusinessOwner } from "@/lib/moderation-notify";
+
+const schema = z.object({
+  message: z.string().min(1, "Please describe required changes"),
+});
+
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { user, error } = await requireAdminApi();
+  if (error) return error;
+
+  const { id } = await params;
+  const body = await request.json();
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.errors[0]?.message }, { status: 400 });
+  }
+
+  const business = await db.business.findUnique({ where: { id } });
+  if (!business) {
+    return NextResponse.json({ error: "Business not found" }, { status: 404 });
+  }
+
+  const updated = await db.business.update({
+    where: { id },
+    data: {
+      status: ListingStatus.CHANGES_REQUESTED,
+      adminFeedback: parsed.data.message,
+    },
+  });
+
+  await db.listingSubmission.create({
+    data: {
+      businessId: id,
+      status: ListingStatus.CHANGES_REQUESTED,
+      reviewedAt: new Date(),
+      notes: parsed.data.message,
+    },
+  });
+
+  await logAdminAction({
+    userId: user!.id,
+    businessId: id,
+    moderationAction: ModerationActionType.REQUEST_CHANGES,
+    message: parsed.data.message,
+    auditAction: "REQUEST_CHANGES",
+    entity: "Business",
+    entityId: id,
+  });
+
+  await notifyBusinessOwner(
+    id,
+    business.name,
+    "Changes Requested",
+    parsed.data.message
+  );
+
+  return NextResponse.json(updated);
+}
