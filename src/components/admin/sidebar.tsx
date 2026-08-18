@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
@@ -22,6 +21,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { SiteLogo } from "@/components/layout/site-logo";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -88,15 +88,14 @@ export function AdminSidebar({
         )}
       >
         <div className="p-4">
-          <Link href="/admin" className="flex items-center gap-3" onClick={() => onMobileOpenChange(false)}>
-            <Image
-              src="/images/logo.png"
-              alt="Let's Go Buffalo"
-              width={140}
-              height={47}
-              className="brightness-0 invert"
-            />
-          </Link>
+          <SiteLogo
+            href="/admin"
+            width={140}
+            height={47}
+            invert
+            comClassName="text-white"
+            imageClassName="h-auto w-auto max-h-10"
+          />
           <p className="mt-2 text-xs uppercase tracking-wider text-white/60">Admin Panel</p>
         </div>
 

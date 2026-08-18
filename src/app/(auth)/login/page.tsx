@@ -2,12 +2,12 @@
 
 import { useState, Suspense } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { SiteLogo } from "@/components/layout/site-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,12 +63,13 @@ function LoginForm() {
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-1/2 hero-gradient items-center justify-center p-12">
         <div className="text-center text-white max-w-md">
-          <Image
-            src="/images/logo.png"
-            alt="Let's Go Buffalo"
+          <SiteLogo
+            href="/"
             width={300}
             height={100}
-            className="mx-auto mb-8"
+            comClassName="text-white"
+            className="mx-auto mb-8 justify-center"
+            imageClassName="mx-auto"
           />
           <h2 className="font-display text-3xl font-bold mb-4">
             Discover Buffalo&apos;s Best
@@ -82,13 +83,7 @@ function LoginForm() {
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center lg:hidden mb-8">
-            <Image
-              src="/images/logo.png"
-              alt="Let's Go Buffalo"
-              width={200}
-              height={67}
-              className="mx-auto"
-            />
+            <SiteLogo href="/" width={200} height={67} className="mx-auto justify-center" />
           </div>
 
           <div>

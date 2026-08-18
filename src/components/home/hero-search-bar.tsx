@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { Grid3X3, MapPin, Search } from "lucide-react";
+import { Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,31 +17,7 @@ import {
   SearchSuggestions,
   type SearchSuggestion,
 } from "@/components/search/search-suggestions";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-
-const HERO_CATEGORIES = [
-  { value: "all", label: "Category" },
-  { value: "restaurants", label: "Restaurants" },
-  { value: "home-services", label: "Home Services" },
-  { value: "shopping", label: "Shopping" },
-  { value: "health-beauty", label: "Health & Beauty" },
-  { value: "automotive", label: "Automotive" },
-];
-
-const HERO_LOCATIONS = [
-  { value: "buffalo", label: "Buffalo, NY" },
-  { value: "amherst", label: "Amherst, NY" },
-  { value: "cheektowaga", label: "Cheektowaga, NY" },
-  { value: "williamsville", label: "Williamsville, NY" },
-  { value: "niagara-falls", label: "Niagara Falls, NY" },
-];
 
 async function fetchSuggestions(query: string): Promise<SearchSuggestion[]> {
   if (query.trim().length < 2) return [];
@@ -62,8 +38,6 @@ export function HeroSearchBar({ className }: { className?: string }) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("all");
-  const [city, setCity] = useState("buffalo");
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -74,13 +48,10 @@ export function HeroSearchBar({ className }: { className?: string }) {
       const q = (searchQuery ?? query).trim();
       const params = new URLSearchParams();
       if (q) params.set("q", q);
-      if (category && category !== "all") params.set("category", category);
-      if (city && city !== "buffalo") params.set("city", city);
-
       setIsOpen(false);
       router.push(params.toString() ? `/search?${params.toString()}` : "/search");
     },
-    [query, category, city, router]
+    [query, router]
   );
 
   useEffect(() => {
@@ -161,9 +132,9 @@ export function HeroSearchBar({ className }: { className?: string }) {
     >
       <div
         ref={containerRef}
-        className="relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-white shadow-2xl lg:flex-row lg:items-stretch"
+        className="relative flex overflow-hidden rounded-2xl border border-border/60 bg-white shadow-2xl"
       >
-        <div className="relative min-w-0 flex-[1.4] border-b border-border/60 lg:border-b-0 lg:border-r">
+        <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted" />
           <Input
             type="search"
@@ -194,38 +165,10 @@ export function HeroSearchBar({ className }: { className?: string }) {
           />
         </div>
 
-        <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger className="h-14 w-full rounded-none border-0 border-b border-border/60 bg-transparent shadow-none focus:ring-0 lg:w-48 lg:border-b-0 lg:border-r">
-            <Grid3X3 className="mr-2 size-4 shrink-0 text-navy" />
-            <SelectValue placeholder="Category" />
-          </SelectTrigger>
-          <SelectContent>
-            {HERO_CATEGORIES.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={city} onValueChange={setCity}>
-          <SelectTrigger className="h-14 w-full rounded-none border-0 border-b border-border/60 bg-transparent shadow-none focus:ring-0 lg:w-44 lg:border-b-0 lg:border-r">
-            <MapPin className="mr-2 size-4 shrink-0 text-buffalo-red" />
-            <SelectValue placeholder="Location" />
-          </SelectTrigger>
-          <SelectContent>
-            {HERO_LOCATIONS.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
         <Button
           type="submit"
           variant="accent"
-          className="h-14 w-full rounded-none px-6 text-base font-semibold sm:px-8 lg:min-w-[140px] lg:w-auto"
+          className="h-14 shrink-0 rounded-none px-6 text-base font-semibold sm:px-8"
         >
           Search
         </Button>

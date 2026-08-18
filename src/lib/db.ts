@@ -11,7 +11,12 @@ export function getDatabaseUrl() {
     throw new Error("DATABASE_URL environment variable is not set");
   }
 
-  // Strip replica-set params — local MongoDB may advertise rs0 without a primary.
+  // MongoDB Atlas (Vercel production) — keep SRV URL as-is for replica set.
+  if (connectionString.includes("mongodb+srv://")) {
+    return connectionString;
+  }
+
+  // Local standalone — strip replicaSet and use direct connection.
   connectionString = connectionString
     .replace(/([?&])replicaSet=[^&]*&?/g, "$1")
     .replace(/[?&]$/, "");

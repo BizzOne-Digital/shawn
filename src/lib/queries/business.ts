@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { ListingStatus, Prisma } from "@prisma/client";
+import { getPublicSearchCities } from "@/lib/queries/locations";
 import { isOpenNow } from "@/lib/services/business-hours";
 import { getSponsoredResults } from "@/lib/services/sponsored-ranking";
 
@@ -45,14 +46,19 @@ export async function getFeaturedBusinesses(limit = 6) {
 }
 
 export async function getRecentBusinesses(limit = 6) {
-  const businesses = await db.business.findMany({
-    where: publishedBusinessWhere,
-    include: businessCardInclude,
-    orderBy: { publishedAt: "desc" },
-    take: limit,
-  });
+  try {
+    const businesses = await db.business.findMany({
+      where: publishedBusinessWhere,
+      include: businessCardInclude,
+      orderBy: { publishedAt: "desc" },
+      take: limit,
+    });
 
-  return businesses.map(enrichBusinessWithOpenStatus);
+    return businesses.map(enrichBusinessWithOpenStatus);
+  } catch (error) {
+    console.error("[getRecentBusinesses]", error);
+    return [];
+  }
 }
 
 export async function getSponsoredBusinesses(limit = 3) {
@@ -100,29 +106,26 @@ export function enrichBusinessWithOpenStatus<
 }
 
 export async function getFilterOptions() {
-  const [categories, cities] = await Promise.all([
-    db.category.findMany({
-      where: { isActive: true },
-      orderBy: { name: "asc" },
-      include: {
-        subcategories: {
-          where: { isActive: true },
-          orderBy: { name: "asc" },
+  try {
+    const [categories, cities] = await Promise.all([
+      db.category.findMany({
+        where: { isActive: true },
+        orderBy: { name: "asc" },
+        include: {
+          subcategories: {
+            where: { isActive: true },
+            orderBy: { name: "asc" },
+          },
         },
-      },
-    }),
-    db.business.findMany({
-      where: { ...publishedBusinessWhere, city: { not: null } },
-      select: { city: true },
-      distinct: ["city"],
-      orderBy: { city: "asc" },
-    }),
-  ]);
+      }),
+      getPublicSearchCities(),
+    ]);
 
-  return {
-    categories,
-    cities: cities.map((c) => c.city!).filter(Boolean),
-  };
+    return { categories, cities };
+  } catch (error) {
+    console.error("getFilterOptions failed:", error);
+    return { categories: [], cities: [] };
+  }
 }
 
 export type DirectorySort = "name" | "newest" | "popular";

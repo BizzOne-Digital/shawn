@@ -113,6 +113,7 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
   const query = q.trim();
   const skip = (page - 1) * limit;
 
+  try {
   const categoryRecord = category
     ? await db.category.findUnique({ where: { slug: category } })
     : null;
@@ -193,22 +194,35 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
   }));
 
   if (query) {
-    await db.searchQuery.create({
-      data: {
-        query,
-        userId,
-        results: total + sponsored.length,
-        city,
-        category,
-      },
-    });
+    try {
+      await db.searchQuery.create({
+        data: {
+          query,
+          userId,
+          results: total + sponsored.length,
+          city,
+          category,
+        },
+      });
+    } catch (error) {
+      console.error("[search] Failed to log query:", error);
+    }
   }
 
   if (sponsoredRaw.length > 0) {
-    await recordAdImpressions(sponsoredRaw, query);
+    try {
+      await recordAdImpressions(sponsoredRaw, query);
+    } catch (error) {
+      console.error("[search] Failed to record ad impressions:", error);
+    }
   }
 
-  const suggestions = await getSearchSuggestions(query);
+  let suggestions: string[] = [];
+  try {
+    suggestions = await getSearchSuggestions(query);
+  } catch (error) {
+    console.error("[search] Failed to load suggestions:", error);
+  }
 
   return {
     query,
@@ -219,33 +233,42 @@ export async function searchBusinesses(params: SearchParams): Promise<SearchResu
     totalPages: Math.ceil(total / limit),
     suggestions,
   };
+  } catch (error) {
+    console.error("[searchBusinesses]", error);
+    throw error;
+  }
 }
 
 export async function getSearchSuggestions(query: string, limit = 5): Promise<string[]> {
   if (!query.trim() || query.length < 2) return [];
 
-  const [recentQueries, businessNames] = await Promise.all([
-    db.searchQuery.groupBy({
-      by: ["query"],
-      where: { query: { contains: query, mode: "insensitive" } },
-      orderBy: { _count: { query: "desc" } },
-      take: limit,
-    }),
-    db.business.findMany({
-      where: {
-        status: ListingStatus.PUBLISHED,
-        name: { contains: query, mode: "insensitive" },
-      },
-      select: { name: true },
-      take: limit,
-    }),
-  ]);
+  try {
+    const [recentQueries, businessNames] = await Promise.all([
+      db.searchQuery.groupBy({
+        by: ["query"],
+        where: { query: { contains: query, mode: "insensitive" } },
+        orderBy: { _count: { query: "desc" } },
+        take: limit,
+      }),
+      db.business.findMany({
+        where: {
+          status: ListingStatus.PUBLISHED,
+          name: { contains: query, mode: "insensitive" },
+        },
+        select: { name: true },
+        take: limit,
+      }),
+    ]);
 
-  const suggestions = new Set<string>();
-  recentQueries.forEach((q) => suggestions.add(q.query));
-  businessNames.forEach((b) => suggestions.add(b.name));
+    const suggestions = new Set<string>();
+    recentQueries.forEach((q) => suggestions.add(q.query));
+    businessNames.forEach((b) => suggestions.add(b.name));
 
-  return Array.from(suggestions).slice(0, limit);
+    return Array.from(suggestions).slice(0, limit);
+  } catch (error) {
+    console.error("[getSearchSuggestions]", error);
+    return [];
+  }
 }
 
 export async function getUserSearchHistory(userId: string, limit = 10): Promise<string[]> {

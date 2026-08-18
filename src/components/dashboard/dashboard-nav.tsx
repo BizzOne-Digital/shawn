@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
@@ -16,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { SiteLogo } from "@/components/layout/site-logo";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -51,15 +51,14 @@ export function DashboardNav() {
       >
         <div className="flex flex-col h-full">
           <div className="p-6 border-b border-white/10">
-            <Link href="/">
-              <Image
-                src="/images/logo.png"
-                alt="Let's Go Buffalo"
-                width={160}
-                height={53}
-                className="h-10 w-auto"
-              />
-            </Link>
+            <SiteLogo
+              href="/"
+              width={160}
+              height={53}
+              invert
+              comClassName="text-white"
+              imageClassName="h-10 w-auto"
+            />
             <p className="text-white/60 text-xs mt-2">Business Dashboard</p>
           </div>
 

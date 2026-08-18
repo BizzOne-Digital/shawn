@@ -8,6 +8,8 @@ import { BusinessCard } from "@/components/business/business-card";
 import { Pagination } from "@/components/shared/pagination";
 import { SectionHeading } from "@/components/shared/section-heading";
 
+export const dynamic = "force-dynamic";
+
 interface SearchPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
@@ -39,21 +41,40 @@ export async function generateMetadata({
   };
 }
 
+function normalizeCity(city?: string): string | undefined {
+  if (!city || city === "All Locations") return undefined;
+  return city;
+}
+
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const q = getParam(params, "q") ?? "";
-  const city = getParam(params, "city");
+  const city = normalizeCity(getParam(params, "city"));
   const category = getParam(params, "category");
   const page = Math.max(1, parseInt(getParam(params, "page") ?? "1", 10) || 1);
 
   const hasQuery = q.trim().length > 0;
 
-  const [results, recommendations] = await Promise.all([
-    hasQuery
-      ? searchBusinesses({ q, page, limit: 10, city, category })
-      : Promise.resolve(null),
-    getRecentBusinesses(6),
-  ]);
+  let results: Awaited<ReturnType<typeof searchBusinesses>> | null = null;
+  let recommendations: Awaited<ReturnType<typeof getRecentBusinesses>> = [];
+  let searchError = false;
+
+  try {
+    [results, recommendations] = await Promise.all([
+      hasQuery
+        ? searchBusinesses({ q, page, limit: 10, city, category })
+        : Promise.resolve(null),
+      getRecentBusinesses(6),
+    ]);
+  } catch (error) {
+    console.error("[SearchPage] Failed to load results:", error);
+    searchError = true;
+    try {
+      recommendations = await getRecentBusinesses(6);
+    } catch {
+      recommendations = [];
+    }
+  }
 
   const filterParams = { q, city, category };
 
@@ -80,7 +101,18 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           </div>
         )}
 
-        {hasQuery && results && (
+        {searchError && hasQuery && (
+          <div className="rounded-xl border border-border bg-soft-gray py-12 text-center">
+            <h3 className="font-display text-xl font-semibold text-navy">
+              Search is temporarily unavailable
+            </h3>
+            <p className="text-muted mt-2">
+              Please try again in a moment or browse the directory.
+            </p>
+          </div>
+        )}
+
+        {hasQuery && results && !searchError && (
           <>
             <p className="text-sm text-muted mb-6">
               About {results.total + results.sponsored.length} results for &quot;{q}&quot;

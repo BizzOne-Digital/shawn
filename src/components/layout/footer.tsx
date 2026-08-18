@@ -1,19 +1,19 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Globe, Mail, MapPin, Phone, Share2 } from "lucide-react";
+import { Mail, MapPin, Phone, Share2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SiteLogo } from "@/components/layout/site-logo";
+import { NewsletterForm } from "@/components/forms/newsletter-form";
 import { cn } from "@/lib/utils";
 
 const footerNav = {
   explore: [
     { href: "/directory", label: "Business Directory" },
-    { href: "/categories", label: "Categories" },
+    { href: "/community", label: "Community Fan Page" },
+    { href: "/gear", label: "Gear Shop" },
+    { href: "/lgb-email", label: "@LetsGoBuffalo Email" },
     { href: "/search", label: "Search" },
     { href: "/advertise", label: "Advertise" },
   ],
@@ -27,15 +27,13 @@ const footerNav = {
 
 const socialLinks = [
   { href: "#", label: "Facebook", icon: Share2 },
-  { href: "#", label: "Instagram", icon: Globe },
+  { href: "#", label: "Instagram", icon: Share2 },
   { href: "#", label: "Twitter", icon: Share2 },
-  { href: "#", label: "LinkedIn", icon: Globe },
+  { href: "#", label: "LinkedIn", icon: Share2 },
 ];
 
 export function Footer() {
   const pathname = usePathname();
-  const [email, setEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
 
   const authRoutes = ["/login", "/register", "/forgot-password", "/reset-password"];
   if (
@@ -46,27 +44,19 @@ export function Footer() {
     return null;
   }
 
-  function handleNewsletterSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!email.trim()) return;
-    setSubscribed(true);
-    setEmail("");
-  }
-
   return (
     <footer className="overflow-x-clip bg-navy text-white">
       <div className="mx-auto max-w-7xl min-w-0 px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-4">
-            <Link href="/" className="inline-block">
-              <Image
-                src="/images/logo.png"
-                alt="Let's Go Buffalo"
-                width={240}
-                height={80}
-                className="h-16 w-auto object-contain sm:h-[4.75rem]"
-              />
-            </Link>
+            <SiteLogo
+              href="/"
+              width={240}
+              height={80}
+              invert
+              comClassName="text-white"
+              imageClassName="h-16 w-auto sm:h-[4.75rem]"
+            />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/75">
               Discover the best local businesses across Buffalo and Western New York.
               From restaurants to services, find trusted neighbors in your community.
@@ -154,22 +144,7 @@ export function Footer() {
             <p className="mt-4 text-sm text-white/75">
               Get local business highlights and community updates delivered to your inbox.
             </p>
-            <form onSubmit={handleNewsletterSubmit} className="mt-4 space-y-2">
-              <Input
-                type="email"
-                placeholder="Your email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="border-white/20 bg-white/10 text-white placeholder:text-white/50 focus-visible:ring-white/30"
-              />
-              <Button type="submit" variant="accent" className="w-full">
-                Subscribe
-              </Button>
-              {subscribed && (
-                <p className="text-xs text-green-300">Thanks for subscribing!</p>
-              )}
-            </form>
+            <NewsletterForm className="mt-4 [&_input]:border-white/20 [&_input]:bg-white/10 [&_input]:text-white [&_input]:placeholder:text-white/50" />
           </div>
         </div>
 

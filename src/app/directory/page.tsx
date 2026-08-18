@@ -7,6 +7,8 @@ import { Pagination } from "@/components/shared/pagination";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { Skeleton } from "@/components/ui/skeleton";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Business Directory",
   description:
@@ -40,17 +42,30 @@ async function DirectoryResults({
   const view = getParam(searchParams, "view") === "list" ? "list" : "grid";
   const page = Math.max(1, parseInt(getParam(searchParams, "page") ?? "1", 10) || 1);
 
-  const { businesses, total, totalPages } = await getDirectoryBusinesses({
-    category,
-    subcategory,
-    city,
-    openNow,
-    verified,
-    featured,
-    sort,
-    page,
-    view,
-  });
+  let businesses: Awaited<ReturnType<typeof getDirectoryBusinesses>>["businesses"] = [];
+  let total = 0;
+  let totalPages = 0;
+  let loadError = false;
+
+  try {
+    const result = await getDirectoryBusinesses({
+      category,
+      subcategory,
+      city,
+      openNow,
+      verified,
+      featured,
+      sort,
+      page,
+      view,
+    });
+    businesses = result.businesses;
+    total = result.total;
+    totalPages = result.totalPages;
+  } catch (error) {
+    console.error("[DirectoryResults] Failed to load businesses:", error);
+    loadError = true;
+  }
 
   const filterParams = {
     category,
@@ -62,6 +77,19 @@ async function DirectoryResults({
     sort,
     view,
   };
+
+  if (loadError) {
+    return (
+      <div className="rounded-xl border border-border bg-soft-gray py-16 text-center">
+        <h3 className="font-display text-xl font-semibold text-navy">
+          Unable to load directory
+        </h3>
+        <p className="text-muted mt-2">
+          Please refresh the page. If this continues, check that the database is connected.
+        </p>
+      </div>
+    );
+  }
 
   if (businesses.length === 0) {
     return (
@@ -104,7 +132,13 @@ async function DirectoryResults({
 
 export default async function DirectoryPage({ searchParams }: DirectoryPageProps) {
   const params = await searchParams;
-  const filterOptions = await getFilterOptions();
+  let filterOptions = { categories: [] as Awaited<ReturnType<typeof getFilterOptions>>["categories"], cities: [] as string[] };
+
+  try {
+    filterOptions = await getFilterOptions();
+  } catch (error) {
+    console.error("Directory page filter load failed:", error);
+  }
 
   const current = {
     category: getParam(params, "category"),

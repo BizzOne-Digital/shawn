@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,17 +9,19 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SiteLogo } from "@/components/layout/site-logo";
+import { PasswordRequirements } from "@/components/auth/password-requirements";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 const registerSchema = z
   .object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
+    name: z.string().min(2, "Business name must be at least 2 characters"),
     email: z.string().email("Invalid email address"),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Must contain uppercase letter")
+      .regex(/[A-Z]/, "Must contain an uppercase letter")
       .regex(/[0-9]/, "Must contain a number"),
     confirmPassword: z.string(),
     phone: z.string().optional(),
@@ -68,35 +69,45 @@ export default function RegisterPage() {
       toast.success("Account created! Please sign in.");
       router.push("/login?callbackUrl=/dashboard/submit");
     } catch {
-      toast.error("Something went wrong");
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="flex min-h-screen">
       <div className="hidden lg:flex lg:w-1/2 hero-gradient items-center justify-center p-12">
-        <div className="text-center text-white max-w-md">
-          <Image src="/images/logo.png" alt="Let's Go Buffalo" width={300} height={100} className="mx-auto mb-8" />
+        <div className="max-w-md text-center text-white">
+          <SiteLogo
+            href="/"
+            width={300}
+            height={100}
+            comClassName="text-white"
+            className="mx-auto mb-8 justify-center"
+            imageClassName="mx-auto"
+          />
           <h2 className="font-display text-3xl font-bold mb-4">List Your Business</h2>
           <p className="text-white/80 text-lg">
-            Join hundreds of Buffalo-area businesses reaching new customers every day.
+            Join Buffalo-area businesses reaching new customers every day.
           </p>
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex flex-1 items-center justify-center p-8">
         <div className="w-full max-w-md space-y-8">
+          <div className="lg:hidden">
+            <SiteLogo href="/" width={180} height={54} className="mb-6" />
+          </div>
           <div>
-            <h1 className="text-2xl font-bold text-navy">Create your account</h1>
+            <h1 className="text-2xl font-bold text-navy">Create your business account</h1>
             <p className="text-muted mt-2">Start listing your business for free</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <Label htmlFor="name">Full Name</Label>
-              <Input id="name" {...register("name")} className="mt-1" />
+              <Label htmlFor="name">Business Name</Label>
+              <Input id="name" placeholder="e.g. Joe's Pizza" {...register("name")} className="mt-1" />
               {errors.name && <p className="text-sm text-buffalo-red mt-1">{errors.name.message}</p>}
             </div>
 
@@ -114,6 +125,7 @@ export default function RegisterPage() {
             <div>
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" {...register("password")} className="mt-1" />
+              <PasswordRequirements />
               {errors.password && <p className="text-sm text-buffalo-red mt-1">{errors.password.message}</p>}
             </div>
 

@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { LayoutDashboard, LogOut, MapPin, Menu } from "lucide-react";
+
+import { SiteLogo } from "@/components/layout/site-logo";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +22,8 @@ import { cn } from "@/lib/utils";
 const navLinks = [
   { href: "/directory", label: "Discover" },
   { href: "/directory", label: "Categories" },
+  { href: "/community", label: "Community" },
+  { href: "/gear", label: "Gear" },
   { href: "/advertise", label: "Advertise" },
   { href: "/#how-it-works", label: "How It Works" },
 ];
@@ -70,16 +73,7 @@ export function Header() {
         )}
       >
         <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex shrink-0 items-center">
-            <Image
-              src="/images/logo.png"
-              alt="Let's Go Buffalo"
-              width={160}
-              height={48}
-              className="h-11 w-auto sm:h-12"
-              priority
-            />
-          </Link>
+          <SiteLogo href="/" width={160} height={48} priority imageClassName="h-11 sm:h-12 w-auto" />
 
           <nav
             className="hidden items-center gap-1 xl:flex"

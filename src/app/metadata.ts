@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://lets-go-buffalo.vercel.app"
+  ),
   title: {
     default: "Let's Go Buffalo | Discover Local Businesses in Western New York",
     template: "%s | Let's Go Buffalo",
@@ -15,6 +18,11 @@ export const metadata: Metadata = {
     "WNY services",
   ],
   authors: [{ name: "Let's Go Buffalo" }],
+  icons: {
+    icon: "/images/logo.png",
+    apple: "/images/logo.png",
+    shortcut: "/images/logo.png",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",

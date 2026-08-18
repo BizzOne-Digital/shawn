@@ -2,6 +2,7 @@ import { getHomepageData } from "@/lib/queries/business";
 
 export const dynamic = "force-dynamic";
 import { HeroSection } from "@/components/home/hero-section";
+import { NewsWeatherSection } from "@/components/home/news-weather-section";
 import { PopularCategories } from "@/components/home/popular-categories";
 import { BusinessSection } from "@/components/home/business-section";
 import { HowItWorksSection } from "@/components/home/how-it-works";
@@ -19,6 +20,7 @@ export default async function HomePage() {
   return (
     <>
       <HeroSection />
+      <NewsWeatherSection />
       <PopularCategories categories={categories} />
       <BusinessSection
         title="Sponsored Businesses"

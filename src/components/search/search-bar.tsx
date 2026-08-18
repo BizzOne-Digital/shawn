@@ -1,14 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   type FormEvent,
   type KeyboardEvent,
   useCallback,
-  useEffect,
   useRef,
-  useState,
 } from "react";
-import { useRouter } from "next/navigation";
 import { MapPin, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -26,19 +25,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-const BUFFALO_AREA_CITIES = [
-  "All Locations",
-  "Buffalo",
-  "Amherst",
-  "Cheektowaga",
-  "Hamburg",
-  "Williamsville",
-  "Tonawanda",
-  "Kenmore",
-  "West Seneca",
-  "East Aurora",
-  "Niagara Falls",
-];
+const ALL_LOCATIONS = "All Locations";
 
 interface SearchBarProps {
   defaultQuery?: string;
@@ -66,7 +53,7 @@ async function fetchSuggestions(query: string): Promise<SearchSuggestion[]> {
 
 export function SearchBar({
   defaultQuery = "",
-  defaultCity = "All Locations",
+  defaultCity = ALL_LOCATIONS,
   placeholder = "Search businesses, services, or categories...",
   className,
   size = "default",
@@ -76,10 +63,20 @@ export function SearchBar({
   const containerRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState(defaultQuery);
   const [city, setCity] = useState(defaultCity);
+  const [cities, setCities] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+
+  useEffect(() => {
+    fetch("/api/public/locations")
+      .then((res) => res.json())
+      .then((data: { cities?: string[] }) => setCities(data.cities ?? []))
+      .catch(() => setCities([]));
+  }, []);
+
+  const showLocationDropdown = showLocation && cities.length > 0;
 
   const submitSearch = useCallback(
     (searchQuery?: string) => {
@@ -87,14 +84,14 @@ export function SearchBar({
       if (!q) return;
 
       const params = new URLSearchParams({ q });
-      if (city && city !== "All Locations") {
+      if (showLocationDropdown && city && city !== ALL_LOCATIONS) {
         params.set("city", city);
       }
 
       setIsOpen(false);
       router.push(`/search?${params.toString()}`);
     },
-    [query, city, router]
+    [query, city, router, showLocationDropdown]
   );
 
   useEffect(() => {
@@ -139,10 +136,7 @@ export function SearchBar({
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (!isOpen || suggestions.length === 0) {
-      if (event.key === "Enter") return;
-      return;
-    }
+    if (!isOpen || suggestions.length === 0) return;
 
     switch (event.key) {
       case "ArrowDown":
@@ -224,7 +218,7 @@ export function SearchBar({
           />
         </div>
 
-        {showLocation && (
+        {showLocationDropdown && (
           <>
             <div className="hidden w-px bg-border sm:block" />
             <Select value={city} onValueChange={setCity}>
@@ -238,7 +232,8 @@ export function SearchBar({
                 <SelectValue placeholder="Location" />
               </SelectTrigger>
               <SelectContent>
-                {BUFFALO_AREA_CITIES.map((location) => (
+                <SelectItem value={ALL_LOCATIONS}>All Locations</SelectItem>
+                {cities.map((location) => (
                   <SelectItem key={location} value={location}>
                     {location}
                   </SelectItem>
