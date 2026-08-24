@@ -16,6 +16,7 @@ import {
   BarChart3,
   Settings,
   ScrollText,
+  FileText,
   LogOut,
   ExternalLink,
   Menu,
@@ -38,6 +39,7 @@ const navItems = [
   { href: "/admin/leads", label: "Leads", icon: Mail },
   { href: "/admin/reports", label: "Reports", icon: Flag },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/content", label: "Page Content", icon: FileText },
   { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
 ];
@@ -92,8 +94,6 @@ export function AdminSidebar({
             href="/admin"
             width={140}
             height={47}
-            invert
-            comClassName="text-white"
             imageClassName="h-auto w-auto max-h-10"
           />
           <p className="mt-2 text-xs uppercase tracking-wider text-white/60">Admin Panel</p>

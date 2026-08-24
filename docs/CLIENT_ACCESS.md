@@ -32,7 +32,7 @@ https://lets-go-buffalo.vercel.app/admin
 **Register:** https://lets-go-buffalo.vercel.app/register
 
 - **Business Name** = your company name (not personal name)
-- **Password rules:** 8+ characters, one uppercase letter, one number
+- **Password rules:** At least 6 characters
 
 After registering, sign in and go to **Dashboard → Add Business** to submit a listing.
 

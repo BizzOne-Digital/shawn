@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { CheckCircle, Building2, User } from "lucide-react";
 import { formatPlanPrice } from "@/lib/services/membership";
+import { getPageContent, txt } from "@/lib/content/page-content";
 
 export const metadata: Metadata = {
   title: "Membership & Pricing",
@@ -17,10 +18,13 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function PricingPage() {
-  const plans = await db.membershipPlan.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: "asc" },
-  });
+  const [plans, content] = await Promise.all([
+    db.membershipPlan.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+    }),
+    getPageContent("pricing"),
+  ]);
 
   const businessPlans = plans.filter((p) => p.memberType === MemberType.BUSINESS);
   const individualPlans = plans.filter((p) => p.memberType === MemberType.INDIVIDUAL);
@@ -30,25 +34,24 @@ export default async function PricingPage() {
       <div className="hero-gradient py-16 lg:py-24">
         <div className="mx-auto max-w-4xl min-w-0 px-4 text-center">
           <Badge className="bg-buffalo-red/20 text-white border-buffalo-red/30 mb-4">
-            Pre-Launch Pricing
+            {txt(content, "hero.badge")}
           </Badge>
           <h1 className="font-display text-4xl lg:text-5xl font-bold text-white mb-4">
-            Membership Plans
+            {txt(content, "hero.title")}
           </h1>
           <p className="text-white/80 text-lg max-w-2xl mx-auto">
-            Promote your business, engage regionally and globally, or join as an
-            individual to access community perks. All paid plans are recurring
-            subscriptions until canceled.
+            {txt(content, "hero.subtitle")}
           </p>
         </div>
       </div>
 
       <div className="mx-auto max-w-7xl min-w-0 space-y-20 px-4 py-16">
-        {/* Business Plans */}
         <section>
           <div className="flex items-center gap-3 mb-8">
             <Building2 className="size-8 text-buffalo-red" />
-            <h2 className="font-display text-3xl font-bold text-navy">Business Team Member</h2>
+            <h2 className="font-display text-3xl font-bold text-navy">
+              {txt(content, "business.title")}
+            </h2>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {businessPlans.map((plan) => {
@@ -110,11 +113,12 @@ export default async function PricingPage() {
           </div>
         </section>
 
-        {/* Individual Plans */}
         <section>
           <div className="flex items-center gap-3 mb-8">
             <User className="size-8 text-buffalo-red" />
-            <h2 className="font-display text-3xl font-bold text-navy">Individual Team Member</h2>
+            <h2 className="font-display text-3xl font-bold text-navy">
+              {txt(content, "individual.title")}
+            </h2>
           </div>
           <div className="grid md:grid-cols-2 gap-6 max-w-3xl">
             {individualPlans.map((plan) => {
@@ -159,14 +163,13 @@ export default async function PricingPage() {
 
         <section className="bg-soft-gray rounded-2xl p-8 text-center">
           <h3 className="font-display text-2xl font-bold text-navy mb-2">
-            Advertising is separate
+            {txt(content, "advertising.title")}
           </h3>
           <p className="text-muted mb-6 max-w-xl mx-auto">
-            Sponsored search placement is available as an add-on starting at $0.25/day,
-            independent of your listing tier.
+            {txt(content, "advertising.description")}
           </p>
           <Link href="/advertise">
-            <Button variant="accent">Learn About Advertising</Button>
+            <Button variant="accent">{txt(content, "advertising.cta")}</Button>
           </Link>
         </section>
       </div>

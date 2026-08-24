@@ -62,21 +62,56 @@ export async function getRecentBusinesses(limit = 6) {
 }
 
 export async function getSponsoredBusinesses(limit = 3) {
-  const sponsored = await getSponsoredResults({});
-  return sponsored.slice(0, limit).map((item) => ({
-    id: item.business.id,
-    name: item.business.name,
-    slug: item.business.slug,
-    shortDescription: item.business.shortDescription,
-    city: item.business.city,
-    phone: item.business.phone,
-    isVerified: item.business.isVerified,
-    isFeatured: false,
-    category: item.business.category,
-    images: item.business.images.map((img) => ({ url: img.url })),
-    isSponsored: true,
-    campaignId: item.campaignId,
-  }));
+  try {
+    const categories = await getPopularCategories(limit);
+    const results: Array<{
+      id: string;
+      name: string;
+      slug: string;
+      shortDescription: string | null;
+      city: string | null;
+      phone: string | null;
+      isVerified: boolean;
+      isFeatured: boolean;
+      category: { name: string; slug: string } | null;
+      images: { url: string }[];
+      isSponsored: boolean;
+      campaignId: string;
+    }> = [];
+    const seen = new Set<string>();
+
+    for (const category of categories) {
+      const sponsored = await getSponsoredResults({
+        categoryId: category.id,
+        categorySlug: category.slug,
+      });
+
+      for (const item of sponsored) {
+        if (seen.has(item.businessId)) continue;
+        seen.add(item.businessId);
+        results.push({
+          id: item.business.id,
+          name: item.business.name,
+          slug: item.business.slug,
+          shortDescription: item.business.shortDescription,
+          city: item.business.city,
+          phone: item.business.phone,
+          isVerified: item.business.isVerified,
+          isFeatured: false,
+          category: item.business.category,
+          images: item.business.images.map((img) => ({ url: img.url })),
+          isSponsored: true,
+          campaignId: item.campaignId,
+        });
+        if (results.length >= limit) return results;
+      }
+    }
+
+    return results;
+  } catch (error) {
+    console.error("[getSponsoredBusinesses]", error);
+    return [];
+  }
 }
 
 export async function getSiteStats() {

@@ -28,7 +28,7 @@ const navLinks = [
   { href: "/#how-it-works", label: "How It Works" },
 ];
 
-export function Header() {
+export function Header({ bannerText }: { bannerText?: string }) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const reducedMotion = useReducedMotion() ?? false;
@@ -62,7 +62,7 @@ export function Header() {
       <div className="bg-buffalo-red px-4 py-2 text-center text-sm font-medium text-white">
         <span className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
           <MapPin className="size-4 shrink-0" />
-          Explore local. Support Buffalo. Grow together.
+          {bannerText ?? "Explore local. Support Buffalo. Grow together."}
         </span>
       </div>
 

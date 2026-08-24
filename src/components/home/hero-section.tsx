@@ -15,33 +15,30 @@ import { motion, useReducedMotion } from "framer-motion";
 import { HeroSearchBar } from "@/components/home/hero-search-bar";
 import { Button } from "@/components/ui/button";
 import { FadeInUp } from "@/components/ui/motion";
+import type { PageContentMap } from "@/lib/content/content-text";
+import { txt } from "@/lib/content/content-text";
 
-const serviceCards = [
-  {
-    icon: UtensilsCrossed,
-    iconBg: "bg-buffalo-red",
-    title: "Restaurants",
-    subtitle: "Savor local flavors",
-    image: "from-orange-200 to-red-300",
-  },
-  {
-    icon: Home,
-    iconBg: "bg-navy",
-    title: "Home Services",
-    subtitle: "Local experts you trust",
-    image: "from-sky-200 to-blue-300",
-  },
-  {
-    icon: ShoppingBag,
-    iconBg: "bg-buffalo-red",
-    title: "Shopping",
-    subtitle: "Find unique local shops",
-    image: "from-rose-200 to-pink-300",
-  },
+const cardIcons = [UtensilsCrossed, Home, ShoppingBag];
+const cardStyles = [
+  { iconBg: "bg-buffalo-red", image: "from-orange-200 to-red-300" },
+  { iconBg: "bg-navy", image: "from-sky-200 to-blue-300" },
+  { iconBg: "bg-buffalo-red", image: "from-rose-200 to-pink-300" },
 ];
 
-export function HeroSection() {
+interface HeroSectionProps {
+  content: PageContentMap;
+}
+
+export function HeroSection({ content }: HeroSectionProps) {
   const reducedMotion = useReducedMotion() ?? false;
+
+  const serviceCards = [0, 1, 2].map((index) => ({
+    icon: cardIcons[index],
+    iconBg: cardStyles[index].iconBg,
+    title: txt(content, `hero.card_${index}.title`),
+    subtitle: txt(content, `hero.card_${index}.subtitle`),
+    image: cardStyles[index].image,
+  }));
 
   return (
     <section className="relative overflow-hidden">
@@ -63,17 +60,16 @@ export function HeroSection() {
           <div className="max-w-xl">
             <FadeInUp>
               <h1 className="font-display text-4xl font-bold leading-[1.08] tracking-tight text-navy sm:text-5xl lg:text-[3.4rem]">
-                Discover the{" "}
-                <span className="text-buffalo-red">Best</span>
+                {txt(content, "hero.headline_line1")}{" "}
+                <span className="text-buffalo-red">{txt(content, "hero.headline_highlight")}</span>
                 <br />
-                of Buffalo
+                {txt(content, "hero.headline_line2")}
               </h1>
             </FadeInUp>
 
             <FadeInUp delay={0.1}>
               <p className="mt-5 max-w-lg text-base leading-relaxed text-navy/75 sm:text-lg">
-                Find trusted local businesses, hidden gems, and everything Western
-                New York has to offer.
+                {txt(content, "hero.subtitle")}
               </p>
             </FadeInUp>
 
@@ -82,7 +78,7 @@ export function HeroSection() {
                 <Button size="lg" variant="accent" className="h-12 px-6 text-base" asChild>
                   <Link href="/directory">
                     <Search className="size-4" />
-                    Explore Businesses
+                    {txt(content, "hero.cta_explore")}
                   </Link>
                 </Button>
                 <Button
@@ -93,7 +89,7 @@ export function HeroSection() {
                 >
                   <Link href="/register">
                     <Store className="size-4" />
-                    List Your Business
+                    {txt(content, "hero.cta_list")}
                   </Link>
                 </Button>
               </div>

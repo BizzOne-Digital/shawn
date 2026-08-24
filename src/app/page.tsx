@@ -1,4 +1,5 @@
 import { getHomepageData } from "@/lib/queries/business";
+import { getPageContent, txt } from "@/lib/content/page-content";
 
 export const dynamic = "force-dynamic";
 import { HeroSection } from "@/components/home/hero-section";
@@ -14,40 +15,43 @@ import { NewsletterSection } from "@/components/home/newsletter-section";
 import { CtaSection } from "@/components/home/cta-section";
 
 export default async function HomePage() {
-  const { categories, sponsored, featured, recent, stats } =
-    await getHomepageData();
+  const [homepageData, content] = await Promise.all([
+    getHomepageData(),
+    getPageContent("home"),
+  ]);
+  const { categories, sponsored, featured, recent, stats } = homepageData;
 
   return (
     <>
-      <HeroSection />
-      <NewsWeatherSection />
-      <PopularCategories categories={categories} />
+      <HeroSection content={content} />
+      <NewsWeatherSection content={content} />
+      <PopularCategories categories={categories} content={content} />
       <BusinessSection
-        title="Sponsored Businesses"
-        subtitle="Featured partners supporting the Buffalo business community"
+        title={txt(content, "sponsored.title")}
+        subtitle={txt(content, "sponsored.subtitle")}
         businesses={sponsored}
         showSponsoredLabel
         viewAllHref="/search"
       />
       <BusinessSection
-        title="Featured Businesses"
-        subtitle="Hand-picked local favorites across Western New York"
+        title={txt(content, "featured.title")}
+        subtitle={txt(content, "featured.subtitle")}
         businesses={featured}
         viewAllHref="/directory?featured=true"
       />
       <BusinessSection
-        title="Recently Added"
-        subtitle="New listings from Buffalo-area businesses"
+        title={txt(content, "recent.title")}
+        subtitle={txt(content, "recent.subtitle")}
         businesses={recent}
         viewAllHref="/directory?sort=newest"
       />
-      <HowItWorksSection />
-      <StatsSection stats={stats} />
-      <BenefitsSection />
-      <AdvertisingPromo />
-      <TestimonialsSection />
-      <NewsletterSection />
-      <CtaSection />
+      <HowItWorksSection content={content} />
+      <StatsSection stats={stats} content={content} />
+      <BenefitsSection content={content} />
+      <AdvertisingPromo content={content} />
+      <TestimonialsSection content={content} />
+      <NewsletterSection content={content} />
+      <CtaSection content={content} />
     </>
   );
 }

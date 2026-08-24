@@ -26,6 +26,20 @@ export default async function CampaignDetailPage({ params }: PageProps) {
 
   if (!campaign) notFound();
 
+  const categoryIds = campaign.targets
+    .filter((t) => t.targetType === "CATEGORY" && t.value)
+    .map((t) => t.value!);
+
+  const categories =
+    categoryIds.length > 0
+      ? await db.category.findMany({
+          where: { id: { in: categoryIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+
+  const categoryMap = new Map(categories.map((c) => [c.id, c.name]));
+
   const ctr = campaign.impressions > 0
     ? ((campaign.clicks / campaign.impressions) * 100).toFixed(2)
     : "0.00";
@@ -88,21 +102,23 @@ export default async function CampaignDetailPage({ params }: PageProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Targeting</CardTitle>
+            <CardTitle>Category Bidding</CardTitle>
           </CardHeader>
           <CardContent>
-            {campaign.targets.length === 0 ? (
-              <p className="text-sm text-muted">All searches</p>
+            {categoryIds.length === 0 ? (
+              <p className="text-sm text-muted">No categories selected</p>
             ) : (
-              <div className="space-y-2">
-                {campaign.targets.map((target) => (
-                  <div key={target.id} className="flex items-center gap-2 text-sm">
-                    <Badge variant="outline">{target.targetType}</Badge>
-                    {target.value && <span>{target.value}</span>}
-                  </div>
+              <div className="flex flex-wrap gap-2">
+                {categoryIds.map((id) => (
+                  <Badge key={id} variant="outline">
+                    {categoryMap.get(id) ?? id}
+                  </Badge>
                 ))}
               </div>
             )}
+            <p className="text-xs text-muted mt-3">
+              This campaign competes for sponsored placement within the selected categories only.
+            </p>
           </CardContent>
         </Card>
       </div>

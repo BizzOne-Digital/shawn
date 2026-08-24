@@ -1,18 +1,24 @@
 import { SectionHeading } from "@/components/shared/section-heading";
 import { NewsletterForm } from "@/components/forms/newsletter-form";
+import type { PageContentMap } from "@/lib/content/page-content";
+import { txt } from "@/lib/content/page-content";
 
-export function NewsletterSection() {
+interface NewsletterSectionProps {
+  content: PageContentMap;
+}
+
+export function NewsletterSection({ content }: NewsletterSectionProps) {
   return (
     <section className="overflow-x-clip py-16 md:py-20">
       <div className="mx-auto max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto text-center">
           <SectionHeading
-            title="Stay in the Herd"
-            subtitle="Get weekly picks for new Buffalo businesses, seasonal guides, and local deals delivered to your inbox"
+            title={txt(content, "newsletter.title")}
+            subtitle={txt(content, "newsletter.subtitle")}
           />
           <NewsletterForm variant="inline" className="max-w-md mx-auto" />
           <p className="text-xs text-muted mt-4">
-            No spam — just good stuff from the 716. Unsubscribe anytime.
+            {txt(content, "newsletter.disclaimer")}
           </p>
         </div>
       </div>

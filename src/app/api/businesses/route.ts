@@ -1,27 +1,37 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireBusinessOwner } from "@/lib/auth-utils";
+import { handleApiError } from "@/lib/api-utils";
+import {
+  generateUniqueSlug,
+  syncBusinessRelations,
+} from "@/lib/business-utils";
+import { businessDraftSchema } from "@/lib/validations/business";
 import { z } from "zod";
-import slugify from "slugify";
 
-const createBusinessSchema = z.object({
-  name: z.string().min(2),
-  description: z.string().optional(),
-  shortDescription: z.string().optional(),
-  suggestedCategory: z.string().optional(),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().default("NY"),
-  zipCode: z.string().optional(),
-  phone: z.string().optional(),
-  publicEmail: z.string().email().optional().or(z.literal("")),
-  website: z.string().url().optional().or(z.literal("")),
-  services: z.array(z.string()).optional(),
-  tags: z.array(z.string()).optional(),
-  categoryId: z.string().optional(),
-  subcategoryId: z.string().optional(),
-  locationId: z.string().optional(),
-});
+function buildBusinessData(data: z.infer<typeof businessDraftSchema>) {
+  return {
+    ...(data.name && { name: data.name }),
+    ...(data.phone !== undefined && { phone: data.phone }),
+    ...(data.publicEmail !== undefined && { publicEmail: data.publicEmail || null }),
+    ...(data.website !== undefined && { website: data.website || null }),
+    ...(data.categoryId !== undefined && { categoryId: data.categoryId || null }),
+    ...(data.subcategoryId !== undefined && { subcategoryId: data.subcategoryId || null }),
+    ...(data.suggestedCategory !== undefined && {
+      suggestedCategory: data.suggestedCategory || null,
+    }),
+    ...(data.shortDescription !== undefined && { shortDescription: data.shortDescription }),
+    ...(data.description !== undefined && { description: data.description }),
+    ...(data.services !== undefined && { services: data.services }),
+    ...(data.tags !== undefined && { tags: data.tags }),
+    ...(data.address !== undefined && { address: data.address }),
+    ...(data.addressLine2 !== undefined && { addressLine2: data.addressLine2 || null }),
+    ...(data.city !== undefined && { city: data.city }),
+    ...(data.state !== undefined && { state: data.state }),
+    ...(data.zipCode !== undefined && { zipCode: data.zipCode }),
+    ...(data.locationId !== undefined && { locationId: data.locationId || null }),
+  };
+}
 
 export async function GET() {
   const user = await requireBusinessOwner();
@@ -42,28 +52,43 @@ export async function POST(request: Request) {
   try {
     const user = await requireBusinessOwner();
     const body = await request.json();
-    const data = createBusinessSchema.parse(body);
+    const { draft: _draft, ...rest } = body;
+    const data = businessDraftSchema.parse(rest);
 
-    let slug = slugify(data.name, { lower: true, strict: true });
-    const existing = await db.business.findUnique({ where: { slug } });
-    if (existing) slug = `${slug}-${Date.now()}`;
+    if (!data.name || data.name.length < 2) {
+      return NextResponse.json(
+        { error: "Business name must be at least 2 characters" },
+        { status: 400 }
+      );
+    }
+
+    const slug = await generateUniqueSlug(data.name);
 
     const business = await db.business.create({
       data: {
-        ...data,
+        ...buildBusinessData(data),
+        name: data.name,
         slug,
         ownerId: user.id,
         status: "DRAFT",
-        publicEmail: data.publicEmail || undefined,
-        website: data.website || undefined,
       },
     });
 
-    return NextResponse.json(business, { status: 201 });
+    await syncBusinessRelations(business.id, data);
+
+    const full = await db.business.findUnique({
+      where: { id: business.id },
+      include: {
+        category: true,
+        subcategory: true,
+        hours: true,
+        images: true,
+        socialLinks: true,
+      },
+    });
+
+    return NextResponse.json(full, { status: 201 });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors[0].message }, { status: 400 });
-    }
-    return NextResponse.json({ error: "Failed to create business" }, { status: 500 });
+    return handleApiError(error);
   }
 }

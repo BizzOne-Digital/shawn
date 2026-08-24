@@ -57,6 +57,18 @@ export async function POST(request: Request) {
       );
     }
 
+    const categories = await db.category.findMany({
+      where: { id: { in: data.categoryIds }, isActive: true },
+      select: { id: true },
+    });
+
+    if (categories.length !== data.categoryIds.length) {
+      return NextResponse.json(
+        { error: "One or more selected categories are invalid" },
+        { status: 400 }
+      );
+    }
+
     const campaign = await db.advertisingCampaign.create({
       data: {
         name: data.name,
@@ -68,10 +80,10 @@ export async function POST(request: Request) {
         endDate: data.endDate,
         status: "PENDING_APPROVAL",
         targets: {
-          create: {
-            targetType: data.targetType,
-            value: data.targetValue,
-          },
+          create: data.categoryIds.map((categoryId) => ({
+            targetType: "CATEGORY",
+            value: categoryId,
+          })),
         },
         bids: {
           create: { amount: data.dailyBid },

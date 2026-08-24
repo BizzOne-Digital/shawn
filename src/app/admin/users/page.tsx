@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { PageHeader } from "@/components/admin/page-header";
 import { UserRoleEditor } from "@/components/admin/user-role-editor";
+import { WalletCreditForm } from "@/components/admin/wallet-credit-form";
 import {
   Table,
   TableBody,
@@ -17,7 +18,10 @@ export default async function UsersPage() {
   const users = await db.user.findMany({
     where: { deletedAt: null },
     orderBy: { createdAt: "desc" },
-    include: { _count: { select: { businesses: true } } },
+    include: {
+      wallet: true,
+      _count: { select: { businesses: true } },
+    },
   });
 
   return (
@@ -32,6 +36,7 @@ export default async function UsersPage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
+                <TableHead>Wallet</TableHead>
                 <TableHead>Businesses</TableHead>
                 <TableHead>Joined</TableHead>
                 <TableHead>Manage</TableHead>
@@ -47,18 +52,29 @@ export default async function UsersPage() {
                       {user.role.replace(/_/g, " ")}
                     </Badge>
                   </TableCell>
+                  <TableCell className="text-sm font-medium">
+                    ${Number(user.wallet?.balance ?? 0).toFixed(2)}
+                  </TableCell>
                   <TableCell>{user._count.businesses}</TableCell>
                   <TableCell className="text-muted text-sm">{formatDate(user.createdAt)}</TableCell>
                   <TableCell>
-                    <UserRoleEditor
-                      user={{
-                        id: user.id,
-                        name: user.name,
-                        email: user.email,
-                        role: user.role,
-                        isActive: user.isActive,
-                      }}
-                    />
+                    <div className="flex flex-col gap-2">
+                      <UserRoleEditor
+                        user={{
+                          id: user.id,
+                          name: user.name,
+                          email: user.email,
+                          role: user.role,
+                          isActive: user.isActive,
+                        }}
+                      />
+                      <WalletCreditForm
+                        userId={user.id}
+                        userName={user.name}
+                        userEmail={user.email}
+                        currentBalance={Number(user.wallet?.balance ?? 0)}
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

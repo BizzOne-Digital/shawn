@@ -9,7 +9,7 @@ import { z } from "zod";
 
 const updateSchema = z.object({
   name: z.string().min(3).max(100).optional(),
-  dailyBid: z.coerce.number().min(1).max(1000).optional(),
+  dailyBid: z.coerce.number().min(0.25, "Minimum bid is $0.25 per day").max(1000).optional(),
   totalBudget: z.coerce.number().min(10).optional(),
   endDate: z.coerce.date().optional(),
   status: z.enum(["PAUSED", "ACTIVE"]).optional(),

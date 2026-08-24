@@ -6,6 +6,7 @@ import { DirectoryFilters } from "@/components/directory/directory-filters";
 import { Pagination } from "@/components/shared/pagination";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getPageContent, txt } from "@/lib/content/page-content";
 
 export const dynamic = "force-dynamic";
 
@@ -132,6 +133,7 @@ async function DirectoryResults({
 
 export default async function DirectoryPage({ searchParams }: DirectoryPageProps) {
   const params = await searchParams;
+  const content = await getPageContent("directory");
   let filterOptions = { categories: [] as Awaited<ReturnType<typeof getFilterOptions>>["categories"], cities: [] as string[] };
 
   try {
@@ -155,8 +157,8 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
     <div className="overflow-x-clip py-12 md:py-16">
       <div className="mx-auto max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          title="Business Directory"
-          subtitle="Explore local businesses across Buffalo, Amherst, Cheektowaga, and all of Western New York"
+          title={txt(content, "hero.title")}
+          subtitle={txt(content, "hero.subtitle")}
           align="left"
           className="mb-8"
         />

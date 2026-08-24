@@ -1,13 +1,33 @@
 import { z } from "zod";
 import { DayOfWeek, ImageType, SocialPlatform } from "@prisma/client";
+import { normalizeSocialUrl, normalizeWebsiteUrl } from "@/lib/url-utils";
 
 const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+const emptyToUndefined = (value: unknown) =>
+  value === "" || value === null || value === undefined ? undefined : value;
+
+const optionalWebsiteField = z.preprocess(
+  (val) => {
+    if (typeof val !== "string" || !val.trim()) return "";
+    return normalizeWebsiteUrl(val);
+  },
+  z.union([z.literal(""), z.string().url("Enter a valid website (e.g. yourbusiness.com)")])
+);
+
+const optionalSocialUrlField = z.preprocess(
+  (val) => {
+    if (typeof val !== "string" || !val.trim()) return "";
+    return normalizeSocialUrl(val);
+  },
+  z.union([z.literal(""), z.string().url("Enter a valid URL")])
+);
 
 export const basicInfoSchema = z.object({
   name: z.string().min(2, "Business name must be at least 2 characters").max(120),
   phone: z.string().min(10, "Phone number is required").max(20),
   publicEmail: z.string().email("Invalid email").optional().or(z.literal("")),
-  website: z.string().url("Invalid URL").optional().or(z.literal("")),
+  website: optionalWebsiteField.optional(),
 });
 
 export const categorySchema = z.object({
@@ -40,7 +60,13 @@ export const locationSchema = z.object({
 
 export const socialLinkSchema = z.object({
   platform: z.nativeEnum(SocialPlatform),
-  url: z.string().url("Invalid URL"),
+  url: z.preprocess(
+    (val) => {
+      if (typeof val !== "string" || !val.trim()) return "";
+      return normalizeSocialUrl(val);
+    },
+    z.string().url("Enter a valid social profile URL")
+  ),
 });
 
 export const socialSchema = z.object({
@@ -96,6 +122,39 @@ export type HoursForm = z.infer<typeof hoursSchema>;
 export type ImagesForm = z.infer<typeof imagesSchema>;
 export type BusinessSubmissionForm = z.infer<typeof businessSubmissionSchema>;
 
+/** Lenient schema for autosave / draft — does not require all steps to be complete */
+export const businessDraftSchema = z.object({
+  name: z.preprocess(emptyToUndefined, z.string().min(2).optional()),
+  phone: z.preprocess(emptyToUndefined, z.string().optional()),
+  publicEmail: z.union([z.literal(""), z.string().email()]).optional(),
+  website: optionalWebsiteField.optional(),
+  categoryId: z.preprocess(emptyToUndefined, z.string().optional()),
+  subcategoryId: z.preprocess(emptyToUndefined, z.string().optional()),
+  suggestedCategory: z.preprocess(emptyToUndefined, z.string().optional()),
+  shortDescription: z.preprocess(emptyToUndefined, z.string().optional()),
+  description: z.preprocess(emptyToUndefined, z.string().optional()),
+  services: z.array(z.string()).optional(),
+  tags: z.array(z.string()).optional(),
+  address: z.preprocess(emptyToUndefined, z.string().optional()),
+  addressLine2: z.preprocess(emptyToUndefined, z.string().optional()),
+  city: z.preprocess(emptyToUndefined, z.string().optional()),
+  state: z.string().optional(),
+  zipCode: z.preprocess(emptyToUndefined, z.string().optional()),
+  locationId: z.preprocess(emptyToUndefined, z.string().optional()),
+  socialLinks: z
+    .array(
+      z.object({
+        platform: z.nativeEnum(SocialPlatform),
+        url: optionalSocialUrlField,
+      })
+    )
+    .optional(),
+  hours: z.array(businessHourSchema).optional(),
+  images: z.array(businessImageSchema).optional(),
+});
+
+export type BusinessDraftForm = z.infer<typeof businessDraftSchema>;
+
 export const STEP_SCHEMAS = [
   basicInfoSchema,
   categorySchema,
@@ -123,12 +182,16 @@ export const STEP_LABELS = [
 export const campaignSchema = z.object({
   name: z.string().min(3).max(100),
   businessId: z.string().min(1),
-  dailyBid: z.coerce.number().min(1).max(1000),
-  totalBudget: z.coerce.number().min(10).optional(),
+  categoryIds: z
+    .array(z.string().min(1))
+    .min(1, "Select at least one category to bid on"),
+  dailyBid: z.coerce
+    .number()
+    .min(0.25, "Minimum bid is $0.25 per day")
+    .max(1000),
+  totalBudget: z.coerce.number().min(0.25).optional(),
   startDate: z.coerce.date(),
   endDate: z.coerce.date().optional(),
-  targetType: z.enum(["ALL", "KEYWORD", "CATEGORY", "LOCATION"]),
-  targetValue: z.string().optional(),
 });
 
 export const leadSchema = z.object({

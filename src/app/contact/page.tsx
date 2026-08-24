@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { ContactForm } from "@/components/forms/contact-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getPageContent, txt } from "@/lib/content/page-content";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Contact Us",
@@ -9,22 +12,25 @@ export const metadata: Metadata = {
     "Get in touch with the Let's Go Buffalo team. Email admin@letsgobuffalo.com or call (716) 559-5955.",
 };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const content = await getPageContent("contact");
+  const email = txt(content, "info.email");
+  const phone = txt(content, "info.phone");
+
   return (
     <div className="overflow-x-clip py-12 md:py-16">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="font-display text-4xl md:text-5xl font-bold text-navy">
-          Contact Us
+          {txt(content, "hero.title")}
         </h1>
         <p className="mt-4 text-lg text-muted max-w-2xl">
-          Have a question about listing your business, advertising, or using the
-          directory? Our Buffalo-based team is here to help.
+          {txt(content, "hero.subtitle")}
         </p>
 
         <div className="grid lg:grid-cols-2 gap-10 mt-12">
           <Card>
             <CardHeader>
-              <CardTitle>Send a Message</CardTitle>
+              <CardTitle>{txt(content, "form.title")}</CardTitle>
             </CardHeader>
             <CardContent>
               <ContactForm />
@@ -37,35 +43,35 @@ export default function ContactPage() {
                 <div className="flex items-start gap-4">
                   <Mail className="size-5 text-buffalo-red flex-shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-navy">Email</h3>
+                    <h3 className="font-semibold text-navy">{txt(content, "info.email_label")}</h3>
                     <a
-                      href="mailto:admin@letsgobuffalo.com"
+                      href={`mailto:${email}`}
                       className="text-muted hover:text-buffalo-red transition-colors"
                     >
-                      admin@letsgobuffalo.com
+                      {email}
                     </a>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
                   <Phone className="size-5 text-buffalo-red flex-shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-navy">Phone</h3>
+                    <h3 className="font-semibold text-navy">{txt(content, "info.phone_label")}</h3>
                     <a
-                      href="tel:7165595955"
+                      href={`tel:${phone.replace(/\D/g, "")}`}
                       className="text-muted hover:text-buffalo-red transition-colors"
                     >
-                      (716) 559-5955
+                      {phone}
                     </a>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
                   <MapPin className="size-5 text-buffalo-red flex-shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-navy">Service Area</h3>
+                    <h3 className="font-semibold text-navy">{txt(content, "info.area_label")}</h3>
                     <p className="text-muted">
-                      Buffalo &amp; Western New York
+                      {txt(content, "info.area_line_1")}
                       <br />
-                      Erie &amp; Niagara Counties
+                      {txt(content, "info.area_line_2")}
                     </p>
                   </div>
                 </div>
@@ -74,11 +80,9 @@ export default function ContactPage() {
 
             <Card className="bg-soft-gray border-0">
               <CardContent className="p-6">
-                <h3 className="font-semibold text-navy">Business Hours</h3>
-                <p className="text-muted mt-2 text-sm leading-relaxed">
-                  Monday – Friday: 9:00 AM – 5:00 PM EST
-                  <br />
-                  We typically respond within one business day.
+                <h3 className="font-semibold text-navy">{txt(content, "hours.title")}</h3>
+                <p className="text-muted mt-2 text-sm leading-relaxed whitespace-pre-line">
+                  {txt(content, "hours.text")}
                 </p>
               </CardContent>
             </Card>

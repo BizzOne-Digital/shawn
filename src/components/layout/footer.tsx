@@ -7,6 +7,8 @@ import { Mail, MapPin, Phone, Share2 } from "lucide-react";
 import { SiteLogo } from "@/components/layout/site-logo";
 import { NewsletterForm } from "@/components/forms/newsletter-form";
 import { cn } from "@/lib/utils";
+import type { PageContentMap } from "@/lib/content/content-text";
+import { txt } from "@/lib/content/content-text";
 
 const footerNav = {
   explore: [
@@ -32,7 +34,11 @@ const socialLinks = [
   { href: "#", label: "LinkedIn", icon: Share2 },
 ];
 
-export function Footer() {
+interface FooterProps {
+  content?: PageContentMap;
+}
+
+export function Footer({ content = {} }: FooterProps) {
   const pathname = usePathname();
 
   const authRoutes = ["/login", "/register", "/forgot-password", "/reset-password"];
@@ -44,6 +50,9 @@ export function Footer() {
     return null;
   }
 
+  const email = txt(content, "footer.email");
+  const phone = txt(content, "footer.phone");
+
   return (
     <footer className="overflow-x-clip bg-navy text-white">
       <div className="mx-auto max-w-7xl min-w-0 px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
@@ -53,32 +62,29 @@ export function Footer() {
               href="/"
               width={240}
               height={80}
-              invert
-              comClassName="text-white"
               imageClassName="h-16 w-auto sm:h-[4.75rem]"
             />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/75">
-              Discover the best local businesses across Buffalo and Western New York.
-              From restaurants to services, find trusted neighbors in your community.
+              {txt(content, "footer.tagline")}
             </p>
             <div className="mt-6 space-y-3 text-sm text-white/85">
               <a
-                href="mailto:admin@letsgobuffalo.com"
+                href={`mailto:${email}`}
                 className="flex items-center gap-2 transition-colors hover:text-white"
               >
                 <Mail className="size-4 shrink-0 text-buffalo-red" />
-                admin@letsgobuffalo.com
+                {email}
               </a>
               <a
-                href="tel:7165595955"
+                href={`tel:${phone.replace(/\D/g, "")}`}
                 className="flex items-center gap-2 transition-colors hover:text-white"
               >
                 <Phone className="size-4 shrink-0 text-buffalo-red" />
-                716-559-5955
+                {phone}
               </a>
               <p className="flex items-start gap-2">
                 <MapPin className="mt-0.5 size-4 shrink-0 text-buffalo-red" />
-                <span>Buffalo, New York</span>
+                <span>{txt(content, "footer.location")}</span>
               </p>
             </div>
           </div>
@@ -142,7 +148,7 @@ export function Footer() {
               Newsletter
             </h3>
             <p className="mt-4 text-sm text-white/75">
-              Get local business highlights and community updates delivered to your inbox.
+              {txt(content, "footer.newsletter_text")}
             </p>
             <NewsletterForm className="mt-4 [&_input]:border-white/20 [&_input]:bg-white/10 [&_input]:text-white [&_input]:placeholder:text-white/50" />
           </div>
@@ -154,7 +160,7 @@ export function Footer() {
           )}
         >
           <p className="text-sm text-white/60">
-            © {new Date().getFullYear()} Let&apos;s Go Buffalo. All rights reserved.
+            © {new Date().getFullYear()} {txt(content, "footer.copyright")}
           </p>
           <div className="flex gap-6 text-sm">
             <Link href="/terms" className="text-white/60 transition-colors hover:text-white">

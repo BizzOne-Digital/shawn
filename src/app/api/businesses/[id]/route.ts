@@ -8,9 +8,33 @@ import {
   generateUniqueSlug,
   syncBusinessRelations,
 } from "@/lib/business-utils";
-import { businessSubmissionSchema } from "@/lib/validations/business";
+import { businessSubmissionSchema, businessDraftSchema } from "@/lib/validations/business";
+import type { z } from "zod";
 
-const draftSchema = businessSubmissionSchema.partial();
+type DraftData = z.infer<typeof businessDraftSchema>;
+
+function buildUpdateFields(data: DraftData) {
+  return {
+    ...(data.phone !== undefined && { phone: data.phone }),
+    ...(data.publicEmail !== undefined && { publicEmail: data.publicEmail || null }),
+    ...(data.website !== undefined && { website: data.website || null }),
+    ...(data.categoryId !== undefined && { categoryId: data.categoryId || null }),
+    ...(data.subcategoryId !== undefined && { subcategoryId: data.subcategoryId || null }),
+    ...(data.suggestedCategory !== undefined && {
+      suggestedCategory: data.suggestedCategory || null,
+    }),
+    ...(data.shortDescription !== undefined && { shortDescription: data.shortDescription }),
+    ...(data.description !== undefined && { description: data.description }),
+    ...(data.services !== undefined && { services: data.services }),
+    ...(data.tags !== undefined && { tags: data.tags }),
+    ...(data.address !== undefined && { address: data.address }),
+    ...(data.addressLine2 !== undefined && { addressLine2: data.addressLine2 || null }),
+    ...(data.city !== undefined && { city: data.city }),
+    ...(data.state !== undefined && { state: data.state }),
+    ...(data.zipCode !== undefined && { zipCode: data.zipCode }),
+    ...(data.locationId !== undefined && { locationId: data.locationId || null }),
+  };
+}
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -35,8 +59,10 @@ export async function PUT(request: Request, context: RouteContext) {
     if ("error" in owned) return owned.error;
 
     const body = await request.json();
-    const isDraft = body.draft === true;
-    const data = isDraft ? draftSchema.parse(body) : businessSubmissionSchema.parse(body);
+    const { draft: isDraft, ...rest } = body;
+    const data = isDraft
+      ? businessDraftSchema.parse(rest)
+      : businessSubmissionSchema.parse(rest);
 
     const slug =
       data.name && data.name !== owned.business.name
@@ -47,35 +73,12 @@ export async function PUT(request: Request, context: RouteContext) {
     const business = await db.business.update({
       where: { id },
       data: {
-        ...(data.name && { name: data.name, slug }),
-        ...(data.phone !== undefined && { phone: data.phone }),
-        ...(data.publicEmail !== undefined && { publicEmail: data.publicEmail || null }),
-        ...(data.website !== undefined && { website: data.website || null }),
-        ...(data.categoryId !== undefined && {
-          categoryId: data.categoryId || null,
-        }),
-        ...(data.subcategoryId !== undefined && {
-          subcategoryId: data.subcategoryId || null,
-        }),
-        ...(data.suggestedCategory !== undefined && {
-          suggestedCategory: data.suggestedCategory || null,
-        }),
-        ...(data.shortDescription !== undefined && {
-          shortDescription: data.shortDescription,
-        }),
-        ...(data.description !== undefined && { description: data.description }),
-        ...(data.services !== undefined && { services: data.services }),
-        ...(data.tags !== undefined && { tags: data.tags }),
-        ...(data.address !== undefined && { address: data.address }),
-        ...(data.addressLine2 !== undefined && {
-          addressLine2: data.addressLine2 || null,
-        }),
-        ...(data.city !== undefined && { city: data.city }),
-        ...(data.state !== undefined && { state: data.state }),
-        ...(data.zipCode !== undefined && { zipCode: data.zipCode }),
-        ...(data.locationId !== undefined && {
-          locationId: data.locationId || null,
-        }),
+        ...(data.name && data.name !== owned.business.name
+          ? { name: data.name, slug }
+          : data.name
+            ? { name: data.name }
+            : {}),
+        ...buildUpdateFields(data),
       },
     });
 

@@ -29,6 +29,8 @@ import {
   type BusinessSubmissionForm,
 } from "@/lib/validations/business";
 import { cn, formatCurrency } from "@/lib/utils";
+import { prepareBusinessFormPayload } from "@/lib/url-utils";
+import { WebsiteUrlInput } from "@/components/forms/website-url-input";
 import {
   ArrowLeft,
   ArrowRight,
@@ -117,11 +119,11 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
   const formValues = watch();
   const selectedCategory = categories.find((c) => c.id === formValues.categoryId);
 
-  const saveDraft = useCallback(async (silent = false) => {
-    const data = getValues();
+  const saveDraft = useCallback(async (silent = false): Promise<string | null> => {
+    const data = prepareBusinessFormPayload(getValues());
     const payload = { ...data, draft: true };
     const serialized = JSON.stringify(payload);
-    if (serialized === lastSaved.current) return;
+    if (serialized === lastSaved.current && businessId) return businessId;
 
     setSaving(true);
     try {
@@ -136,15 +138,18 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
       if (!res.ok) {
         const json = await res.json();
         if (!silent) toast.error(json.error ?? "Failed to save draft");
-        return;
+        return null;
       }
 
       const saved = await res.json();
-      if (!businessId) setBusinessId(saved.id);
+      const id = saved.id as string;
+      if (!businessId) setBusinessId(id);
       lastSaved.current = serialized;
       if (!silent) toast.success("Draft saved");
+      return id;
     } catch {
       if (!silent) toast.error("Failed to save draft");
+      return null;
     } finally {
       setSaving(false);
     }
@@ -234,24 +239,36 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
     }
     setSubmitting(true);
     try {
-      await saveDraft(true);
-      if (!businessId) {
-        toast.error("Please save your business first");
+      const valid = await trigger();
+      if (!valid) {
+        toast.error("Please complete all required fields before submitting");
         return;
       }
-      const res = await fetch(`/api/businesses/${businessId}/submit`, { method: "POST" });
+
+      const savedId = await saveDraft(false);
+      const submitId = savedId ?? businessId;
+      if (!submitId) {
+        toast.error("Could not save your business. Please try Save Draft first.");
+        return;
+      }
+
+      const res = await fetch(`/api/businesses/${submitId}/submit`, { method: "POST" });
       if (!res.ok) {
         const json = await res.json();
         toast.error(json.error ?? "Submission failed");
         return;
       }
       toast.success("Business submitted for review!");
-      router.push(`/dashboard/businesses/${businessId}/status`);
+      router.push(`/dashboard/businesses/${submitId}/status`);
     } catch {
       toast.error("Submission failed");
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function fieldClass(fieldError?: { message?: string }) {
+    return cn("mt-1", fieldError && "border-buffalo-red ring-1 ring-buffalo-red");
   }
 
   function addService() {
@@ -293,25 +310,41 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="name">Business Name *</Label>
-                  <Input id="name" {...register("name")} className="mt-1" />
+                  <Input id="name" {...register("name")} className={fieldClass(errors.name)} />
                   {errors.name && (
                     <p className="text-sm text-buffalo-red mt-1">{errors.name.message}</p>
                   )}
                 </div>
                 <div>
                   <Label htmlFor="phone">Phone *</Label>
-                  <Input id="phone" type="tel" {...register("phone")} className="mt-1" />
+                  <Input id="phone" type="tel" {...register("phone")} className={fieldClass(errors.phone)} />
                   {errors.phone && (
                     <p className="text-sm text-buffalo-red mt-1">{errors.phone.message}</p>
                   )}
                 </div>
                 <div>
                   <Label htmlFor="publicEmail">Public Email</Label>
-                  <Input id="publicEmail" type="email" {...register("publicEmail")} className="mt-1" />
+                  <Input
+                    id="publicEmail"
+                    type="email"
+                    {...register("publicEmail")}
+                    className={fieldClass(errors.publicEmail)}
+                  />
+                  {errors.publicEmail && (
+                    <p className="text-sm text-buffalo-red mt-1">{errors.publicEmail.message}</p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="website">Website</Label>
-                  <Input id="website" type="url" placeholder="https://" {...register("website")} className="mt-1" />
+                  <WebsiteUrlInput
+                    value={formValues.website ?? ""}
+                    onChange={(v) => setValue("website", v, { shouldValidate: true })}
+                    className="mt-1"
+                    error={!!errors.website}
+                  />
+                  {errors.website && (
+                    <p className="text-sm text-buffalo-red mt-1">{errors.website.message}</p>
+                  )}
                 </div>
               </div>
             )}
@@ -327,7 +360,12 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
                       setValue("subcategoryId", "");
                     }}
                   >
-                    <SelectTrigger className="mt-1">
+                    <SelectTrigger
+                      className={cn(
+                        "mt-1",
+                        errors.categoryId && "border-buffalo-red ring-1 ring-buffalo-red"
+                      )}
+                    >
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -436,7 +474,7 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="address">Street Address *</Label>
-                  <Input id="address" {...register("address")} className="mt-1" />
+                  <Input id="address" {...register("address")} className={fieldClass(errors.address)} />
                   {errors.address && (
                     <p className="text-sm text-buffalo-red mt-1">{errors.address.message}</p>
                   )}
@@ -448,7 +486,7 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <Label htmlFor="city">City *</Label>
-                    <Input id="city" {...register("city")} className="mt-1" />
+                    <Input id="city" {...register("city")} className={fieldClass(errors.city)} />
                     {errors.city && (
                       <p className="text-sm text-buffalo-red mt-1">{errors.city.message}</p>
                     )}
@@ -460,7 +498,7 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
                 </div>
                 <div>
                   <Label htmlFor="zipCode">ZIP Code *</Label>
-                  <Input id="zipCode" {...register("zipCode")} className="mt-1" />
+                  <Input id="zipCode" {...register("zipCode")} className={fieldClass(errors.zipCode)} />
                   {errors.zipCode && (
                     <p className="text-sm text-buffalo-red mt-1">{errors.zipCode.message}</p>
                   )}
@@ -478,16 +516,18 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
                       <Label htmlFor={`social-${platform}`}>{label}</Label>
                       <Input
                         id={`social-${platform}`}
-                        type="url"
-                        placeholder="https://"
-                        defaultValue={existing?.url ?? ""}
+                        type="text"
+                        placeholder="facebook.com/yourpage"
+                        defaultValue={existing?.url?.replace(/^https?:\/\//i, "") ?? ""}
                         className="mt-1"
                         onChange={(e) => {
                           const links = [...(getValues("socialLinks") ?? [])].filter(
                             (s) => s.platform !== platform
                           );
-                          if (e.target.value) {
-                            links.push({ platform, url: e.target.value });
+                          const raw = e.target.value.trim();
+                          if (raw) {
+                            const url = raw.startsWith("http") ? raw : `https://${raw}`;
+                            links.push({ platform, url });
                           }
                           setValue("socialLinks", links);
                         }}

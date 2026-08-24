@@ -60,23 +60,41 @@ function campaignMatchesContext(
   targets: { targetType: TargetType; value: string | null }[],
   context: SponsoredSearchContext
 ): boolean {
-  if (targets.length === 0) return true;
+  if (targets.length === 0) return false;
 
   const hasAll = targets.some((t) => t.targetType === TargetType.ALL);
   if (hasAll) return true;
 
-  return targets.some((target) => {
+  const categoryTargets = targets.filter((t) => t.targetType === TargetType.CATEGORY);
+  const hasCategoryTargets = categoryTargets.length > 0;
+
+  if (hasCategoryTargets) {
+    const hasCategoryContext = !!(context.categoryId || context.categorySlug);
+    if (!hasCategoryContext) return false;
+
+    const categoryMatch = categoryTargets.some(
+      (target) =>
+        (context.categoryId && target.value === context.categoryId) ||
+        (context.categorySlug && target.value === context.categorySlug)
+    );
+    if (!categoryMatch) return false;
+  }
+
+  const otherTargets = targets.filter(
+    (t) => t.targetType !== TargetType.CATEGORY && t.targetType !== TargetType.ALL
+  );
+
+  if (otherTargets.length === 0) {
+    return hasCategoryTargets;
+  }
+
+  return otherTargets.some((target) => {
     switch (target.targetType) {
       case TargetType.KEYWORD:
         return (
           context.query &&
           target.value &&
           context.query.toLowerCase().includes(target.value.toLowerCase())
-        );
-      case TargetType.CATEGORY:
-        return (
-          (context.categoryId && target.value === context.categoryId) ||
-          (context.categorySlug && target.value === context.categorySlug)
         );
       case TargetType.LOCATION:
         return (

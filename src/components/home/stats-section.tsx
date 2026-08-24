@@ -1,17 +1,21 @@
+import type { PageContentMap } from "@/lib/content/page-content";
+import { txt } from "@/lib/content/page-content";
+
 interface StatsSectionProps {
   stats: {
     businessCount: number;
     categoryCount: number;
     cityCount: number;
   };
+  content: PageContentMap;
 }
 
-export function StatsSection({ stats }: StatsSectionProps) {
+export function StatsSection({ stats, content }: StatsSectionProps) {
   const items = [
-    { value: stats.businessCount, label: "Local Businesses" },
-    { value: stats.categoryCount, label: "Categories" },
-    { value: stats.cityCount, label: "WNY Communities" },
-    { value: "716", label: "Buffalo Proud" },
+    { value: stats.businessCount, label: txt(content, "stats.label_businesses") },
+    { value: stats.categoryCount, label: txt(content, "stats.label_categories") },
+    { value: stats.cityCount, label: txt(content, "stats.label_communities") },
+    { value: txt(content, "stats.value_proud"), label: txt(content, "stats.label_proud") },
   ];
 
   return (

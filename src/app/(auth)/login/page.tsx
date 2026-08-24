@@ -67,8 +67,7 @@ function LoginForm() {
             href="/"
             width={300}
             height={100}
-            comClassName="text-white"
-            className="mx-auto mb-8 justify-center"
+            className="mx-auto mb-8"
             imageClassName="mx-auto"
           />
           <h2 className="font-display text-3xl font-bold mb-4">

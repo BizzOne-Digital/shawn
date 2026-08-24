@@ -5,8 +5,10 @@ import { Toaster } from "@/components/ui/sonner";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { metadata as siteMetadata } from "./metadata";
+import { getPageContent, txt } from "@/lib/content/page-content";
 import "./globals.css";
 
+export const dynamic = "force-dynamic";
 export const metadata = siteMetadata;
 
 const inter = Inter({
@@ -20,14 +22,16 @@ const playfair = Playfair_Display({
   weight: ["400", "600", "700", "800"],
 });
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const layoutContent = await getPageContent("layout");
+
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable} h-full overflow-x-clip`}>
       <body className="flex min-h-full min-w-0 flex-col overflow-x-clip antialiased">
         <Providers>
-          <Header />
+          <Header bannerText={txt(layoutContent, "header.banner")} />
           <main className="min-w-0 flex-1 overflow-x-clip">{children}</main>
-          <Footer />
+          <Footer content={layoutContent} />
           <Toaster position="top-right" richColors closeButton />
         </Providers>
       </body>

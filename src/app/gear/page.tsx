@@ -1,26 +1,43 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { GearOrderForm } from "@/components/forms/gear-order-form";
-import { gearProducts } from "@/lib/content/gear-products";
+import { getPageContent, txt } from "@/lib/content/page-content";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Gear Shop",
   description: "Official Let's Go Buffalo gear — hats, shirts, hoodies, and more.",
 };
 
-export default function GearPage() {
+const productImages = [
+  "/images/logo.png",
+  "/images/logo.png",
+  "/images/logo.png",
+  "/images/logo.png",
+];
+
+export default async function GearPage() {
+  const content = await getPageContent("gear");
+
+  const products = [0, 1, 2, 3].map((index) => ({
+    id: `product-${index}`,
+    name: txt(content, `products.item_${index}.name`),
+    description: txt(content, `products.item_${index}.description`),
+    price: parseFloat(txt(content, `products.item_${index}.price`) || "0"),
+    image: productImages[index],
+  }));
+
   return (
     <div className="overflow-x-clip py-12 md:py-16">
       <div className="mx-auto max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl">
-          <h1 className="font-display text-4xl font-bold text-navy">Let&apos;s Go Buffalo Gear</h1>
-          <p className="mt-4 text-lg text-muted">
-            Rep the 716 with official Let&apos;s Go Buffalo merchandise. Submit an order inquiry and we&apos;ll email you to complete checkout.
-          </p>
+          <h1 className="font-display text-4xl font-bold text-navy">{txt(content, "hero.title")}</h1>
+          <p className="mt-4 text-lg text-muted">{txt(content, "hero.subtitle")}</p>
         </div>
 
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {gearProducts.map((product) => (
+          {products.map((product) => (
             <div key={product.id} className="rounded-2xl border border-border bg-white p-5 shadow-sm">
               <div className="flex h-36 items-center justify-center rounded-xl bg-soft-gray p-4">
                 <Image

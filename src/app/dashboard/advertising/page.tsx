@@ -33,7 +33,7 @@ export default async function AdvertisingPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-bold text-navy">Advertising</h1>
-          <p className="text-muted mt-1">Manage your sponsored campaigns</p>
+          <p className="text-muted mt-1">Manage per-category sponsored campaigns</p>
         </div>
         <Link href="/dashboard/advertising/new">
           <Button variant="accent">

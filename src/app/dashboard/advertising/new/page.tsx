@@ -10,6 +10,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -28,10 +29,18 @@ interface Business {
   name: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export default function NewCampaignPage() {
   const router = useRouter();
   const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const {
     register,
@@ -42,8 +51,9 @@ export default function NewCampaignPage() {
   } = useForm<CampaignForm>({
     resolver: zodResolver(campaignSchema),
     defaultValues: {
-      targetType: "ALL",
+      categoryIds: [],
       startDate: new Date(),
+      dailyBid: 0.25,
     },
   });
 
@@ -56,7 +66,21 @@ export default function NewCampaignPage() {
         );
         setBusinesses(eligible);
       });
+
+    fetch("/api/public/categories")
+      .then((r) => r.json())
+      .then((data: { categories?: Category[] }) => setCategories(data.categories ?? []));
   }, []);
+
+  function toggleCategory(categoryId: string) {
+    setSelectedCategories((prev) => {
+      const next = prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId];
+      setValue("categoryIds", next, { shouldValidate: true });
+      return next;
+    });
+  }
 
   async function onSubmit(data: CampaignForm) {
     setLoading(true);
@@ -90,7 +114,9 @@ export default function NewCampaignPage() {
           </Button>
         </Link>
         <h1 className="font-display text-3xl font-bold text-navy">Create Campaign</h1>
-        <p className="text-muted mt-1">Promote your business in search results</p>
+        <p className="text-muted mt-1">
+          Bid per category — choose one or more categories. Minimum $0.25/day per campaign.
+        </p>
       </div>
 
       <Card>
@@ -127,10 +153,47 @@ export default function NewCampaignPage() {
               )}
             </div>
 
+            <div>
+              <Label>Categories to bid on</Label>
+              <p className="text-xs text-muted mt-1 mb-3">
+                Your ad competes only within each selected category. Create separate campaigns for
+                different bids per category.
+              </p>
+              {categories.length === 0 ? (
+                <p className="text-sm text-muted">No categories available yet. Ask an admin to add categories.</p>
+              ) : (
+                <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-border p-3">
+                  {categories.map((category) => (
+                    <label
+                      key={category.id}
+                      className="flex cursor-pointer items-center gap-3 text-sm"
+                    >
+                      <Checkbox
+                        checked={selectedCategories.includes(category.id)}
+                        onCheckedChange={() => toggleCategory(category.id)}
+                      />
+                      <span>{category.name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              {errors.categoryIds && (
+                <p className="text-sm text-buffalo-red mt-1">{errors.categoryIds.message}</p>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="dailyBid">Daily Bid ($)</Label>
-                <Input id="dailyBid" type="number" step="0.01" {...register("dailyBid")} className="mt-1" />
+                <Input
+                  id="dailyBid"
+                  type="number"
+                  step="0.01"
+                  min="0.25"
+                  {...register("dailyBid")}
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted mt-1">Minimum $0.25 per day</p>
                 {errors.dailyBid && (
                   <p className="text-sm text-buffalo-red mt-1">{errors.dailyBid.message}</p>
                 )}
@@ -138,21 +201,36 @@ export default function NewCampaignPage() {
               <div>
                 <Label htmlFor="totalBudget">Total Budget ($)</Label>
                 <Input id="totalBudget" type="number" step="0.01" {...register("totalBudget")} className="mt-1" />
+                <p className="text-xs text-muted mt-1">Optional spending cap</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="startDate">Start Date</Label>
-                <Input id="startDate" type="date" {...register("startDate")} className="mt-1" />
+                <Input
+                  id="startDate"
+                  type="date"
+                  {...register("startDate", {
+                    setValueAs: (v) => (v ? new Date(v) : new Date()),
+                  })}
+                  className="mt-1"
+                />
               </div>
               <div>
                 <Label htmlFor="endDate">End Date (optional)</Label>
-                <Input id="endDate" type="date" {...register("endDate")} className="mt-1" />
+                <Input
+                  id="endDate"
+                  type="date"
+                  {...register("endDate", {
+                    setValueAs: (v) => (v ? new Date(v) : undefined),
+                  })}
+                  className="mt-1"
+                />
               </div>
             </div>
 
-            <Button type="submit" variant="accent" disabled={loading}>
+            <Button type="submit" variant="accent" disabled={loading || categories.length === 0}>
               {loading && <Loader2 className="animate-spin" />}
               Create Campaign
             </Button>

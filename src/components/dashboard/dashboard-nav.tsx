@@ -55,8 +55,6 @@ export function DashboardNav() {
               href="/"
               width={160}
               height={53}
-              invert
-              comClassName="text-white"
               imageClassName="h-10 w-auto"
             />
             <p className="text-white/60 text-xs mt-2">Business Dashboard</p>

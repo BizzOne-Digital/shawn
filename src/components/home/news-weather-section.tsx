@@ -2,8 +2,14 @@ import Link from "next/link";
 import { CloudSun, ExternalLink, Newspaper } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getBuffaloNews, getBuffaloWeather } from "@/lib/feeds/buffalo-feeds";
+import type { PageContentMap } from "@/lib/content/page-content";
+import { txt } from "@/lib/content/page-content";
 
-export async function NewsWeatherSection() {
+interface NewsWeatherSectionProps {
+  content: PageContentMap;
+}
+
+export async function NewsWeatherSection({ content }: NewsWeatherSectionProps) {
   const [weather, news] = await Promise.all([getBuffaloWeather(), getBuffaloNews()]);
 
   return (
@@ -11,9 +17,9 @@ export async function NewsWeatherSection() {
       <div className="mx-auto max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8">
         <div className="mb-8 text-center">
           <h2 className="font-display text-3xl font-bold text-navy md:text-4xl">
-            Buffalo News &amp; Weather
+            {txt(content, "news_weather.title")}
           </h2>
-          <p className="mt-3 text-muted">Local headlines and today&apos;s forecast for Western New York</p>
+          <p className="mt-3 text-muted">{txt(content, "news_weather.subtitle")}</p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
@@ -21,7 +27,7 @@ export async function NewsWeatherSection() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-navy">
                 <CloudSun className="size-5 text-buffalo-red" />
-                Today in Buffalo
+                {txt(content, "news_weather.weather_title")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -43,7 +49,7 @@ export async function NewsWeatherSection() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-navy">
                 <Newspaper className="size-5 text-buffalo-red" />
-                Local Headlines
+                {txt(content, "news_weather.news_title")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -63,9 +69,9 @@ export async function NewsWeatherSection() {
                 ))}
               </ul>
               <p className="mt-6 text-xs text-muted">
-                Headlines from trusted WNY sources.{" "}
+                {txt(content, "news_weather.news_footer")}{" "}
                 <Link href="/community" className="text-buffalo-red hover:underline">
-                  Join the community fan page →
+                  {txt(content, "news_weather.community_link")}
                 </Link>
               </p>
             </CardContent>

@@ -1,34 +1,27 @@
 import { Search, Building2, TrendingUp } from "lucide-react";
 import { SectionHeading } from "@/components/shared/section-heading";
+import type { PageContentMap } from "@/lib/content/page-content";
+import { txt } from "@/lib/content/page-content";
 
-const steps = [
-  {
-    icon: Search,
-    title: "Search & Discover",
-    description:
-      "Find restaurants on Hertel, contractors in Cheektowaga, or shops on Elmwood — all in one Buffalo-focused directory.",
-  },
-  {
-    icon: Building2,
-    title: "Connect with Locals",
-    description:
-      "View hours, contact info, and services from verified Western New York businesses you can trust.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Support & Grow",
-    description:
-      "List your business for free, reach more customers, and boost visibility with optional sponsored placement.",
-  },
-];
+const stepIcons = [Search, Building2, TrendingUp];
 
-export function HowItWorksSection() {
+interface HowItWorksSectionProps {
+  content: PageContentMap;
+}
+
+export function HowItWorksSection({ content }: HowItWorksSectionProps) {
+  const steps = [0, 1, 2].map((index) => ({
+    icon: stepIcons[index],
+    title: txt(content, `how_it_works.step_${index}.title`),
+    description: txt(content, `how_it_works.step_${index}.description`),
+  }));
+
   return (
     <section id="how-it-works" className="overflow-x-clip py-16 md:py-20 bg-soft-gray scroll-mt-28">
       <div className="mx-auto max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          title="How It Works"
-          subtitle="Three simple steps to find and support Buffalo-area businesses"
+          title={txt(content, "how_it_works.title")}
+          subtitle={txt(content, "how_it_works.subtitle")}
         />
         <div className="grid md:grid-cols-3 gap-8">
           {steps.map((step, index) => (

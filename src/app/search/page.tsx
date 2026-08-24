@@ -7,6 +7,7 @@ import { SearchResultCard } from "@/components/search/search-result-card";
 import { BusinessCard } from "@/components/business/business-card";
 import { Pagination } from "@/components/shared/pagination";
 import { SectionHeading } from "@/components/shared/section-heading";
+import { getPageContent, txt } from "@/lib/content/page-content";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,7 @@ function normalizeCity(city?: string): string | undefined {
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
+  const content = await getPageContent("search");
   const q = getParam(params, "q") ?? "";
   const city = normalizeCity(getParam(params, "city"));
   const category = getParam(params, "category");
@@ -82,8 +84,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     <div className="overflow-x-clip py-12 md:py-16">
       <div className="mx-auto max-w-3xl min-w-0 px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          title="Search Buffalo Businesses"
-          subtitle="Find restaurants, services, shops, and more across Western New York"
+          title={txt(content, "hero.title")}
+          subtitle={txt(content, "hero.subtitle")}
           className="mb-8"
         />
         <SearchBar
@@ -94,21 +96,17 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
         {!hasQuery && (
           <div className="text-center py-12 text-muted">
-            <p className="text-lg">Enter a search term to find local businesses.</p>
-            <p className="mt-2 text-sm">
-              Try &quot;wing sauce supplier,&quot; &quot;Elmwood coffee,&quot; or &quot;Amherst dentist&quot;
-            </p>
+            <p className="text-lg">{txt(content, "empty.title")}</p>
+            <p className="mt-2 text-sm">{txt(content, "empty.hint")}</p>
           </div>
         )}
 
         {searchError && hasQuery && (
           <div className="rounded-xl border border-border bg-soft-gray py-12 text-center">
             <h3 className="font-display text-xl font-semibold text-navy">
-              Search is temporarily unavailable
+              {txt(content, "error.title")}
             </h3>
-            <p className="text-muted mt-2">
-              Please try again in a moment or browse the directory.
-            </p>
+            <p className="text-muted mt-2">{txt(content, "error.message")}</p>
           </div>
         )}
 
@@ -136,15 +134,14 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             ) : results.sponsored.length === 0 ? (
               <div className="text-center py-12 bg-soft-gray rounded-xl">
                 <h3 className="font-display text-xl font-semibold text-navy">
-                  No results for &quot;{q}&quot;
+                  {txt(content, "no_results.title_prefix")} &quot;{q}&quot;
                 </h3>
                 <p className="text-muted mt-2 max-w-md mx-auto">
-                  We couldn&apos;t find any businesses matching your search. Try different
-                  keywords or browse our recommendations below.
+                  {txt(content, "no_results.message")}
                 </p>
                 {results.suggestions.length > 0 && (
                   <div className="mt-6">
-                    <p className="text-sm text-muted mb-3">Try searching for:</p>
+                    <p className="text-sm text-muted mb-3">{txt(content, "no_results.suggestions_label")}</p>
                     <div className="flex flex-wrap justify-center gap-2">
                       {results.suggestions.map((suggestion) => (
                         <Link
@@ -175,7 +172,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         {(!hasQuery || (results && results.organic.length === 0 && results.sponsored.length === 0)) && (
           <section className="mt-12">
             <h3 className="font-display text-2xl font-semibold text-navy mb-6">
-              {hasQuery ? "You might also like" : "Recently added in Buffalo"}
+              {hasQuery
+                ? txt(content, "recommendations.with_query")
+                : txt(content, "recommendations.without_query")}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {recommendations.map((business) => (

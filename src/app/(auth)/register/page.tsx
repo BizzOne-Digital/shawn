@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SiteLogo } from "@/components/layout/site-logo";
+import { PasswordInput } from "@/components/auth/password-input";
 import { PasswordRequirements } from "@/components/auth/password-requirements";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -18,11 +20,7 @@ const registerSchema = z
   .object({
     name: z.string().min(2, "Business name must be at least 2 characters"),
     email: z.string().email("Invalid email address"),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Must contain an uppercase letter")
-      .regex(/[0-9]/, "Must contain a number"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string(),
     phone: z.string().optional(),
   })
@@ -66,8 +64,21 @@ export default function RegisterPage() {
         return;
       }
 
-      toast.success("Account created! Please sign in.");
-      router.push("/login?callbackUrl=/dashboard/submit");
+      const signInResult = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+
+      if (signInResult?.error) {
+        toast.success("Account created! Please sign in.");
+        router.push("/login?callbackUrl=/dashboard/submit");
+        return;
+      }
+
+      toast.success("Welcome! Let's set up your business listing.");
+      router.push("/dashboard/submit");
+      router.refresh();
     } catch {
       toast.error("Something went wrong. Please try again.");
     } finally {
@@ -83,8 +94,7 @@ export default function RegisterPage() {
             href="/"
             width={300}
             height={100}
-            comClassName="text-white"
-            className="mx-auto mb-8 justify-center"
+            className="mx-auto mb-8"
             imageClassName="mx-auto"
           />
           <h2 className="font-display text-3xl font-bold mb-4">List Your Business</h2>
@@ -124,14 +134,14 @@ export default function RegisterPage() {
 
             <div>
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" {...register("password")} className="mt-1" />
+              <PasswordInput id="password" {...register("password")} className="mt-1" />
               <PasswordRequirements />
               {errors.password && <p className="text-sm text-buffalo-red mt-1">{errors.password.message}</p>}
             </div>
 
             <div>
               <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input id="confirmPassword" type="password" {...register("confirmPassword")} className="mt-1" />
+              <PasswordInput id="confirmPassword" {...register("confirmPassword")} className="mt-1" />
               {errors.confirmPassword && (
                 <p className="text-sm text-buffalo-red mt-1">{errors.confirmPassword.message}</p>
               )}

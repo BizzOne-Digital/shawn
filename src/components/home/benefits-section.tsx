@@ -1,41 +1,28 @@
 import { BadgeCheck, MapPin, Megaphone, Shield } from "lucide-react";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { Card, CardContent } from "@/components/ui/card";
+import type { PageContentMap } from "@/lib/content/page-content";
+import { txt } from "@/lib/content/page-content";
 
-const benefits = [
-  {
-    icon: MapPin,
-    title: "Hyper-Local Focus",
-    description:
-      "Built for Buffalo, Amherst, Cheektowaga, and every corner of Western New York — not a generic national directory.",
-  },
-  {
-    icon: BadgeCheck,
-    title: "Verified Listings",
-    description:
-      "Look for the verified badge on businesses that have been reviewed by our team for accuracy and legitimacy.",
-  },
-  {
-    icon: Megaphone,
-    title: "Free to List",
-    description:
-      "Every local business deserves visibility. Basic listings are free — always. Optional ads help you stand out.",
-  },
-  {
-    icon: Shield,
-    title: "Community First",
-    description:
-      "We prioritize local ownership, honest reviews, and keeping dollars circulating in the 716 economy.",
-  },
-];
+const benefitIcons = [MapPin, BadgeCheck, Megaphone, Shield];
 
-export function BenefitsSection() {
+interface BenefitsSectionProps {
+  content: PageContentMap;
+}
+
+export function BenefitsSection({ content }: BenefitsSectionProps) {
+  const benefits = [0, 1, 2, 3].map((index) => ({
+    icon: benefitIcons[index],
+    title: txt(content, `benefits.item_${index}.title`),
+    description: txt(content, `benefits.item_${index}.description`),
+  }));
+
   return (
     <section className="overflow-x-clip py-16 md:py-20">
       <div className="mx-auto max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          title="Why Let's Go Buffalo?"
-          subtitle="The directory Western New York businesses and residents actually use"
+          title={txt(content, "benefits.title")}
+          subtitle={txt(content, "benefits.subtitle")}
         />
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {benefits.map((benefit) => (
