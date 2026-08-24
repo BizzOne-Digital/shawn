@@ -7,6 +7,7 @@ import {
   Flag,
   Users,
   TrendingUp,
+  Tags,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { ListingStatus, CampaignStatus, LeadStatus, ReportStatus } from "@prisma/client";
@@ -39,6 +40,7 @@ export default async function AdminDashboardPage() {
     newLeads,
     pendingReports,
     totalUsers,
+    totalCategories,
     recentBusinesses,
     recentAuditLogs,
   ] = await Promise.all([
@@ -55,6 +57,7 @@ export default async function AdminDashboardPage() {
     db.lead.count({ where: { status: LeadStatus.NEW } }),
     db.report.count({ where: { status: ReportStatus.PENDING } }),
     db.user.count({ where: { deletedAt: null } }),
+    db.category.count(),
     db.business.findMany({
       where: { deletedAt: null },
       orderBy: { createdAt: "desc" },
@@ -201,7 +204,7 @@ export default async function AdminDashboardPage() {
         </Card>
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
+      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-l-4 border-l-buffalo-red">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
@@ -227,6 +230,21 @@ export default async function AdminDashboardPage() {
             <p className="text-3xl font-bold text-navy">{pendingCampaigns}</p>
             <Button className="mt-4" variant="outline" asChild>
               <Link href="/admin/campaigns">Review Campaigns</Link>
+            </Button>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-emerald-600">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Tags className="h-5 w-5" />
+              Business Categories
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-navy">{totalCategories}</p>
+            <p className="text-muted text-sm mt-1">Categories on the directory</p>
+            <Button className="mt-4" variant="outline" asChild>
+              <Link href="/admin/categories">Manage Categories</Link>
             </Button>
           </CardContent>
         </Card>

@@ -31,7 +31,7 @@ const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/moderation", label: "Moderation", icon: ClipboardCheck },
   { href: "/admin/businesses", label: "Businesses", icon: Building2 },
-  { href: "/admin/categories", label: "Categories", icon: Tags },
+  { href: "/admin/categories", label: "Business Categories", icon: Tags },
   { href: "/admin/locations", label: "Locations", icon: MapPin },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/campaigns", label: "Campaigns", icon: Megaphone },

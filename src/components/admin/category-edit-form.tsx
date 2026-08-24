@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Save, Trash2, Plus } from "lucide-react";
+import { Loader2, Save, Trash2, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -146,7 +146,11 @@ export function CategoryEditForm({ category, subcategories: initialSubs }: Categ
                 value={sub.name}
                 onChange={(e) => {
                   const updated = [...subcategories];
-                  updated[i] = { ...sub, name: e.target.value };
+                  updated[i] = {
+                    ...sub,
+                    name: e.target.value,
+                    slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+                  };
                   setSubcategories(updated);
                 }}
                 className="flex-1"
@@ -159,6 +163,15 @@ export function CategoryEditForm({ category, subcategories: initialSubs }: Categ
                   setSubcategories(updated);
                 }}
               />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setSubcategories(subcategories.filter((_, idx) => idx !== i))}
+                aria-label={`Remove ${sub.name}`}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           ))}
           <div className="flex gap-3">
