@@ -48,7 +48,7 @@ export function Header({ bannerText }: { bannerText?: string }) {
 
   const isAuthenticated = status === "authenticated" && session?.user;
 
-  const authRoutes = ["/login", "/register", "/forgot-password", "/reset-password"];
+  const authRoutes = ["/login", "/register", "/forgot-password", "/reset-password", "/admin-login"];
   if (
     pathname.startsWith("/admin") ||
     pathname.startsWith("/dashboard") ||

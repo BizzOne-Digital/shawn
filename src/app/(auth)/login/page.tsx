@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { getSession, signIn, signOut } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { isAdminRole } from "@/lib/auth-roles";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -46,6 +47,13 @@ function LoginForm() {
 
       if (result?.error) {
         toast.error("Invalid email or password");
+        return;
+      }
+
+      const session = await getSession();
+      if (isAdminRole(session?.user?.role)) {
+        await signOut({ redirect: false });
+        toast.error("Admin accounts must use the admin sign-in page.");
         return;
       }
 

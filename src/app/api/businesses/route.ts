@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireBusinessOwner } from "@/lib/auth-utils";
-import { handleApiError } from "@/lib/api-utils";
+import { handleApiError, requireBusinessOwnerApi } from "@/lib/api-utils";
 import {
   generateUniqueSlug,
   syncBusinessRelations,
 } from "@/lib/business-utils";
-import { businessDraftSchema } from "@/lib/validations/business";
+import { businessDraftSchema, businessSubmissionSchema } from "@/lib/validations/business";
 import { z } from "zod";
 
 function buildBusinessData(data: z.infer<typeof businessDraftSchema>) {
@@ -34,7 +33,9 @@ function buildBusinessData(data: z.infer<typeof businessDraftSchema>) {
 }
 
 export async function GET() {
-  const user = await requireBusinessOwner();
+  const authResult = await requireBusinessOwnerApi();
+  if ("error" in authResult) return authResult.error;
+  const user = authResult.user;
 
   const businesses = await db.business.findMany({
     where: { ownerId: user.id, deletedAt: null },
@@ -50,10 +51,15 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const user = await requireBusinessOwner();
+    const authResult = await requireBusinessOwnerApi();
+    if ("error" in authResult) return authResult.error;
+    const user = authResult.user;
+
     const body = await request.json();
-    const { draft: _draft, ...rest } = body;
-    const data = businessDraftSchema.parse(rest);
+    const { draft: isDraft, ...rest } = body;
+    const data = isDraft
+      ? businessDraftSchema.parse(rest)
+      : businessSubmissionSchema.parse(rest);
 
     if (!data.name || data.name.length < 2) {
       return NextResponse.json(

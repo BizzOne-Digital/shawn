@@ -145,7 +145,7 @@ export function AdminSidebar({
             variant="outline"
             size="sm"
             className="w-full border-white/20 bg-transparent text-white hover:bg-white/10"
-            onClick={() => signOut({ callbackUrl: "/login" })}
+            onClick={() => signOut({ callbackUrl: "/admin-login" })}
           >
             <LogOut className="h-4 w-4" />
             Sign Out

@@ -41,7 +41,7 @@ interface FooterProps {
 export function Footer({ content = {} }: FooterProps) {
   const pathname = usePathname();
 
-  const authRoutes = ["/login", "/register", "/forgot-password", "/reset-password"];
+  const authRoutes = ["/login", "/register", "/forgot-password", "/reset-password", "/admin-login"];
   if (
     pathname.startsWith("/admin") ||
     pathname.startsWith("/dashboard") ||

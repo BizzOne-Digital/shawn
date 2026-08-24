@@ -14,7 +14,21 @@ export async function requireSessionUser() {
   if (!user) {
     return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
   }
+  if (!user.id) {
+    return { error: NextResponse.json({ error: "Invalid session" }, { status: 401 }) };
+  }
   return { user };
+}
+
+export async function requireBusinessOwnerApi() {
+  const result = await requireSessionUser();
+  if ("error" in result) return result;
+
+  const allowed = ["BUSINESS_OWNER", "ADMIN", "MODERATOR"];
+  if (!allowed.includes(result.user.role)) {
+    return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+  }
+  return result;
 }
 
 export async function getOwnedBusiness(businessId: string, userId: string) {

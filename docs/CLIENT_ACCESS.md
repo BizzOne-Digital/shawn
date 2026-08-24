@@ -7,18 +7,17 @@
 
 ## Admin panel (manage categories, businesses, users)
 
-**Step 1 — Sign in first:**  
-https://lets-go-buffalo.vercel.app/login
-
-**Step 2 — Open admin:**  
-https://lets-go-buffalo.vercel.app/admin
+**Admin sign-in (staff only — do not use the public login page):**  
+https://lets-go-buffalo.vercel.app/admin-login
 
 | Field | Value |
 |-------|--------|
 | **Email** | `admin@letsgobuffalo.com` |
 | **Password** | `Demo123!` |
 
-> **Important:** Do not go directly to `/admin` without signing in — you will be redirected to login.
+After signing in, you will be taken to **https://lets-go-buffalo.vercel.app/admin**
+
+> **Security:** Admin accounts cannot sign in through `/login`. Use `/admin-login` only.
 
 ### First-time admin setup
 1. Go to **Admin → Categories** — add your categories and subcategories.
@@ -76,4 +75,4 @@ This creates the admin account and site settings. **MongoDB Atlas includes a rep
 After deploy, verify:
 - https://lets-go-buffalo.vercel.app/directory
 - https://lets-go-buffalo.vercel.app/register (test sign-up)
-- https://lets-go-buffalo.vercel.app/login → then `/admin`
+- https://lets-go-buffalo.vercel.app/admin-login (admin staff only)

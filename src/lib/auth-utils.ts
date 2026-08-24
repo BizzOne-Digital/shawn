@@ -7,9 +7,9 @@ export async function getCurrentUser() {
   return session?.user ?? null;
 }
 
-export async function requireAuth() {
+export async function requireAuth(loginPath = "/login") {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  if (!user) redirect(loginPath);
   return user;
 }
 
@@ -20,7 +20,12 @@ export async function requireRole(...roles: UserRole[]) {
 }
 
 export async function requireAdmin() {
-  return requireRole(UserRole.ADMIN, UserRole.MODERATOR);
+  const user = await getCurrentUser();
+  if (!user) redirect("/admin-login");
+  if (user.role !== UserRole.ADMIN && user.role !== UserRole.MODERATOR) {
+    redirect("/");
+  }
+  return user;
 }
 
 export async function requireBusinessOwner() {

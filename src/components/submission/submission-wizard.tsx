@@ -100,6 +100,7 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [businessId, setBusinessId] = useState<string | undefined>(initialData?.id);
+  const [draftSaved, setDraftSaved] = useState(!!initialData?.id);
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -119,41 +120,69 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
   const formValues = watch();
   const selectedCategory = categories.find((c) => c.id === formValues.categoryId);
 
-  const saveDraft = useCallback(async (silent = false): Promise<string | null> => {
-    const data = prepareBusinessFormPayload(getValues());
-    const payload = { ...data, draft: true };
-    const serialized = JSON.stringify(payload);
-    if (serialized === lastSaved.current && businessId) return businessId;
+  const saveDraft = useCallback(
+    async (silent = false, options?: { force?: boolean }): Promise<string | null> => {
+      const data = prepareBusinessFormPayload(getValues());
+      const payload = { ...data, draft: true };
+      const serialized = JSON.stringify(payload);
 
-    setSaving(true);
-    try {
-      const url = businessId ? `/api/businesses/${businessId}` : "/api/businesses";
-      const method = businessId ? "PUT" : "POST";
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const json = await res.json();
-        if (!silent) toast.error(json.error ?? "Failed to save draft");
-        return null;
+      if (!options?.force && serialized === lastSaved.current && businessId) {
+        return businessId;
       }
 
-      const saved = await res.json();
-      const id = saved.id as string;
-      if (!businessId) setBusinessId(id);
-      lastSaved.current = serialized;
-      if (!silent) toast.success("Draft saved");
-      return id;
-    } catch {
-      if (!silent) toast.error("Failed to save draft");
-      return null;
-    } finally {
-      setSaving(false);
-    }
-  }, [businessId, getValues]);
+      setSaving(true);
+      try {
+        let currentId = businessId;
+
+        async function persist(id?: string) {
+          const url = id ? `/api/businesses/${id}` : "/api/businesses";
+          const method = id ? "PUT" : "POST";
+          return fetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+        }
+
+        let res = await persist(currentId);
+
+        if (res.status === 404 && currentId) {
+          currentId = undefined;
+          res = await persist(undefined);
+        }
+
+        if (!res.ok) {
+          const json = await res.json().catch(() => ({}));
+          if (!silent) toast.error(json.error ?? "Failed to save draft");
+          if (res.status === 404) {
+            setBusinessId(undefined);
+            setDraftSaved(false);
+            lastSaved.current = "";
+          }
+          return null;
+        }
+
+        const saved = await res.json();
+        const id = typeof saved?.id === "string" ? saved.id.trim() : null;
+        if (!id) {
+          if (!silent) toast.error("Failed to save draft");
+          return null;
+        }
+
+        setBusinessId(id);
+        setDraftSaved(true);
+        lastSaved.current = serialized;
+        if (!silent) toast.success("Draft saved");
+        return id;
+      } catch {
+        if (!silent) toast.error("Failed to save draft");
+        return null;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [businessId, getValues]
+  );
 
   useEffect(() => {
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
@@ -238,6 +267,7 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
       return;
     }
     setSubmitting(true);
+    setSaving(true);
     try {
       const valid = await trigger();
       if (!valid) {
@@ -245,24 +275,58 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
         return;
       }
 
-      const savedId = await saveDraft(false);
-      const submitId = savedId ?? businessId;
-      if (!submitId) {
-        toast.error("Could not save your business. Please try Save Draft first.");
+      const data = prepareBusinessFormPayload(getValues());
+      const fullPayload = { ...data, draft: false };
+
+      let currentId = businessId;
+      let res = await fetch(
+        currentId ? `/api/businesses/${currentId}` : "/api/businesses",
+        {
+          method: currentId ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(fullPayload),
+        }
+      );
+
+      if (res.status === 404 && currentId) {
+        currentId = undefined;
+        res = await fetch("/api/businesses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(fullPayload),
+        });
+      }
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        toast.error(json.error ?? "Could not save your business before submitting");
         return;
       }
 
-      const res = await fetch(`/api/businesses/${submitId}/submit`, { method: "POST" });
-      if (!res.ok) {
-        const json = await res.json();
+      const saved = await res.json();
+      const submitId = typeof saved?.id === "string" ? saved.id.trim() : null;
+      if (!submitId) {
+        toast.error("Could not save your business before submitting");
+        return;
+      }
+
+      setBusinessId(submitId);
+      setDraftSaved(true);
+      lastSaved.current = JSON.stringify({ ...data, draft: true });
+
+      const submitRes = await fetch(`/api/businesses/${submitId}/submit`, { method: "POST" });
+      if (!submitRes.ok) {
+        const json = await submitRes.json().catch(() => ({}));
         toast.error(json.error ?? "Submission failed");
         return;
       }
+
       toast.success("Business submitted for review!");
       router.push(`/dashboard/businesses/${submitId}/status`);
     } catch {
       toast.error("Submission failed");
     } finally {
+      setSaving(false);
       setSubmitting(false);
     }
   }
@@ -298,7 +362,7 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
             </span>
             <span className="text-muted flex items-center gap-2">
               {saving && <Loader2 className="size-3 animate-spin" />}
-              {saving ? "Saving..." : businessId ? "Draft saved" : "Unsaved"}
+              {saving ? "Saving..." : draftSaved ? "Draft saved" : "Unsaved"}
             </span>
           </div>
           <Progress value={progress} className="h-2" />
