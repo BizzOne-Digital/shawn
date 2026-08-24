@@ -15,7 +15,7 @@ const footerNav = {
     { href: "/directory", label: "Business Directory" },
     { href: "/community", label: "Community Fan Page" },
     { href: "/gear", label: "Gear Shop" },
-    { href: "/lgb-email", label: "@LetsGoBuffalo Email" },
+    { href: "/email-enrollment", label: "@LetsGoBuffalo Email" },
     { href: "/search", label: "Search" },
     { href: "/advertise", label: "Advertise" },
   ],
@@ -60,9 +60,9 @@ export function Footer({ content = {} }: FooterProps) {
           <div className="lg:col-span-4">
             <SiteLogo
               href="/"
-              width={240}
-              height={80}
-              imageClassName="h-16 w-auto sm:h-[4.75rem]"
+              width={300}
+              height={100}
+              imageClassName="h-20 w-auto sm:h-24"
             />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/75">
               {txt(content, "footer.tagline")}

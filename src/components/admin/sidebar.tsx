@@ -21,6 +21,7 @@ import {
   ExternalLink,
   Menu,
   X,
+  Newspaper,
 } from "lucide-react";
 import { SiteLogo } from "@/components/layout/site-logo";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,7 @@ const navItems = [
   { href: "/admin/moderation", label: "Moderation", icon: ClipboardCheck },
   { href: "/admin/businesses", label: "Businesses", icon: Building2 },
   { href: "/admin/categories", label: "Business Categories", icon: Tags },
+  { href: "/admin/fan-page", label: "Fan Page / Blog", icon: Newspaper },
   { href: "/admin/locations", label: "Locations", icon: MapPin },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/campaigns", label: "Campaigns", icon: Megaphone },

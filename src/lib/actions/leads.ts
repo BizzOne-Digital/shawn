@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db";
 import { LeadSource } from "@prisma/client";
+import { lgbEmailRequestSchema } from "@/lib/validations/lgb-email";
 import { z } from "zod";
 
 const contactSchema = z.object({
@@ -29,15 +30,7 @@ const communityCommentSchema = z.object({
   message: z.string().min(5, "Comment must be at least 5 characters"),
 });
 
-const lgbEmailSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid contact email"),
-  requestedAddress: z
-    .string()
-    .min(3, "Enter your desired email address")
-    .regex(/^[^\s@]+@letsgobuffalo\.com$/i, "Must end with @letsgobuffalo.com"),
-  forwardTo: z.string().email("Enter the email where mail should forward"),
-});
+const lgbEmailSchema = lgbEmailRequestSchema;
 
 const gearInquirySchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -160,11 +153,18 @@ export async function submitCommunityComment(formData: FormData) {
 }
 
 export async function submitLgbEmailRequest(formData: FormData) {
+  const localPart = formData.get("requestedLocalPart");
+  const fullAddress = formData.get("requestedAddress");
+
   const parsed = lgbEmailSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
-    requestedAddress: formData.get("requestedAddress"),
+    requestedAddress:
+      typeof localPart === "string" && localPart.trim()
+        ? localPart
+        : fullAddress,
     forwardTo: formData.get("forwardTo"),
+    businessName: formData.get("businessName") || undefined,
   });
 
   if (!parsed.success) {
@@ -177,10 +177,19 @@ export async function submitLgbEmailRequest(formData: FormData) {
         name: parsed.data.name,
         email: parsed.data.email,
         message: `LGB Email request: ${parsed.data.requestedAddress} → forward to ${parsed.data.forwardTo}`,
-        source: LeadSource.CONTACT_PAGE,
+        source: LeadSource.LGB_EMAIL,
         consent: true,
+        metadata: {
+          requestedAddress: parsed.data.requestedAddress,
+          forwardTo: parsed.data.forwardTo,
+          businessName: parsed.data.businessName ?? null,
+        },
       },
     });
+
+    const { sendLgbEmailNotification } = await import("@/lib/services/email");
+    await sendLgbEmailNotification(parsed.data);
+
     return { success: true };
   } catch (error) {
     console.error("submitLgbEmailRequest failed:", error);

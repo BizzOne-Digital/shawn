@@ -743,7 +743,7 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
             {step === 7 && (
               <div className="space-y-6">
                 <PreviewSection title="Basic Info" items={[
-                  ["Name", formValues.name],
+                  ["Business Name", formValues.name],
                   ["Phone", formValues.phone],
                   ["Email", formValues.publicEmail || "—"],
                   ["Website", formValues.website || "—"],

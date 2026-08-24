@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { ListingStatus, Prisma } from "@prisma/client";
-import { getPublicSearchCities } from "@/lib/queries/locations";
+import { getAdminSearchTowns } from "@/lib/queries/locations";
 import { isOpenNow } from "@/lib/services/business-hours";
 import { getSponsoredResults } from "@/lib/services/sponsored-ranking";
 
@@ -153,7 +153,7 @@ export async function getFilterOptions() {
           },
         },
       }),
-      getPublicSearchCities(),
+      getAdminSearchTowns(),
     ]);
 
     return { categories, cities };
@@ -207,7 +207,19 @@ export async function getDirectoryBusinesses(filters: DirectoryFilters) {
     ...publishedBusinessWhere,
     ...(category && { category: { slug: category } }),
     ...(subcategory && { subcategory: { slug: subcategory } }),
-    ...(city && { city: { equals: city, mode: "insensitive" } }),
+    ...(city && {
+      OR: [
+        { city: { equals: city, mode: "insensitive" } },
+        {
+          location: {
+            is: {
+              city: { equals: city, mode: "insensitive" },
+              isActive: true,
+            },
+          },
+        },
+      ],
+    }),
     ...(verified && { isVerified: true }),
     ...(featured && { isFeatured: true }),
   };

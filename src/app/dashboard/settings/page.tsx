@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { Loader2, User } from "lucide-react";
 
 const settingsSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
+  name: z.string().min(2, "Business name must be at least 2 characters"),
   phone: z.string().optional(),
 });
 
@@ -86,7 +86,7 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">Business Name</Label>
               <Input id="name" {...register("name")} className="mt-1" />
               {errors.name && (
                 <p className="text-sm text-buffalo-red mt-1">{errors.name.message}</p>

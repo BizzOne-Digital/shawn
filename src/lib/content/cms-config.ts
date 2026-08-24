@@ -591,11 +591,11 @@ export const CMS_PAGES: CmsPage[] = [
     path: "/community",
     sections: [
       section("hero", "Page Header", [
-        f("hero.title", "Title", "Community Fan Page"),
+        f("hero.title", "Title", "Buffalo Community Fan Page"),
         f(
           "hero.subtitle",
           "Subtitle",
-          "Talk Buffalo businesses, local events, and WNY life. Comments are reviewed before appearing publicly.",
+          "Read local blog posts, leave comments on each article, and connect with fellow Buffalonians across Western New York.",
           true
         ),
       ]),
@@ -686,7 +686,7 @@ export const CMS_PAGES: CmsPage[] = [
   {
     slug: "lgb-email",
     title: "LGB Email",
-    path: "/lgb-email",
+    path: "/email-enrollment",
     sections: [
       section("hero", "Page Header", [
         f("hero.title", "Title", "Your @LetsGoBuffalo.com Email"),
@@ -695,6 +695,26 @@ export const CMS_PAGES: CmsPage[] = [
           "Subtitle",
           "Get a professional local email like Sally@letsgobuffalo.com or JoesPizza@letsgobuffalo.com. Mail forwards to your existing inbox.",
           true
+        ),
+      ]),
+      section("steps", "How It Works", [
+        f("steps.item_0.title", "Step 1 title", "Choose your address"),
+        f(
+          "steps.item_0.description",
+          "Step 1 description",
+          "Pick a name like Sally or JoesPizza for your new @LetsGoBuffalo.com email."
+        ),
+        f("steps.item_1.title", "Step 2 title", "Tell us where to forward"),
+        f(
+          "steps.item_1.description",
+          "Step 2 description",
+          "We forward all mail to Gmail, Outlook, Yahoo, or any inbox you already use."
+        ),
+        f("steps.item_2.title", "Step 3 title", "We set it up for you"),
+        f(
+          "steps.item_2.description",
+          "Step 3 description",
+          "Our team confirms availability and activates your address — usually within 1–2 business days."
         ),
       ]),
       section("bullets", "Bullet Points", [
@@ -706,11 +726,19 @@ export const CMS_PAGES: CmsPage[] = [
           "We set up forwarding to Gmail, Outlook, or any email you use today"
         ),
       ]),
+      section("form", "Request Form", [
+        f("form.title", "Form title", "Request your email"),
+        f(
+          "form.subtitle",
+          "Form subtitle",
+          "Fill out the form below and we'll contact you to confirm your address is available."
+        ),
+      ]),
       section("footer", "Footer Link", [
         f(
           "footer.text",
           "Footer text",
-          "Already have an account? View membership plans"
+          "Need a membership first?"
         ),
       ]),
     ],
@@ -742,13 +770,18 @@ export const CMS_PAGES: CmsPage[] = [
           "Subtitle",
           "Find restaurants, services, shops, and more across Western New York"
         ),
+        f(
+          "hero.hint",
+          "Search hint",
+          "Type what you're looking for — business name, service, or town. The town dropdown only appears after towns are added in Admin → Locations."
+        ),
       ]),
       section("empty", "Empty State", [
         f("empty.title", "Empty title", "Enter a search term to find local businesses."),
         f(
           "empty.hint",
           "Empty hint",
-          'Try "wing sauce supplier," "Elmwood coffee," or "Amherst dentist"'
+          'Try "pizza," "plumber," or "Amherst" — search matches published business listings.'
         ),
       ]),
       section("error", "Error State", [

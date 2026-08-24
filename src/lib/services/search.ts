@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { ListingStatus, Prisma } from "@prisma/client";
 import { getSponsoredResults, recordAdImpressions } from "./sponsored-ranking";
+import { getAdminSearchTowns, getListedBusinessCities } from "@/lib/queries/locations";
 
 export interface SearchParams {
   q: string;
@@ -40,6 +41,22 @@ export interface SearchResults {
   suggestions: string[];
 }
 
+function buildCityFilter(city: string): Prisma.BusinessWhereInput {
+  return {
+    OR: [
+      { city: { equals: city, mode: "insensitive" } },
+      {
+        location: {
+          is: {
+            city: { equals: city, mode: "insensitive" },
+            isActive: true,
+          },
+        },
+      },
+    ],
+  };
+}
+
 function buildSearchWhere(query: string, filters?: { city?: string; category?: string }): Prisma.BusinessWhereInput {
   const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
 
@@ -52,8 +69,11 @@ function buildSearchWhere(query: string, filters?: { city?: string; category?: s
           { services: { has: term } },
           { tags: { has: term } },
           { city: { contains: term, mode: "insensitive" as const } },
+          { zipCode: { contains: term, mode: "insensitive" as const } },
           { address: { contains: term, mode: "insensitive" as const } },
+          { searchKeywords: { has: term } },
           { category: { name: { contains: term, mode: "insensitive" as const } } },
+          { subcategory: { name: { contains: term, mode: "insensitive" as const } } },
         ],
       }))
     : [];
@@ -61,7 +81,7 @@ function buildSearchWhere(query: string, filters?: { city?: string; category?: s
   const where: Prisma.BusinessWhereInput = {
     status: ListingStatus.PUBLISHED,
     deletedAt: null,
-    ...(filters?.city && { city: { equals: filters.city, mode: "insensitive" } }),
+    ...(filters?.city && buildCityFilter(filters.city)),
     ...(filters?.category && {
       category: { slug: filters.category },
     }),
@@ -243,7 +263,7 @@ export async function getSearchSuggestions(query: string, limit = 5): Promise<st
   if (!query.trim() || query.length < 2) return [];
 
   try {
-    const [recentQueries, businessNames] = await Promise.all([
+    const [recentQueries, businessNames, listedCities, adminTowns] = await Promise.all([
       db.searchQuery.groupBy({
         by: ["query"],
         where: { query: { contains: query, mode: "insensitive" } },
@@ -253,16 +273,26 @@ export async function getSearchSuggestions(query: string, limit = 5): Promise<st
       db.business.findMany({
         where: {
           status: ListingStatus.PUBLISHED,
+          deletedAt: null,
           name: { contains: query, mode: "insensitive" },
         },
         select: { name: true },
         take: limit,
       }),
+      getListedBusinessCities(),
+      getAdminSearchTowns(),
     ]);
 
     const suggestions = new Set<string>();
     recentQueries.forEach((q) => suggestions.add(q.query));
     businessNames.forEach((b) => suggestions.add(b.name));
+
+    const q = query.toLowerCase();
+    for (const city of [...listedCities, ...adminTowns]) {
+      if (city.toLowerCase().includes(q)) {
+        suggestions.add(city);
+      }
+    }
 
     return Array.from(suggestions).slice(0, limit);
   } catch (error) {

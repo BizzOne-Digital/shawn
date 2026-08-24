@@ -104,25 +104,27 @@ export function DirectoryFilters({ categories, cities, current }: DirectoryFilte
         </div>
       )}
 
-      <div className="space-y-2">
-        <Label>City</Label>
-        <Select
-          value={current.city ?? "all"}
-          onValueChange={(v) => updateParams({ city: v === "all" ? undefined : v })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="All cities" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Western NY</SelectItem>
-            {cities.map((city) => (
-              <SelectItem key={city} value={city}>
-                {city}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {cities.length > 0 && (
+        <div className="space-y-2">
+          <Label>Town</Label>
+          <Select
+            value={current.city ?? "all"}
+            onValueChange={(v) => updateParams({ city: v === "all" ? undefined : v })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="All towns" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {cities.map((city) => (
+                <SelectItem key={city} value={city}>
+                  {city}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label>Sort by</Label>

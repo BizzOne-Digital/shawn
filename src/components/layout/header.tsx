@@ -22,8 +22,9 @@ import { cn } from "@/lib/utils";
 const navLinks = [
   { href: "/directory", label: "Discover" },
   { href: "/directory", label: "Categories" },
-  { href: "/community", label: "Community" },
+  { href: "/community", label: "Fan Page" },
   { href: "/gear", label: "Gear" },
+  { href: "/email-enrollment", label: "LGB Email" },
   { href: "/advertise", label: "Advertise" },
   { href: "/#how-it-works", label: "How It Works" },
 ];
@@ -72,8 +73,8 @@ export function Header({ bannerText }: { bannerText?: string }) {
           scrolled && "shadow-md"
         )}
       >
-        <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          <SiteLogo href="/" width={160} height={48} priority imageClassName="h-11 sm:h-12 w-auto" />
+        <div className="mx-auto flex h-[80px] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8 sm:h-[84px]">
+          <SiteLogo href="/" width={200} height={60} priority imageClassName="h-14 w-auto sm:h-16" />
 
           <nav
             className="hidden items-center gap-1 xl:flex"

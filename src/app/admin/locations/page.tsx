@@ -11,7 +11,15 @@ export default async function LocationsPage() {
 
   return (
     <div>
-      <PageHeader title="Locations" description={`${locations.length} locations in Western New York`} />
+      <PageHeader title="Locations" description={`${locations.length} towns in Western New York`} />
+
+      <Card className="mb-6 border-dashed">
+        <CardContent className="py-4 text-sm text-muted">
+          Towns added here appear as an optional filter on Search and the Business Directory
+          (with an <strong className="text-navy">All</strong> option). Visitors can always search
+          by typing a business name, service, or town — results come from published listings.
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="pt-6">

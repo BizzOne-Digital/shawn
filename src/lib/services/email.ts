@@ -33,6 +33,31 @@ export function getEmailAdapter(): EmailAdapter {
   return new ConsoleEmailAdapter();
 }
 
+export async function sendLgbEmailNotification(
+  request: {
+    name: string;
+    email: string;
+    requestedAddress: string;
+    forwardTo: string;
+    businessName?: string;
+  }
+): Promise<void> {
+  const email = getEmailAdapter();
+  await email.send({
+    to: process.env.EMAIL_FROM ?? "admin@letsgobuffalo.com",
+    subject: `New LGB email request: ${request.requestedAddress}`,
+    html: `
+      <h2>New @LetsGoBuffalo.com Email Request</h2>
+      <p><strong>Name:</strong> ${request.name}</p>
+      <p><strong>Contact Email:</strong> ${request.email}</p>
+      ${request.businessName ? `<p><strong>Business:</strong> ${request.businessName}</p>` : ""}
+      <p><strong>Requested Address:</strong> ${request.requestedAddress}</p>
+      <p><strong>Forward To:</strong> ${request.forwardTo}</p>
+    `,
+    text: `LGB email request from ${request.name} (${request.email}): ${request.requestedAddress} → ${request.forwardTo}`,
+  });
+}
+
 export async function sendLeadNotification(
   lead: { name: string; email: string; message: string },
   businessName?: string

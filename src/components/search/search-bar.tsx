@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-const ALL_LOCATIONS = "All Locations";
+const ALL_TOWNS = "all";
 
 interface SearchBarProps {
   defaultQuery?: string;
@@ -34,6 +34,7 @@ interface SearchBarProps {
   className?: string;
   size?: "default" | "lg";
   showLocation?: boolean;
+  hint?: string;
 }
 
 async function fetchSuggestions(query: string): Promise<SearchSuggestion[]> {
@@ -53,11 +54,12 @@ async function fetchSuggestions(query: string): Promise<SearchSuggestion[]> {
 
 export function SearchBar({
   defaultQuery = "",
-  defaultCity = ALL_LOCATIONS,
-  placeholder = "Search businesses, services, or categories...",
+  defaultCity = ALL_TOWNS,
+  placeholder = "Search businesses, services, towns, or categories...",
   className,
   size = "default",
   showLocation = true,
+  hint,
 }: SearchBarProps) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -84,7 +86,7 @@ export function SearchBar({
       if (!q) return;
 
       const params = new URLSearchParams({ q });
-      if (showLocationDropdown && city && city !== ALL_LOCATIONS) {
+      if (showLocationDropdown && city && city !== ALL_TOWNS) {
         params.set("city", city);
       }
 
@@ -232,7 +234,7 @@ export function SearchBar({
                 <SelectValue placeholder="Location" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ALL_LOCATIONS}>All Locations</SelectItem>
+                <SelectItem value={ALL_TOWNS}>All</SelectItem>
                 {cities.map((location) => (
                   <SelectItem key={location} value={location}>
                     {location}
@@ -254,6 +256,7 @@ export function SearchBar({
           Search
         </Button>
       </div>
+      {hint && <p className="mt-2 text-xs text-muted">{hint}</p>}
     </form>
   );
 }

@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   X,
+  Mail,
 } from "lucide-react";
 import { useState } from "react";
 import { SiteLogo } from "@/components/layout/site-logo";
@@ -24,6 +25,7 @@ const navItems = [
   { href: "/dashboard/businesses", label: "My Businesses", icon: Building2 },
   { href: "/dashboard/submit", label: "Add Business", icon: PlusCircle },
   { href: "/dashboard/advertising", label: "Advertising", icon: Megaphone },
+  { href: "/email-enrollment", label: "LGB Email", icon: Mail },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];

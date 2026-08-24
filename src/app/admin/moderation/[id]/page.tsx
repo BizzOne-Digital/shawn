@@ -124,7 +124,7 @@ export default async function ModerationDetailPage({ params }: Props) {
               <CardTitle>Owner Info</CardTitle>
             </CardHeader>
             <CardContent className="text-sm space-y-2">
-              <p><span className="text-muted">Name:</span> {business.owner.name ?? "—"}</p>
+              <p><span className="text-muted">Business Name:</span> {business.owner.name ?? "—"}</p>
               <p><span className="text-muted">Email:</span> {business.owner.email}</p>
               {business.suggestedCategory && (
                 <p><span className="text-muted">Suggested Category:</span> {business.suggestedCategory}</p>

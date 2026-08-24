@@ -43,7 +43,7 @@ export async function generateMetadata({
 }
 
 function normalizeCity(city?: string): string | undefined {
-  if (!city || city === "All Locations") return undefined;
+  if (!city || city === "All Locations" || city === "all") return undefined;
   return city;
 }
 
@@ -90,7 +90,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         />
         <SearchBar
           defaultQuery={q}
-          defaultCity={city ?? "All Locations"}
+          defaultCity={city ?? "all"}
+          hint={txt(content, "hero.hint")}
           className="mb-10"
         />
 

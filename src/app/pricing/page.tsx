@@ -168,9 +168,14 @@ export default async function PricingPage() {
           <p className="text-muted mb-6 max-w-xl mx-auto">
             {txt(content, "advertising.description")}
           </p>
-          <Link href="/advertise">
-            <Button variant="accent">{txt(content, "advertising.cta")}</Button>
-          </Link>
+          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link href="/advertise">
+              <Button variant="accent">{txt(content, "advertising.cta")}</Button>
+            </Link>
+            <Link href="/email-enrollment">
+              <Button variant="outline">Get Your @LetsGoBuffalo.com Email</Button>
+            </Link>
+          </div>
         </section>
       </div>
     </div>

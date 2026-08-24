@@ -145,7 +145,7 @@ export function HeroSearchBar({ className }: { className?: string }) {
             }}
             onFocus={() => setIsOpen(true)}
             onKeyDown={handleKeyDown}
-            placeholder="What are you looking for?"
+            placeholder="What are you looking for? Try a business, service, or town..."
             autoComplete="off"
             aria-autocomplete="list"
             aria-expanded={isOpen}
