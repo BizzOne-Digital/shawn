@@ -94,7 +94,16 @@ export const hoursSchema = z.object({
 });
 
 export const businessImageSchema = z.object({
-  url: z.string().url(),
+  url: z
+    .string()
+    .min(1, "Image URL is required")
+    .refine(
+      (value) =>
+        value.startsWith("https://") ||
+        value.startsWith("http://") ||
+        value.startsWith("data:image/"),
+      { message: "Invalid image URL" }
+    ),
   publicId: z.string().optional(),
   type: z.nativeEnum(ImageType),
   alt: z.string().max(200).optional(),

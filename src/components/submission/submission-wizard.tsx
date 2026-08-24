@@ -276,50 +276,32 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
       }
 
       const data = prepareBusinessFormPayload(getValues());
-      const fullPayload = { ...data, draft: false };
 
-      let currentId = businessId;
-      let res = await fetch(
-        currentId ? `/api/businesses/${currentId}` : "/api/businesses",
-        {
-          method: currentId ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(fullPayload),
-        }
-      );
-
-      if (res.status === 404 && currentId) {
-        currentId = undefined;
-        res = await fetch("/api/businesses", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(fullPayload),
-        });
-      }
+      const res = await fetch("/api/businesses/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessId: businessId?.trim() || undefined,
+          ...data,
+        }),
+      });
 
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
-        toast.error(json.error ?? "Could not save your business before submitting");
+        toast.error(json.error ?? "Submission failed");
         return;
       }
 
-      const saved = await res.json();
-      const submitId = typeof saved?.id === "string" ? saved.id.trim() : null;
+      const submitted = await res.json();
+      const submitId = typeof submitted?.id === "string" ? submitted.id.trim() : null;
       if (!submitId) {
-        toast.error("Could not save your business before submitting");
+        toast.error("Submission failed");
         return;
       }
 
       setBusinessId(submitId);
       setDraftSaved(true);
       lastSaved.current = JSON.stringify({ ...data, draft: true });
-
-      const submitRes = await fetch(`/api/businesses/${submitId}/submit`, { method: "POST" });
-      if (!submitRes.ok) {
-        const json = await submitRes.json().catch(() => ({}));
-        toast.error(json.error ?? "Submission failed");
-        return;
-      }
 
       toast.success("Business submitted for review!");
       router.push(`/dashboard/businesses/${submitId}/status`);
