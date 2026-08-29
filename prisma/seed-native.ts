@@ -22,8 +22,20 @@ async function resetDatabase(db: Db) {
 
 function getUri() {
   const raw = process.env.DATABASE_URL ?? "mongodb://127.0.0.1:27017/letsgobuffalo";
+  // Atlas SRV URLs must be passed through unchanged (with query params).
+  if (raw.includes("mongodb+srv://")) {
+    return raw;
+  }
   const base = raw.split("?")[0];
-  return base.includes("/") ? base : `${base}/${DB_NAME}`;
+  return /\/[^/]+$/.test(base) ? base : `${base}/${DB_NAME}`;
+}
+
+function getClientOptions(uri: string) {
+  // directConnection is for local standalone MongoDB only — not Atlas SRV.
+  if (uri.includes("mongodb+srv://")) {
+    return {};
+  }
+  return { directConnection: true };
 }
 
 function id() {
@@ -33,7 +45,8 @@ function id() {
 async function main() {
   console.log("🌱 Seeding Let's Go Buffalo (native MongoDB)...\n");
 
-  const client = new MongoClient(getUri(), { directConnection: true });
+  const uri = getUri();
+  const client = new MongoClient(uri, getClientOptions(uri));
   await client.connect();
   const db = client.db(DB_NAME);
 

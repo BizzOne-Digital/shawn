@@ -16,6 +16,7 @@ import { ListingStatusBadge } from "@/components/admin/status-badge";
 import { formatDate } from "@/lib/admin-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus } from "lucide-react";
+import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 interface Props {
   searchParams: Promise<{
@@ -34,7 +35,7 @@ export default async function BusinessesPage({ searchParams }: Props) {
   const [businesses, categories] = await Promise.all([
     db.business.findMany({
       where: {
-        deletedAt: null,
+        ...NOT_DELETED,
         ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
         ...(status ? { status } : {}),
         ...(categoryId ? { categoryId } : {}),

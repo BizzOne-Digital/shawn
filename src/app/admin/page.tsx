@@ -31,6 +31,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ListingStatusBadge } from "@/components/admin/status-badge";
 import { formatDate } from "@/lib/admin-utils";
+import { NOT_DELETED, USER_NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 export default async function AdminDashboardPage() {
   const [
@@ -49,17 +50,17 @@ export default async function AdminDashboardPage() {
         status: {
           in: [ListingStatus.PENDING_REVIEW, ListingStatus.CHANGES_REQUESTED],
         },
-        deletedAt: null,
+        ...NOT_DELETED,
       },
     }),
-    db.business.count({ where: { deletedAt: null } }),
+    db.business.count({ where: { ...NOT_DELETED } }),
     db.advertisingCampaign.count({ where: { status: CampaignStatus.PENDING_APPROVAL } }),
     db.lead.count({ where: { status: LeadStatus.NEW } }),
     db.report.count({ where: { status: ReportStatus.PENDING } }),
-    db.user.count({ where: { deletedAt: null } }),
+    db.user.count({ where: { ...USER_NOT_DELETED } }),
     db.category.count(),
     db.business.findMany({
-      where: { deletedAt: null },
+      where: { ...NOT_DELETED },
       orderBy: { createdAt: "desc" },
       take: 5,
       include: { owner: { select: { name: true, email: true } } },

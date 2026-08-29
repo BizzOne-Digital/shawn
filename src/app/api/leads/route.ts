@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-utils";
 import { leadSchema } from "@/lib/validations/business";
 import { sendLeadNotification } from "@/lib/services/email";
+import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 export async function POST(request: Request) {
   try {
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
     let businessName: string | undefined;
     if (data.businessId) {
       const business = await db.business.findFirst({
-        where: { id: data.businessId, status: "PUBLISHED", deletedAt: null },
+        where: { id: data.businessId, status: "PUBLISHED", ...NOT_DELETED },
         select: { name: true, publicEmail: true },
       });
       if (!business) {

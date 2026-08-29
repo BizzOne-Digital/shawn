@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { ListingStatus } from "@prisma/client";
 import { db } from "@/lib/db";
+import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://letsgobuffalo.com";
 
@@ -33,7 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const [businesses, categories] = await Promise.all([
       db.business.findMany({
-        where: { status: ListingStatus.PUBLISHED, deletedAt: null },
+        where: { status: ListingStatus.PUBLISHED, ...NOT_DELETED },
         select: { slug: true, updatedAt: true },
       }),
       db.category.findMany({

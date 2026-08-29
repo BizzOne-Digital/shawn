@@ -13,10 +13,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/admin-utils";
 import { Card, CardContent } from "@/components/ui/card";
+import { USER_NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 export default async function UsersPage() {
   const users = await db.user.findMany({
-    where: { deletedAt: null },
+    where: { ...USER_NOT_DELETED },
     orderBy: { createdAt: "desc" },
     include: {
       wallet: true,

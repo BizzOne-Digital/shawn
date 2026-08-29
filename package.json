@@ -17,6 +17,7 @@
     "db:dev-mongo": "powershell -ExecutionPolicy Bypass -File scripts/start-mongodb-dev.ps1",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed-native.ts",
+    "seed": "tsx prisma/seed-native.ts",
     "db:cleanup": "tsx scripts/cleanup-demo-data.ts",
     "db:studio": "prisma studio",
     "db:setup": "prisma db push && tsx prisma/seed-native.ts",

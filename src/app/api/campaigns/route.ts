@@ -5,6 +5,7 @@ import {
   handleApiError,
 } from "@/lib/api-utils";
 import { campaignSchema } from "@/lib/validations/business";
+import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 export async function GET() {
   const result = await requireSessionUser();
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
       where: {
         id: data.businessId,
         ownerId: result.user.id,
-        deletedAt: null,
+        ...NOT_DELETED,
         status: { in: ["APPROVED", "PUBLISHED"] },
       },
     });

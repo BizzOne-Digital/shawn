@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireAdminApi, recordAuditLog } from "@/lib/admin-utils";
 import { handleApiError } from "@/lib/api-utils";
+import { USER_NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 const creditSchema = z.object({
   amount: z.coerce.number().min(0.01, "Amount must be at least $0.01").max(10000),
@@ -21,7 +22,7 @@ export async function POST(request: Request, context: RouteContext) {
     const data = creditSchema.parse(body);
 
     const targetUser = await db.user.findFirst({
-      where: { id: userId, deletedAt: null },
+      where: { id: userId, ...USER_NOT_DELETED },
       include: { wallet: true },
     });
 

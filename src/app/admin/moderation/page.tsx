@@ -20,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 export default async function ModerationPage() {
   const pendingBusinesses = await db.business.findMany({
@@ -30,7 +31,7 @@ export default async function ModerationPage() {
           ListingStatus.CHANGES_REQUESTED,
         ],
       },
-      deletedAt: null,
+      ...NOT_DELETED,
     },
     orderBy: { createdAt: "asc" },
     include: {
