@@ -33,10 +33,11 @@ export default async function ModerationPage() {
       },
       ...NOT_DELETED,
     },
-    orderBy: { createdAt: "asc" },
+    orderBy: { updatedAt: "desc" },
     include: {
       owner: { select: { name: true, email: true } },
       category: { select: { name: true } },
+      submissions: { orderBy: { submittedAt: "desc" }, take: 1 },
     },
   });
 
@@ -100,7 +101,9 @@ export default async function ModerationPage() {
                       <ListingStatusBadge status={business.status} />
                     </TableCell>
                     <TableCell className="text-muted text-sm">
-                      {formatDate(business.createdAt)}
+                      {business.submissions[0]
+                        ? formatDate(business.submissions[0].submittedAt)
+                        : formatDate(business.updatedAt)}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button size="sm" asChild>

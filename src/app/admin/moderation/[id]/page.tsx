@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { BusinessSubmissionReview } from "@/components/admin/business-submission-review";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -30,7 +31,9 @@ export default async function ModerationDetailPage({ params }: Props) {
         owner: { select: { id: true, name: true, email: true } },
         category: true,
         subcategory: true,
-        images: { orderBy: { sortOrder: "asc" }, take: 5 },
+        hours: { orderBy: { dayOfWeek: "asc" } },
+        images: { orderBy: { sortOrder: "asc" } },
+        socialLinks: true,
       },
     }),
     db.category.findMany({
@@ -71,9 +74,22 @@ export default async function ModerationDetailPage({ params }: Props) {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Listing Details</CardTitle>
+                <CardTitle>Full Submission Review</CardTitle>
                 <ListingStatusBadge status={business.status} />
               </div>
+              <CardDescription>
+                All wizard steps in one place — review before approving or publishing.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BusinessSubmissionReview business={business} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Admin Edit</CardTitle>
+              <CardDescription>Adjust fields before publishing if needed</CardDescription>
             </CardHeader>
             <CardContent>
               <BusinessEditForm

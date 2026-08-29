@@ -106,6 +106,17 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
   const [tagInput, setTagInput] = useState("");
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSaved = useRef<string>("");
+  const businessIdRef = useRef<string | undefined>(initialData?.id);
+  const saveInFlightRef = useRef<Promise<string | null> | null>(null);
+
+  useEffect(() => {
+    businessIdRef.current = businessId;
+  }, [businessId]);
+
+  useEffect(() => {
+    if (!businessId || initialData?.id) return;
+    router.replace(`/dashboard/submit?draft=${businessId}`, { scroll: false });
+  }, [businessId, initialData?.id, router]);
 
   const methods = useForm<BusinessSubmissionForm>({
     resolver: zodResolver(businessSubmissionSchema) as never,
@@ -119,83 +130,91 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
 
   const saveDraft = useCallback(
     async (silent = false, options?: { force?: boolean; quietSuccess?: boolean }): Promise<string | null> => {
-      const formData = getValues();
-      const imageUrls = (formData.images ?? [])
-        .map((image) => image.url)
-        .filter((url): url is string => Boolean(url));
-      const imagesAlreadyStored =
-        Boolean(businessId) &&
-        imageUrls.some((url) => url.startsWith("data:")) &&
-        (formData.images ?? []).every((image) => image.publicId);
-
-      const data = prepareBusinessFormPayload(formData, {
-        compactImages: imagesAlreadyStored,
-      });
-      const payload = { ...data, draft: true };
-      const serialized = JSON.stringify(payload);
-
-      if (!options?.force && serialized === lastSaved.current && businessId) {
-        return businessId;
+      if (saveInFlightRef.current) {
+        return saveInFlightRef.current;
       }
 
-      setSaving(true);
-      try {
-        let currentId = businessId;
+      const run = async (): Promise<string | null> => {
+        const formData = getValues();
+        const currentId = businessIdRef.current;
+        const imageUrls = (formData.images ?? [])
+          .map((image) => image.url)
+          .filter((url): url is string => Boolean(url));
+        const imagesAlreadyStored =
+          Boolean(currentId) &&
+          imageUrls.some((url) => url.startsWith("data:")) &&
+          (formData.images ?? []).every((image) => image.publicId);
 
-        async function persist(id?: string) {
-          const url = id ? `/api/businesses/${id}` : "/api/businesses";
-          const method = id ? "PUT" : "POST";
-          return fetch(url, {
+        const data = prepareBusinessFormPayload(formData, {
+          compactImages: imagesAlreadyStored,
+        });
+        const payload = { ...data, draft: true };
+        const serialized = JSON.stringify(payload);
+
+        if (!options?.force && serialized === lastSaved.current && currentId) {
+          return currentId;
+        }
+
+        if (!formData.name?.trim() || formData.name.trim().length < 2) {
+          if (!silent) toast.error("Enter a business name (at least 2 characters) to save");
+          return null;
+        }
+
+        setSaving(true);
+        try {
+          const url = currentId ? `/api/businesses/${currentId}` : "/api/businesses";
+          const method = currentId ? "PUT" : "POST";
+          const res = await fetch(url, {
             method,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
-        }
 
-        let res = await persist(currentId);
-
-        if (res.status === 404 && currentId) {
-          currentId = undefined;
-          res = await persist(undefined);
-        }
-
-        if (!res.ok) {
-          const json = await res.json().catch(() => ({}));
-          if (!silent) toast.error(json.error ?? "Failed to save draft");
-          if (res.status === 404) {
-            setBusinessId(undefined);
-            setDraftSaved(false);
-            lastSaved.current = "";
+          if (!res.ok) {
+            const json = await res.json().catch(() => ({}));
+            if (!silent) toast.error(json.error ?? "Failed to save draft");
+            return null;
           }
-          return null;
-        }
 
-        const saved = await res.json();
-        const id = typeof saved?.id === "string" ? saved.id.trim() : null;
-        if (!id) {
+          const saved = await res.json();
+          const id = typeof saved?.id === "string" ? saved.id.trim() : null;
+          if (!id) {
+            if (!silent) toast.error("Failed to save draft");
+            return null;
+          }
+
+          businessIdRef.current = id;
+          setBusinessId(id);
+          setDraftSaved(true);
+          lastSaved.current = serialized;
+          if (!silent && !options?.quietSuccess) toast.success("Draft saved");
+          return id;
+        } catch {
           if (!silent) toast.error("Failed to save draft");
           return null;
+        } finally {
+          setSaving(false);
         }
+      };
 
-        setBusinessId(id);
-        setDraftSaved(true);
-        lastSaved.current = serialized;
-        if (!silent && !options?.quietSuccess) toast.success("Draft saved");
-        return id;
-      } catch {
-        if (!silent) toast.error("Failed to save draft");
-        return null;
+      const pending = run();
+      saveInFlightRef.current = pending;
+      try {
+        return await pending;
       } finally {
-        setSaving(false);
+        if (saveInFlightRef.current === pending) {
+          saveInFlightRef.current = null;
+        }
       }
     },
-    [businessId, getValues]
+    [getValues]
   );
 
   useEffect(() => {
+    if (!businessIdRef.current) return;
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     autosaveTimer.current = setTimeout(() => {
-      if (formValues.name) saveDraft(true);
+      if (formValues.name) void saveDraft(true);
     }, 3000);
     return () => {
       if (autosaveTimer.current) clearTimeout(autosaveTimer.current);

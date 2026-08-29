@@ -37,7 +37,7 @@ export default async function BusinessesPage({ searchParams }: Props) {
       where: {
         ...NOT_DELETED,
         ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
-        ...(status ? { status } : {}),
+        ...(status ? { status } : { status: { not: ListingStatus.DRAFT } }),
         ...(categoryId ? { categoryId } : {}),
       },
       orderBy: { updatedAt: "desc" },
@@ -51,7 +51,7 @@ export default async function BusinessesPage({ searchParams }: Props) {
 
   return (
     <div>
-      <PageHeader title="Businesses" description={`${businesses.length} listings`}>
+      <PageHeader title="Businesses" description={`${businesses.length} listings (drafts hidden by default)`}>
         <Button variant="accent" asChild>
           <Link href="/admin/businesses/new">
             <Plus className="h-4 w-4" />
