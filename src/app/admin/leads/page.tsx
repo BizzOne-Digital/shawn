@@ -30,11 +30,13 @@ function getLgbEmailDetails(metadata: unknown) {
   const data = metadata as Record<string, unknown>;
   const requestedAddress =
     typeof data.requestedAddress === "string" ? data.requestedAddress : null;
+  const backupAddress =
+    typeof data.backupAddress === "string" ? data.backupAddress : null;
   const forwardTo = typeof data.forwardTo === "string" ? data.forwardTo : null;
   const businessName = typeof data.businessName === "string" ? data.businessName : null;
 
   if (!requestedAddress && !forwardTo) return null;
-  return { requestedAddress, forwardTo, businessName };
+  return { requestedAddress, backupAddress, forwardTo, businessName };
 }
 
 export default async function LeadsPage({ searchParams }: Props) {
@@ -120,8 +122,14 @@ export default async function LeadsPage({ searchParams }: Props) {
                           <div className="space-y-1">
                             {lgbDetails.requestedAddress && (
                               <p>
-                                <span className="text-muted">Requested:</span>{" "}
+                                <span className="text-muted">First choice:</span>{" "}
                                 <span className="font-medium">{lgbDetails.requestedAddress}</span>
+                              </p>
+                            )}
+                            {lgbDetails.backupAddress && (
+                              <p>
+                                <span className="text-muted">Backup:</span>{" "}
+                                <span className="font-medium">{lgbDetails.backupAddress}</span>
                               </p>
                             )}
                             {lgbDetails.forwardTo && (

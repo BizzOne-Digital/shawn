@@ -33,28 +33,34 @@ export function getEmailAdapter(): EmailAdapter {
   return new ConsoleEmailAdapter();
 }
 
+import { LGB_EMAIL_REQUEST_TO } from "@/lib/validations/lgb-email";
+
 export async function sendLgbEmailNotification(
   request: {
     name: string;
     email: string;
     requestedAddress: string;
+    backupAddress: string;
     forwardTo: string;
     businessName?: string;
   }
 ): Promise<void> {
   const email = getEmailAdapter();
+  const destination = process.env.LGB_EMAIL_REQUEST_TO ?? LGB_EMAIL_REQUEST_TO;
+
   await email.send({
-    to: process.env.EMAIL_FROM ?? "admin@letsgobuffalo.com",
+    to: destination,
     subject: `New LGB email request: ${request.requestedAddress}`,
     html: `
       <h2>New @LetsGoBuffalo.com Email Request</h2>
       <p><strong>Name:</strong> ${request.name}</p>
       <p><strong>Contact Email:</strong> ${request.email}</p>
       ${request.businessName ? `<p><strong>Business:</strong> ${request.businessName}</p>` : ""}
-      <p><strong>Requested Address:</strong> ${request.requestedAddress}</p>
+      <p><strong>Preferred Address:</strong> ${request.requestedAddress}</p>
+      <p><strong>Backup Address:</strong> ${request.backupAddress}</p>
       <p><strong>Forward To:</strong> ${request.forwardTo}</p>
     `,
-    text: `LGB email request from ${request.name} (${request.email}): ${request.requestedAddress} → ${request.forwardTo}`,
+    text: `LGB email request from ${request.name} (${request.email}). Preferred: ${request.requestedAddress}. Backup: ${request.backupAddress}. Forward to: ${request.forwardTo}`,
   });
 }
 

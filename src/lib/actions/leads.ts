@@ -3,6 +3,10 @@
 import { db } from "@/lib/db";
 import { LeadSource } from "@prisma/client";
 import { lgbEmailRequestSchema } from "@/lib/validations/lgb-email";
+import {
+  isLgbEmailAddressTaken,
+  normalizeLgbEmailAddress,
+} from "@/lib/services/lgb-email-availability";
 import { z } from "zod";
 
 const contactSchema = z.object({
@@ -29,8 +33,6 @@ const communityCommentSchema = z.object({
   email: z.string().email("Invalid email address"),
   message: z.string().min(5, "Comment must be at least 5 characters"),
 });
-
-const lgbEmailSchema = lgbEmailRequestSchema;
 
 const gearInquirySchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -153,16 +155,11 @@ export async function submitCommunityComment(formData: FormData) {
 }
 
 export async function submitLgbEmailRequest(formData: FormData) {
-  const localPart = formData.get("requestedLocalPart");
-  const fullAddress = formData.get("requestedAddress");
-
-  const parsed = lgbEmailSchema.safeParse({
+  const parsed = lgbEmailRequestSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
-    requestedAddress:
-      typeof localPart === "string" && localPart.trim()
-        ? localPart
-        : fullAddress,
+    requestedAddress: formData.get("requestedLocalPart"),
+    backupAddress: formData.get("backupLocalPart"),
     forwardTo: formData.get("forwardTo"),
     businessName: formData.get("businessName") || undefined,
   });
@@ -171,24 +168,46 @@ export async function submitLgbEmailRequest(formData: FormData) {
     return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid request" };
   }
 
+  const requestedAddress = normalizeLgbEmailAddress(parsed.data.requestedAddress);
+  const backupAddress = normalizeLgbEmailAddress(parsed.data.backupAddress);
+
+  const [primaryTaken, backupTaken] = await Promise.all([
+    isLgbEmailAddressTaken(requestedAddress),
+    isLgbEmailAddressTaken(backupAddress),
+  ]);
+
+  if (primaryTaken && backupTaken) {
+    return {
+      success: false,
+      error: "Both email choices are already taken. Please try different names.",
+    };
+  }
+
   try {
     await db.lead.create({
       data: {
         name: parsed.data.name,
         email: parsed.data.email,
-        message: `LGB Email request: ${parsed.data.requestedAddress} → forward to ${parsed.data.forwardTo}`,
+        message: `LGB Email request: ${requestedAddress} (backup: ${backupAddress}) → forward to ${parsed.data.forwardTo}`,
         source: LeadSource.LGB_EMAIL,
         consent: true,
         metadata: {
-          requestedAddress: parsed.data.requestedAddress,
+          requestedAddress,
+          backupAddress,
           forwardTo: parsed.data.forwardTo,
           businessName: parsed.data.businessName ?? null,
+          primaryAvailable: !primaryTaken,
+          backupAvailable: !backupTaken,
         },
       },
     });
 
     const { sendLgbEmailNotification } = await import("@/lib/services/email");
-    await sendLgbEmailNotification(parsed.data);
+    await sendLgbEmailNotification({
+      ...parsed.data,
+      requestedAddress,
+      backupAddress,
+    });
 
     return { success: true };
   } catch (error) {

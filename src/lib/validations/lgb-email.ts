@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const LGB_EMAIL_DOMAIN = "letsgobuffalo.com";
+export const LGB_EMAIL_REQUEST_TO = "emailrequest@letsgobuffalo.com";
 
 const localPartSchema = z
   .string()
@@ -23,12 +24,10 @@ export function buildLgbEmailAddress(input: string): string {
   return `${trimmed.toLowerCase()}@${LGB_EMAIL_DOMAIN}`;
 }
 
-export const lgbEmailRequestSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Enter a valid contact email"),
-  requestedAddress: z
+function requestedAddressField(label: string) {
+  return z
     .string()
-    .min(1, "Choose your @LetsGoBuffalo.com address")
+    .min(1, label)
     .transform(buildLgbEmailAddress)
     .pipe(
       z
@@ -37,9 +36,21 @@ export const lgbEmailRequestSchema = z.object({
           new RegExp(`^[^\\s@]+@${LGB_EMAIL_DOMAIN.replace(".", "\\.")}$`, "i"),
           `Must be a valid @${LGB_EMAIL_DOMAIN} address`
         )
-    ),
-  forwardTo: z.string().email("Enter the email where mail should forward"),
-  businessName: z.string().optional(),
-});
+    );
+}
+
+export const lgbEmailRequestSchema = z
+  .object({
+    name: z.string().min(1, "Name is required"),
+    email: z.string().email("Enter a valid contact email"),
+    requestedAddress: requestedAddressField("Choose your preferred @LetsGoBuffalo.com address"),
+    backupAddress: requestedAddressField("Choose a backup @LetsGoBuffalo.com address"),
+    forwardTo: z.string().email("Enter the email where mail should forward"),
+    businessName: z.string().optional(),
+  })
+  .refine((data) => data.requestedAddress !== data.backupAddress, {
+    message: "Backup address must be different from your first choice",
+    path: ["backupAddress"],
+  });
 
 export type LgbEmailRequestInput = z.infer<typeof lgbEmailRequestSchema>;
