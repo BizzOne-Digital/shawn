@@ -20,6 +20,9 @@ interface WalletCreditFormProps {
   userName: string | null;
   userEmail: string;
   currentBalance: number;
+  campaignId?: string;
+  defaultNote?: string;
+  triggerLabel?: string;
 }
 
 export function WalletCreditForm({
@@ -27,12 +30,22 @@ export function WalletCreditForm({
   userName,
   userEmail,
   currentBalance,
+  campaignId,
+  defaultNote = "",
+  triggerLabel = "Add Credit",
 }: WalletCreditFormProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState(defaultNote);
   const [loading, setLoading] = useState(false);
+
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
+    if (nextOpen) {
+      setNote(defaultNote);
+    }
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -47,7 +60,11 @@ export function WalletCreditForm({
       const res = await fetch(`/api/admin/users/${userId}/wallet`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: parsed, note: note || undefined }),
+        body: JSON.stringify({
+          amount: parsed,
+          note: note || undefined,
+          campaignId,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -67,11 +84,11 @@ export function WalletCreditForm({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <DollarSign className="size-4" />
-          Add Credit
+          {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent>

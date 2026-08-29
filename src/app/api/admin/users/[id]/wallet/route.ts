@@ -8,6 +8,7 @@ import { USER_NOT_DELETED } from "@/lib/prisma-mongo-filters";
 const creditSchema = z.object({
   amount: z.coerce.number().min(0.01, "Amount must be at least $0.01").max(10000),
   note: z.string().max(500).optional(),
+  campaignId: z.string().optional(),
 });
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -34,6 +35,11 @@ export async function POST(request: Request, context: RouteContext) {
       data.note?.trim() ||
       `Admin advertising credit by ${admin!.email}`;
 
+    const metadata: Record<string, string> = { creditedBy: admin!.id };
+    if (data.campaignId) {
+      metadata.campaignId = data.campaignId;
+    }
+
     const [wallet, transaction] = await db.$transaction([
       db.wallet.upsert({
         where: { userId },
@@ -47,7 +53,7 @@ export async function POST(request: Request, context: RouteContext) {
           status: "COMPLETED",
           amount: data.amount,
           description,
-          metadata: { creditedBy: admin!.id },
+          metadata,
         },
       }),
     ]);
@@ -63,6 +69,7 @@ export async function POST(request: Request, context: RouteContext) {
         amount: data.amount,
         transactionId: transaction.id,
         note: data.note,
+        campaignId: data.campaignId,
       },
     });
 

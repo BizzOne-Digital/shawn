@@ -1,22 +1,29 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireBusinessOwner } from "@/lib/auth-utils";
+import { getMinimumDailyBid } from "@/lib/services/ad-settings";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, Megaphone } from "lucide-react";
+import { PlusCircle, Megaphone, Wallet } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 export default async function AdvertisingPage() {
   const user = await requireBusinessOwner();
+  const minimumDailyBid = await getMinimumDailyBid();
 
-  const campaigns = await db.advertisingCampaign.findMany({
-    where: { ownerId: user.id },
-    include: {
-      business: { select: { name: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const [campaigns, wallet] = await Promise.all([
+    db.advertisingCampaign.findMany({
+      where: { ownerId: user.id },
+      include: {
+        business: { select: { name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.wallet.findUnique({ where: { userId: user.id } }),
+  ]);
+
+  const walletBalance = Number(wallet?.balance ?? 0);
 
   const statusColors: Record<string, "default" | "secondary" | "destructive" | "accent"> = {
     ACTIVE: "default",
@@ -33,7 +40,9 @@ export default async function AdvertisingPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-bold text-navy">Advertising</h1>
-          <p className="text-muted mt-1">Manage per-category sponsored campaigns</p>
+          <p className="text-muted mt-1">
+            Bid per category from {formatCurrency(minimumDailyBid)}/day. Highest bids appear at the top of search results.
+          </p>
         </div>
         <Link href="/dashboard/advertising/new">
           <Button variant="accent">
@@ -42,6 +51,24 @@ export default async function AdvertisingPage() {
           </Button>
         </Link>
       </div>
+
+      <Card className="border-buffalo-red/20 bg-soft-gray">
+        <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <Wallet className="mt-0.5 size-5 text-buffalo-red" />
+            <div>
+              <p className="font-medium text-navy">Advertising wallet</p>
+              <p className="text-sm text-muted">
+                Balance: <span className="font-semibold text-navy">{formatCurrency(walletBalance)}</span>
+                {" · "}Minimum bid: {formatCurrency(minimumDailyBid)}/day
+              </p>
+            </div>
+          </div>
+          <Link href="/dashboard/billing">
+            <Button variant="outline" size="sm">Add Funds</Button>
+          </Link>
+        </CardContent>
+      </Card>
 
       {campaigns.length === 0 ? (
         <Card>

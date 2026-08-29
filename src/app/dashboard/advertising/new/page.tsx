@@ -41,6 +41,8 @@ export default function NewCampaignPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [minimumDailyBid, setMinimumDailyBid] = useState(0.25);
 
   const {
     register,
@@ -70,7 +72,19 @@ export default function NewCampaignPage() {
     fetch("/api/public/categories")
       .then((r) => r.json())
       .then((data: { categories?: Category[] }) => setCategories(data.categories ?? []));
-  }, []);
+
+    fetch("/api/billing/wallet")
+      .then((r) => r.json())
+      .then((data: { balance?: number }) => setWalletBalance(Number(data.balance ?? 0)));
+
+    fetch("/api/public/ad-settings")
+      .then((r) => r.json())
+      .then((data: { minimumDailyBid?: number }) => {
+        const minBid = Number(data.minimumDailyBid ?? 0.25);
+        setMinimumDailyBid(minBid);
+        setValue("dailyBid", minBid);
+      });
+  }, [setValue]);
 
   function toggleCategory(categoryId: string) {
     setSelectedCategories((prev) => {
@@ -115,9 +129,22 @@ export default function NewCampaignPage() {
         </Link>
         <h1 className="font-display text-3xl font-bold text-navy">Create Campaign</h1>
         <p className="text-muted mt-1">
-          Bid per category — choose one or more categories. Minimum $0.25/day per campaign.
+          Bid per category — choose one or more categories. Minimum ${minimumDailyBid.toFixed(2)}/day per campaign.
         </p>
       </div>
+
+      {walletBalance !== null && walletBalance < minimumDailyBid && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-900">
+            Your wallet balance (${walletBalance.toFixed(2)}) is below the minimum daily bid.
+            {" "}
+            <Link href="/dashboard/billing" className="font-medium underline">
+              Add funds
+            </Link>{" "}
+            before creating a campaign.
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
@@ -189,11 +216,16 @@ export default function NewCampaignPage() {
                   id="dailyBid"
                   type="number"
                   step="0.01"
-                  min="0.25"
+                  min={minimumDailyBid}
                   {...register("dailyBid")}
                   className="mt-1"
                 />
-                <p className="text-xs text-muted mt-1">Minimum $0.25 per day</p>
+                <p className="text-xs text-muted mt-1">
+                  Minimum ${minimumDailyBid.toFixed(2)} per day
+                  {walletBalance !== null && (
+                    <> · Wallet balance: ${walletBalance.toFixed(2)}</>
+                  )}
+                </p>
                 {errors.dailyBid && (
                   <p className="text-sm text-buffalo-red mt-1">{errors.dailyBid.message}</p>
                 )}
@@ -230,7 +262,15 @@ export default function NewCampaignPage() {
               </div>
             </div>
 
-            <Button type="submit" variant="accent" disabled={loading || categories.length === 0}>
+            <Button
+              type="submit"
+              variant="accent"
+              disabled={
+                loading ||
+                categories.length === 0 ||
+                (walletBalance !== null && walletBalance < minimumDailyBid)
+              }
+            >
               {loading && <Loader2 className="animate-spin" />}
               Create Campaign
             </Button>

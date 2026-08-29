@@ -6,6 +6,7 @@ import {
 } from "@/lib/api-utils";
 import { campaignSchema } from "@/lib/validations/business";
 import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
+import { getMinimumDailyBid } from "@/lib/services/ad-settings";
 
 export async function GET() {
   const result = await requireSessionUser();
@@ -30,6 +31,14 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const data = campaignSchema.parse(body);
+
+    const minimumDailyBid = await getMinimumDailyBid();
+    if (Number(data.dailyBid) < minimumDailyBid) {
+      return NextResponse.json(
+        { error: `Minimum bid is $${minimumDailyBid.toFixed(2)} per day` },
+        { status: 400 }
+      );
+    }
 
     const business = await db.business.findFirst({
       where: {

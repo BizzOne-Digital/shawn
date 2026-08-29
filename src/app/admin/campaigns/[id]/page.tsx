@@ -4,8 +4,10 @@ import { db } from "@/lib/db";
 import { PageHeader } from "@/components/admin/page-header";
 import { CampaignStatusBadge } from "@/components/admin/status-badge";
 import { CampaignActions } from "@/components/admin/campaign-actions";
+import { WalletCreditForm } from "@/components/admin/wallet-credit-form";
 import { formatCurrency } from "@/lib/utils";
 import { formatDate } from "@/lib/admin-utils";
+import { getMinimumDailyBid } from "@/lib/services/ad-settings";
 import {
   Card,
   CardContent,
@@ -21,17 +23,28 @@ interface Props {
 
 export default async function CampaignDetailPage({ params }: Props) {
   const { id } = await params;
+  const minimumDailyBid = await getMinimumDailyBid();
 
   const campaign = await db.advertisingCampaign.findUnique({
     where: { id },
     include: {
       business: { select: { name: true, slug: true } },
-      owner: { select: { name: true, email: true } },
+      owner: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          wallet: { select: { balance: true } },
+        },
+      },
       targets: true,
     },
   });
 
   if (!campaign) notFound();
+
+  const walletBalance = Number(campaign.owner.wallet?.balance ?? 0);
+  const canCoverBid = walletBalance >= Number(campaign.dailyBid);
 
   return (
     <div>
@@ -51,6 +64,7 @@ export default async function CampaignDetailPage({ params }: Props) {
             <CardHeader><CardTitle>Campaign Details</CardTitle></CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2 text-sm">
               <div><span className="text-muted">Daily Bid:</span> {formatCurrency(Number(campaign.dailyBid))}</div>
+              <div><span className="text-muted">Minimum Bid:</span> {formatCurrency(minimumDailyBid)}</div>
               <div><span className="text-muted">Total Budget:</span> {campaign.totalBudget ? formatCurrency(Number(campaign.totalBudget)) : "Unlimited"}</div>
               <div><span className="text-muted">Spent:</span> {formatCurrency(Number(campaign.spentAmount))}</div>
               <div><span className="text-muted">Start Date:</span> {formatDate(campaign.startDate)}</div>
@@ -90,12 +104,39 @@ export default async function CampaignDetailPage({ params }: Props) {
           )}
         </div>
 
-        <Card>
-          <CardHeader><CardTitle>Actions</CardTitle></CardHeader>
-          <CardContent>
-            <CampaignActions campaignId={campaign.id} status={campaign.status} />
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader><CardTitle>Owner Wallet</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-sm">
+                <p className="text-muted">Current balance</p>
+                <p className="text-2xl font-bold text-navy">{formatCurrency(walletBalance)}</p>
+              </div>
+              {!canCoverBid && (
+                <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                  Balance is below the daily bid ({formatCurrency(Number(campaign.dailyBid))}).
+                  Fund this account so the campaign can run.
+                </p>
+              )}
+              <WalletCreditForm
+                userId={campaign.owner.id}
+                userName={campaign.owner.name}
+                userEmail={campaign.owner.email}
+                currentBalance={walletBalance}
+                campaignId={campaign.id}
+                defaultNote={`Advertising fund for campaign: ${campaign.name}`}
+                triggerLabel="Fund Bid Wallet"
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Actions</CardTitle></CardHeader>
+            <CardContent>
+              <CampaignActions campaignId={campaign.id} status={campaign.status} />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
