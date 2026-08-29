@@ -83,6 +83,37 @@ export async function POST(request: Request) {
             data: { individualTier: plan.individualTier, memberType: "INDIVIDUAL" },
           });
         }
+
+        const user = await db.user.findUnique({
+          where: { id: userId },
+          select: { email: true, name: true },
+        });
+        const business = businessId
+          ? await db.business.findUnique({
+              where: { id: businessId },
+              select: { name: true },
+            })
+          : null;
+
+        if (user?.email && plan) {
+          const amount =
+            interval === BillingInterval.MONTHLY
+              ? Number(plan.monthlyPrice)
+              : Number(plan.yearlyPrice);
+          try {
+            const { sendSubscriptionConfirmationEmail } = await import("@/lib/services/email");
+            await sendSubscriptionConfirmationEmail({
+              to: user.email,
+              customerName: user.name,
+              planName: plan.name,
+              amount,
+              interval,
+              businessName: business?.name ?? null,
+            });
+          } catch (emailError) {
+            console.error("[stripe webhook] Subscription confirmation email failed:", emailError);
+          }
+        }
       }
     } else {
       const userId = session.metadata?.userId;
@@ -108,6 +139,24 @@ export async function POST(request: Request) {
               update: { balance: { increment: transaction.amount } },
             }),
           ]);
+
+          const user = await db.user.findUnique({
+            where: { id: userId },
+            select: { email: true, name: true },
+          });
+
+          if (user?.email) {
+            try {
+              const { sendWalletTopUpConfirmationEmail } = await import("@/lib/services/email");
+              await sendWalletTopUpConfirmationEmail({
+                to: user.email,
+                customerName: user.name,
+                amount: Number(transaction.amount),
+              });
+            } catch (emailError) {
+              console.error("[stripe webhook] Wallet top-up email failed:", emailError);
+            }
+          }
         }
       }
     }
