@@ -8,6 +8,7 @@ import {
   type BusinessSubmissionForm,
 } from "@/lib/validations/business";
 import { sendListingStatusEmail } from "@/lib/services/email";
+import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 const SUBMITTABLE_STATUSES = ["DRAFT", "CHANGES_REQUESTED", "PUBLISHED"] as const;
 
@@ -80,7 +81,7 @@ function toSubmissionPayload(
 async function loadOwnedBusiness(userId: string, businessId: string) {
   const query = () =>
     db.business.findFirst({
-      where: { id: businessId, ownerId: userId, deletedAt: null },
+      where: { id: businessId, ownerId: userId, ...NOT_DELETED },
       include: businessInclude,
     });
 
@@ -168,7 +169,7 @@ export async function saveAndSubmitBusiness(
   const existing =
     normalizedId &&
     (await db.business.findFirst({
-      where: { id: normalizedId, ownerId: userId, deletedAt: null },
+      where: { id: normalizedId, ownerId: userId, ...NOT_DELETED },
     }));
 
   let businessIdToUse: string;

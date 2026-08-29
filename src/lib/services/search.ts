@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { ListingStatus, Prisma } from "@prisma/client";
 import { getSponsoredResults, recordAdImpressions } from "./sponsored-ranking";
 import { getAdminSearchTowns, getListedBusinessCities } from "@/lib/queries/locations";
+import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 export interface SearchParams {
   q: string;
@@ -80,7 +81,7 @@ function buildSearchWhere(query: string, filters?: { city?: string; category?: s
 
   const where: Prisma.BusinessWhereInput = {
     status: ListingStatus.PUBLISHED,
-    deletedAt: null,
+    ...NOT_DELETED,
     ...(filters?.city && buildCityFilter(filters.city)),
     ...(filters?.category && {
       category: { slug: filters.category },
@@ -273,7 +274,7 @@ export async function getSearchSuggestions(query: string, limit = 5): Promise<st
       db.business.findMany({
         where: {
           status: ListingStatus.PUBLISHED,
-          deletedAt: null,
+          ...NOT_DELETED,
           name: { contains: query, mode: "insensitive" },
         },
         select: { name: true },

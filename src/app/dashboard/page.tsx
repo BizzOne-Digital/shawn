@@ -14,12 +14,13 @@ import {
   PlusCircle,
   Building2,
 } from "lucide-react";
+import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 export default async function DashboardPage() {
   const user = await requireBusinessOwner();
 
   const businesses = await db.business.findMany({
-    where: { ownerId: user.id, deletedAt: null },
+    where: { ownerId: user.id, ...NOT_DELETED },
     orderBy: { updatedAt: "desc" },
     take: 5,
   });

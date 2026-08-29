@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
+import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 export async function getSessionUser() {
   const session = await auth();
@@ -33,7 +34,7 @@ export async function requireBusinessOwnerApi() {
 
 export async function getOwnedBusiness(businessId: string, userId: string) {
   return db.business.findFirst({
-    where: { id: businessId, ownerId: userId, deletedAt: null },
+    where: { id: businessId, ownerId: userId, ...NOT_DELETED },
     include: {
       category: true,
       subcategory: true,

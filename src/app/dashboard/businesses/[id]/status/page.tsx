@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
+import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -27,7 +28,7 @@ export default async function BusinessStatusPage({ params }: PageProps) {
   const { id } = await params;
 
   const business = await db.business.findFirst({
-    where: { id, ownerId: user.id, deletedAt: null },
+    where: { id, ownerId: user.id, ...NOT_DELETED },
     include: {
       submissions: { orderBy: { submittedAt: "desc" } },
       moderationActions: { orderBy: { createdAt: "desc" } },

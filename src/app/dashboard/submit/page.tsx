@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { requireBusinessOwner } from "@/lib/auth-utils";
 import { SubmissionWizard } from "@/components/submission/submission-wizard";
 import { DEFAULT_HOURS } from "@/lib/services/business-hours";
+import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 export default async function SubmitBusinessPage({
   searchParams,
@@ -27,7 +28,12 @@ export default async function SubmitBusinessPage({
   if (params.draft) {
     const user = await requireBusinessOwner();
     const draft = await db.business.findFirst({
-      where: { id: params.draft, ownerId: user.id, status: { in: ["DRAFT", "CHANGES_REQUESTED"] } },
+      where: {
+        id: params.draft,
+        ownerId: user.id,
+        status: { in: ["DRAFT", "CHANGES_REQUESTED"] },
+        ...NOT_DELETED,
+      },
       include: { hours: true, images: true, socialLinks: true },
     });
     if (draft) {

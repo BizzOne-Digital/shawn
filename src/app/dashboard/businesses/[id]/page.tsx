@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireBusinessOwner } from "@/lib/auth-utils";
 import { SubmissionWizard } from "@/components/submission/submission-wizard";
 import { DEFAULT_HOURS } from "@/lib/services/business-hours";
+import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
 import { Badge } from "@/components/ui/badge";
 import { getListingStatusLabel } from "@/lib/business-utils";
 import Link from "next/link";
@@ -15,7 +16,7 @@ export default async function EditBusinessPage({ params }: PageProps) {
   const { id } = await params;
 
   const business = await db.business.findFirst({
-    where: { id, ownerId: user.id, deletedAt: null },
+    where: { id, ownerId: user.id, ...NOT_DELETED },
     include: { hours: true, images: true, socialLinks: true },
   });
 

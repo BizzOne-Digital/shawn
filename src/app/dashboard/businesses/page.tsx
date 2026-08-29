@@ -7,12 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PlusCircle, Building2, Eye, Edit } from "lucide-react";
 import { CmsImage } from "@/components/ui/cms-image";
+import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 export default async function MyBusinessesPage() {
   const user = await requireBusinessOwner();
 
   const businesses = await db.business.findMany({
-    where: { ownerId: user.id, deletedAt: null },
+    where: { ownerId: user.id, ...NOT_DELETED },
     include: {
       category: { select: { name: true } },
       images: { where: { type: "LOGO" }, take: 1 },

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { handleBusinessSaveError, requireBusinessOwnerApi } from "@/lib/api-utils";
+import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
 import {
   generateUniqueSlug,
   syncBusinessRelations,
@@ -38,7 +39,7 @@ export async function GET() {
   const user = authResult.user;
 
   const businesses = await db.business.findMany({
-    where: { ownerId: user.id, deletedAt: null },
+    where: { ownerId: user.id, ...NOT_DELETED },
     include: {
       category: { select: { name: true } },
       images: { where: { type: "LOGO" }, take: 1 },

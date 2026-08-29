@@ -3,10 +3,11 @@ import { ListingStatus, Prisma } from "@prisma/client";
 import { getAdminSearchTowns } from "@/lib/queries/locations";
 import { isOpenNow } from "@/lib/services/business-hours";
 import { getSponsoredResults } from "@/lib/services/sponsored-ranking";
+import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 export const publishedBusinessWhere: Prisma.BusinessWhereInput = {
   status: ListingStatus.PUBLISHED,
-  deletedAt: null,
+  ...NOT_DELETED,
 };
 
 export const businessCardInclude = {
