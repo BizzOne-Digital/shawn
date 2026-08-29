@@ -118,21 +118,15 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
   const selectedCategory = categories.find((c) => c.id === formValues.categoryId);
 
   const saveDraft = useCallback(
-    async (silent = false, options?: { force?: boolean }): Promise<string | null> => {
+    async (silent = false, options?: { force?: boolean; quietSuccess?: boolean }): Promise<string | null> => {
       const formData = getValues();
       const imageUrls = (formData.images ?? [])
         .map((image) => image.url)
         .filter((url): url is string => Boolean(url));
       const imagesAlreadyStored =
         Boolean(businessId) &&
-        imageUrls.length > 0 &&
-        !imageUrls.some((url) => url.startsWith("data:")) &&
-        imageUrls.every(
-          (url) =>
-            url.startsWith("/api/uploads/") ||
-            url.startsWith("https://") ||
-            url.startsWith("http://")
-        );
+        imageUrls.some((url) => url.startsWith("data:")) &&
+        (formData.images ?? []).every((image) => image.publicId);
 
       const data = prepareBusinessFormPayload(formData, {
         compactImages: imagesAlreadyStored,
@@ -186,7 +180,7 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
         setBusinessId(id);
         setDraftSaved(true);
         lastSaved.current = serialized;
-        if (!silent) toast.success("Draft saved");
+        if (!silent && !options?.quietSuccess) toast.success("Draft saved");
         return id;
       } catch {
         if (!silent) toast.error("Failed to save draft");
@@ -259,9 +253,16 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
         return;
       }
 
-      const savedId = await saveDraft(true, { force: true });
+      const pendingImages = getValues("images") ?? [];
+      if (pendingImages.some((image) => image.url?.startsWith("data:"))) {
+        toast.error(
+          "Images must be uploaded before submitting. Go back to the Images step and re-upload your photos."
+        );
+        return;
+      }
+
+      const savedId = await saveDraft(false, { force: true, quietSuccess: true });
       if (!savedId) {
-        toast.error("Failed to save your listing before submitting. Please try again.");
         return;
       }
 

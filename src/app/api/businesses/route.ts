@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { handleApiError, requireBusinessOwnerApi } from "@/lib/api-utils";
+import { handleBusinessSaveError, requireBusinessOwnerApi } from "@/lib/api-utils";
 import {
   generateUniqueSlug,
   syncBusinessRelations,
@@ -95,6 +95,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(full, { status: 201 });
   } catch (error) {
-    return handleApiError(error);
+    return handleBusinessSaveError(error);
   }
 }

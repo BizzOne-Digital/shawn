@@ -75,3 +75,16 @@ export function handleApiError(error: unknown) {
   console.error("[API Error]", error);
   return NextResponse.json({ error: "Internal server error" }, { status: 500 });
 }
+
+export function handleBusinessSaveError(error: unknown) {
+  if (error instanceof Error && error.message === "Image URL is required") {
+    return NextResponse.json(
+      {
+        error:
+          "One or more images failed to save. Please re-upload your images on the Images step and try again.",
+      },
+      { status: 400 }
+    );
+  }
+  return handleApiError(error);
+}

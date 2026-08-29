@@ -38,8 +38,11 @@ export function prepareBusinessFormPayload<T extends Record<string, unknown>>(
   }
 
   if (options?.compactImages && Array.isArray(payload.images)) {
+    // Only strip large base64 payloads — /api/uploads/ and https URLs are small.
     payload.images = payload.images.map((image) =>
-      image.url?.startsWith("/api/uploads/") ? { ...image, url: "" } : image
+      image.url?.startsWith("data:image/") && image.publicId
+        ? { ...image, url: "" }
+        : image
     );
   }
 

@@ -2,6 +2,10 @@ import slugify from "slugify";
 import { db } from "@/lib/db";
 import type { BusinessSubmissionForm } from "@/lib/validations/business";
 import { Prisma, type ImageType } from "@prisma/client";
+import {
+  buildStoredUploadUrl,
+  sanitizeUploadFilename,
+} from "@/lib/services/stored-upload";
 
 type SyncableBusinessRelations = Partial<Omit<BusinessSubmissionForm, "images">> & {
   images?: Array<{
@@ -59,6 +63,21 @@ export function mapBusinessFormToData(
   };
 }
 
+type SyncableImage = NonNullable<SyncableBusinessRelations["images"]>[number];
+
+function resolveBusinessImageUrl(
+  image: SyncableImage,
+  existing?: { url: string; publicId?: string | null }
+): string {
+  const trimmed = image.url?.trim();
+  if (trimmed) return trimmed;
+  if (existing?.url) return existing.url;
+  if (image.publicId && sanitizeUploadFilename(image.publicId)) {
+    return buildStoredUploadUrl("gallery", image.publicId);
+  }
+  throw new Error("Image URL is required");
+}
+
 export async function syncBusinessRelations(
   businessId: string,
   data: SyncableBusinessRelations
@@ -92,16 +111,14 @@ export async function syncBusinessRelations(
       await db.businessImage.createMany({
         data: data.images.map((img, i) => {
           const existing = existingImages.find(
-            (entry) => entry.publicId && entry.publicId === img.publicId
+            (entry) =>
+              (entry.publicId && entry.publicId === img.publicId) ||
+              (img.url?.trim() && entry.url === img.url.trim())
           );
-          const url = img.url?.trim() || existing?.url;
-          if (!url) {
-            throw new Error("Image URL is required");
-          }
 
           return {
             businessId,
-            url,
+            url: resolveBusinessImageUrl(img, existing),
             publicId: img.publicId ?? existing?.publicId,
             type: img.type,
             alt: img.alt,

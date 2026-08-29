@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import {
   requireSessionUser,
   requireOwnedBusiness,
-  handleApiError,
+  handleBusinessSaveError,
 } from "@/lib/api-utils";
 import {
   generateUniqueSlug,
@@ -97,7 +97,7 @@ export async function PUT(request: Request, context: RouteContext) {
 
     return NextResponse.json(full);
   } catch (error) {
-    return handleApiError(error);
+    return handleBusinessSaveError(error);
   }
 }
 
