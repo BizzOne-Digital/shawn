@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { BusinessListingTier } from "@prisma/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,8 +26,11 @@ import {
   businessSubmissionSchema,
   STEP_LABELS,
   STEP_SCHEMAS,
+  FREE_STEP_FIELD_MAP,
+  freeBusinessSubmissionSchema,
   type BusinessSubmissionForm,
 } from "@/lib/validations/business";
+import { getWizardStepFlow, isProListingTier, WIZARD_STEP } from "@/lib/services/listing-tier";
 import { cn, formatCurrency } from "@/lib/utils";
 import { prepareBusinessFormPayload } from "@/lib/url-utils";
 import { WebsiteUrlInput } from "@/components/forms/website-url-input";
@@ -69,6 +73,7 @@ interface SubmissionWizardProps {
   categories: Category[];
   initialData?: Partial<BusinessSubmissionForm> & { id?: string };
   businessStatus?: string;
+  listingTier?: BusinessListingTier;
 }
 
 const defaultValues: BusinessSubmissionForm = {
@@ -92,9 +97,21 @@ const defaultValues: BusinessSubmissionForm = {
   socialLinks: [],
   hours: DEFAULT_HOURS,
   images: [],
+  couponText: "",
+  discountCode: "",
+  lgbEmail: "",
+  videoUrl: "",
+  searchKeywords: [],
 };
 
-export function SubmissionWizard({ categories, initialData, businessStatus }: SubmissionWizardProps) {
+export function SubmissionWizard({
+  categories,
+  initialData,
+  businessStatus,
+  listingTier = BusinessListingTier.FREE_BASIC,
+}: SubmissionWizardProps) {
+  const isPro = isProListingTier(listingTier);
+  const stepFlow = useMemo(() => getWizardStepFlow(listingTier), [listingTier]);
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [businessId, setBusinessId] = useState<string | undefined>(initialData?.id);
@@ -127,6 +144,7 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
   const { register, watch, setValue, getValues, trigger, formState: { errors } } = methods;
   const formValues = watch();
   const selectedCategory = categories.find((c) => c.id === formValues.categoryId);
+  const currentStep = stepFlow[step] ?? stepFlow[0];
 
   const saveDraft = useCallback(
     async (silent = false, options?: { force?: boolean; quietSuccess?: boolean }): Promise<string | null> => {
@@ -222,8 +240,18 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
   }, [formValues, saveDraft]);
 
   async function validateCurrentStep(): Promise<boolean> {
-    if (step >= 7) return true;
-    const schema = STEP_SCHEMAS[step];
+    if (currentStep >= WIZARD_STEP.PREVIEW) return true;
+
+    const freeFields = !isPro ? FREE_STEP_FIELD_MAP[currentStep] : undefined;
+    if (freeFields) {
+      const valid = await trigger(freeFields);
+      if (!valid) {
+        toast.error("Please fix the errors before continuing");
+      }
+      return valid;
+    }
+
+    const schema = STEP_SCHEMAS[currentStep];
     const fields = Object.keys(schema.shape) as (keyof BusinessSubmissionForm)[];
     const valid = await trigger(fields);
     if (!valid) {
@@ -236,7 +264,7 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
     const valid = await validateCurrentStep();
     if (!valid) return;
     await saveDraft(true);
-    setStep((s) => Math.min(s + 1, STEP_LABELS.length - 1));
+    setStep((s) => Math.min(s + 1, stepFlow.length - 1));
   }
 
   function handleBack() {
@@ -266,18 +294,26 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
     setSubmitting(true);
     setSaving(true);
     try {
-      const valid = await trigger();
-      if (!valid) {
-        toast.error("Please complete all required fields before submitting");
-        return;
-      }
+      if (isPro) {
+        const valid = await trigger();
+        if (!valid) {
+          toast.error("Please complete all required fields before submitting");
+          return;
+        }
 
-      const pendingImages = getValues("images") ?? [];
-      if (pendingImages.some((image) => image.url?.startsWith("data:"))) {
-        toast.error(
-          "Images must be uploaded before submitting. Go back to the Images step and re-upload your photos."
-        );
-        return;
+        const pendingImages = getValues("images") ?? [];
+        if (pendingImages.some((image) => image.url?.startsWith("data:"))) {
+          toast.error(
+            "Images must be uploaded before submitting. Go back to the Images step and re-upload your photos."
+          );
+          return;
+        }
+      } else {
+        const parsed = freeBusinessSubmissionSchema.safeParse(getValues());
+        if (!parsed.success) {
+          toast.error(parsed.error.errors[0]?.message ?? "Please complete all required fields");
+          return;
+        }
       }
 
       const savedId = await saveDraft(false, { force: true, quietSuccess: true });
@@ -340,15 +376,25 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
     setTagInput("");
   }
 
-  const progress = ((step + 1) / STEP_LABELS.length) * 100;
+  const progress = ((step + 1) / stepFlow.length) * 100;
 
   return (
     <FormProvider {...methods}>
       <div className="min-w-0 space-y-6 overflow-x-clip">
+        {!isPro && (
+          <div className="rounded-lg border border-buffalo-red/20 bg-soft-gray px-4 py-3 text-sm text-muted">
+            <span className="font-medium text-navy">Free Basic listing</span> includes company name,
+            address, phone, and website only.{" "}
+            <a href="/dashboard/subscribe?plan=business-pro" className="text-buffalo-red hover:underline">
+              Upgrade to Pro
+            </a>{" "}
+            for logo, images, social links, coupons, promo codes, and a free @LetsGoBuffalo.com email.
+          </div>
+        )}
         <div className="space-y-2">
           <div className="flex flex-col gap-1 text-sm sm:flex-row sm:justify-between">
             <span className="min-w-0 font-medium text-navy">
-              Step {step + 1} of {STEP_LABELS.length}: {STEP_LABELS[step]}
+              Step {step + 1} of {stepFlow.length}: {STEP_LABELS[currentStep]}
             </span>
             <span className="text-muted flex items-center gap-2">
               {saving && <Loader2 className="size-3 animate-spin" />}
@@ -360,7 +406,7 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
 
         <Card>
           <CardContent className="pt-6">
-            {step === 0 && (
+            {currentStep === WIZARD_STEP.BASIC && (
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="name">Business Name *</Label>
@@ -376,20 +422,22 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
                     <p className="text-sm text-buffalo-red mt-1">{errors.phone.message}</p>
                   )}
                 </div>
+                {isPro && (
+                  <div>
+                    <Label htmlFor="publicEmail">Public Email</Label>
+                    <Input
+                      id="publicEmail"
+                      type="email"
+                      {...register("publicEmail")}
+                      className={fieldClass(errors.publicEmail)}
+                    />
+                    {errors.publicEmail && (
+                      <p className="text-sm text-buffalo-red mt-1">{errors.publicEmail.message}</p>
+                    )}
+                  </div>
+                )}
                 <div>
-                  <Label htmlFor="publicEmail">Public Email</Label>
-                  <Input
-                    id="publicEmail"
-                    type="email"
-                    {...register("publicEmail")}
-                    className={fieldClass(errors.publicEmail)}
-                  />
-                  {errors.publicEmail && (
-                    <p className="text-sm text-buffalo-red mt-1">{errors.publicEmail.message}</p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="website">Website</Label>
+                  <Label htmlFor="website">Website{!isPro ? " *" : ""}</Label>
                   <WebsiteUrlInput
                     value={formValues.website ?? ""}
                     onChange={(v) => setValue("website", v, { shouldValidate: true })}
@@ -403,7 +451,7 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
               </div>
             )}
 
-            {step === 1 && (
+            {currentStep === WIZARD_STEP.CATEGORY && (
               <div className="space-y-4">
                 <div>
                   <Label>Category *</Label>
@@ -461,7 +509,7 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
               </div>
             )}
 
-            {step === 2 && (
+            {currentStep === WIZARD_STEP.DESCRIPTION && (
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="shortDescription">Short Description *</Label>
@@ -524,7 +572,7 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
               </div>
             )}
 
-            {step === 3 && (
+            {currentStep === WIZARD_STEP.LOCATION && (
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="address">Street Address *</Label>
@@ -560,7 +608,7 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
               </div>
             )}
 
-            {step === 4 && (
+            {currentStep === WIZARD_STEP.SOCIAL && (
               <div className="space-y-4">
                 <p className="text-sm text-muted">Add your social media profiles (optional)</p>
                 {SOCIAL_PLATFORMS.map(({ platform, label }) => {
@@ -592,7 +640,7 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
               </div>
             )}
 
-            {step === 5 && (
+            {currentStep === WIZARD_STEP.HOURS && (
               <div className="space-y-4">
                 {(formValues.hours ?? DEFAULT_HOURS).map((hour: BusinessHourInput, index: number) => (
                   <div
@@ -656,7 +704,7 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
               </div>
             )}
 
-            {step === 6 && (
+            {currentStep === WIZARD_STEP.IMAGES && (
               <div className="space-y-6">
                 <ListingImagesField
                   images={formValues.images ?? []}
@@ -670,34 +718,78 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
               </div>
             )}
 
-            {step === 7 && (
+            {currentStep === WIZARD_STEP.PRO_EXTRAS && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="couponText">Coupon / Offer Text</Label>
+                  <Textarea
+                    id="couponText"
+                    {...register("couponText")}
+                    className="mt-1"
+                    placeholder="e.g. 10% off your first visit — mention Lets Go Buffalo"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="discountCode">Promo / Discount Code</Label>
+                  <Input
+                    id="discountCode"
+                    {...register("discountCode")}
+                    className="mt-1"
+                    placeholder="BUFFALO10"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="lgbEmail">LetsGoBuffalo.com Email (local part)</Label>
+                  <div className="mt-1 flex items-center gap-2">
+                    <Input id="lgbEmail" {...register("lgbEmail")} placeholder="yourbusiness" />
+                    <span className="text-sm text-muted whitespace-nowrap">@LetsGoBuffalo.com</span>
+                  </div>
+                  <p className="text-xs text-muted mt-1">Included free with Pro — we&apos;ll set up forwarding after approval.</p>
+                </div>
+                <div>
+                  <Label htmlFor="videoUrl">Video URL (optional)</Label>
+                  <Input id="videoUrl" {...register("videoUrl")} className="mt-1" placeholder="https://youtube.com/..." />
+                </div>
+              </div>
+            )}
+
+            {currentStep === WIZARD_STEP.PREVIEW && (
               <div className="space-y-6">
                 <PreviewSection title="Basic Info" items={[
                   ["Business Name", formValues.name],
                   ["Phone", formValues.phone],
-                  ["Email", formValues.publicEmail || "—"],
+                  ...(isPro ? [["Email", formValues.publicEmail || "—"] as [string, string]] : []),
                   ["Website", formValues.website || "—"],
                 ]} />
                 <PreviewSection title="Category" items={[
                   ["Category", categories.find((c) => c.id === formValues.categoryId)?.name ?? "—"],
                   ["Subcategory", selectedCategory?.subcategories.find((s) => s.id === formValues.subcategoryId)?.name ?? "—"],
                 ]} />
-                <PreviewSection title="Description" items={[
-                  ["Short", formValues.shortDescription],
-                  ["Services", (formValues.services ?? []).join(", ") || "—"],
-                  ["Tags", (formValues.tags ?? []).join(", ") || "—"],
-                ]} />
+                {isPro && (
+                  <>
+                    <PreviewSection title="Description" items={[
+                      ["Short", formValues.shortDescription],
+                      ["Services", (formValues.services ?? []).join(", ") || "—"],
+                      ["Tags", (formValues.tags ?? []).join(", ") || "—"],
+                    ]} />
+                    <PreviewSection title="Pro Features" items={[
+                      ["Coupon", formValues.couponText || "—"],
+                      ["Promo Code", formValues.discountCode || "—"],
+                      ["LGB Email", formValues.lgbEmail ? `${formValues.lgbEmail}@LetsGoBuffalo.com` : "—"],
+                    ]} />
+                    <PreviewSection title="Images" items={[
+                      ["Total", String(formValues.images?.length ?? 0)],
+                    ]} />
+                  </>
+                )}
                 <PreviewSection title="Location" items={[
                   ["Address", `${formValues.address}${formValues.addressLine2 ? `, ${formValues.addressLine2}` : ""}`],
                   ["City", `${formValues.city}, ${formValues.state} ${formValues.zipCode}`],
                 ]} />
-                <PreviewSection title="Images" items={[
-                  ["Total", String(formValues.images?.length ?? 0)],
-                ]} />
               </div>
             )}
 
-            {step === 8 && (
+            {currentStep === WIZARD_STEP.SUBMIT && (
               <div className="text-center space-y-6 py-8">
                 <div className="mx-auto size-16 bg-navy/10 rounded-full flex items-center justify-center">
                   <Check className="size-8 text-navy" />
@@ -747,7 +839,7 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
               Save Draft
             </Button>
 
-            {step < STEP_LABELS.length - 1 ? (
+            {step < stepFlow.length - 1 ? (
               <Button type="button" onClick={handleNext} className="w-full sm:w-auto">
                 Next
                 <ArrowRight className="size-4" />

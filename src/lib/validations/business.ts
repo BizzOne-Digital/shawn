@@ -30,6 +30,19 @@ export const basicInfoSchema = z.object({
   website: optionalWebsiteField.optional(),
 });
 
+/** Free Basic listing — company name, phone, and website only on step 1 */
+export const freeBasicInfoSchema = z.object({
+  name: z.string().min(2, "Business name must be at least 2 characters").max(120),
+  phone: z.string().min(10, "Phone number is required").max(20),
+  website: z.preprocess(
+    (val) => {
+      if (typeof val !== "string" || !val.trim()) return val;
+      return normalizeWebsiteUrl(val);
+    },
+    z.string().url("Enter a valid website URL (e.g. yourbusiness.com)")
+  ),
+});
+
 export const categorySchema = z.object({
   categoryId: z.string().min(1, "Please select a category"),
   subcategoryId: z.string().optional(),
@@ -123,13 +136,39 @@ export const imagesSchema = z.object({
   images: z.array(businessImageSchema).min(1, "At least one image is required"),
 });
 
+export const proExtrasSchema = z.object({
+  couponText: z.preprocess(emptyToUndefined, z.string().max(500).optional()),
+  discountCode: z.preprocess(emptyToUndefined, z.string().max(50).optional()),
+  lgbEmail: z.preprocess(
+    emptyToUndefined,
+    z
+      .string()
+      .max(64)
+      .regex(/^[a-zA-Z0-9._-]+$/, "Use letters, numbers, dots, dashes, or underscores")
+      .optional()
+  ),
+  videoUrl: z.preprocess(
+    (val) => {
+      if (typeof val !== "string" || !val.trim()) return "";
+      return normalizeWebsiteUrl(val);
+    },
+    z.union([z.literal(""), z.string().url("Enter a valid video URL")]).optional()
+  ),
+  searchKeywords: z.array(z.string().min(1).max(50)).max(10).optional(),
+});
+
 export const businessSubmissionSchema = basicInfoSchema
   .merge(categorySchema)
   .merge(descriptionSchema)
   .merge(locationSchema)
   .merge(socialSchema)
   .merge(hoursSchema)
-  .merge(imagesSchema);
+  .merge(imagesSchema)
+  .merge(proExtrasSchema);
+
+export const freeBusinessSubmissionSchema = freeBasicInfoSchema
+  .merge(categorySchema)
+  .merge(locationSchema);
 
 export type BasicInfoForm = z.infer<typeof basicInfoSchema>;
 export type CategoryForm = z.infer<typeof categorySchema>;
@@ -138,7 +177,9 @@ export type LocationForm = z.infer<typeof locationSchema>;
 export type SocialForm = z.infer<typeof socialSchema>;
 export type HoursForm = z.infer<typeof hoursSchema>;
 export type ImagesForm = z.infer<typeof imagesSchema>;
+export type ProExtrasForm = z.infer<typeof proExtrasSchema>;
 export type BusinessSubmissionForm = z.infer<typeof businessSubmissionSchema>;
+export type FreeBusinessSubmissionForm = z.infer<typeof freeBusinessSubmissionSchema>;
 
 /** Lenient schema for autosave / draft — does not require all steps to be complete */
 export const businessDraftSchema = z.object({
@@ -169,6 +210,11 @@ export const businessDraftSchema = z.object({
     .optional(),
   hours: z.array(businessHourSchema).optional(),
   images: z.array(draftBusinessImageSchema).optional(),
+  couponText: z.preprocess(emptyToUndefined, z.string().optional()),
+  discountCode: z.preprocess(emptyToUndefined, z.string().optional()),
+  lgbEmail: z.preprocess(emptyToUndefined, z.string().optional()),
+  videoUrl: z.preprocess(emptyToUndefined, z.string().optional()),
+  searchKeywords: z.array(z.string()).optional(),
 });
 
 export type BusinessDraftForm = z.infer<typeof businessDraftSchema>;
@@ -181,6 +227,7 @@ export const STEP_SCHEMAS = [
   socialSchema,
   hoursSchema,
   imagesSchema,
+  proExtrasSchema,
   businessSubmissionSchema,
   z.object({}),
 ] as const;
@@ -193,9 +240,14 @@ export const STEP_LABELS = [
   "Social Media",
   "Hours",
   "Images",
+  "Pro Features",
   "Preview",
   "Submit",
 ] as const;
+
+export const FREE_STEP_FIELD_MAP: Partial<Record<number, (keyof BusinessSubmissionForm)[]>> = {
+  0: ["name", "phone", "website"],
+};
 
 export const campaignSchema = z.object({
   name: z.string().min(3).max(100),

@@ -5,8 +5,10 @@ import {
 } from "@/lib/business-utils";
 import {
   businessSubmissionSchema,
+  freeBusinessSubmissionSchema,
   type BusinessSubmissionForm,
 } from "@/lib/validations/business";
+import { isProListingTier } from "@/lib/services/listing-tier";
 import { sendListingStatusEmail } from "@/lib/services/email";
 import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
@@ -39,6 +41,11 @@ function buildBusinessData(data: BusinessSubmissionForm) {
     state: data.state,
     zipCode: data.zipCode,
     locationId: data.locationId || null,
+    couponText: data.couponText || null,
+    discountCode: data.discountCode || null,
+    lgbEmail: data.lgbEmail ? `${data.lgbEmail.replace(/@.*/, "")}@LetsGoBuffalo.com` : null,
+    videoUrl: data.videoUrl || null,
+    searchKeywords: data.searchKeywords ?? [],
   };
 }
 
@@ -75,6 +82,11 @@ function toSubmissionPayload(
       alt: img.alt ?? undefined,
       sortOrder: img.sortOrder,
     })),
+    couponText: business.couponText ?? undefined,
+    discountCode: business.discountCode ?? undefined,
+    lgbEmail: business.lgbEmail?.replace(/@LetsGoBuffalo\.com$/i, "") ?? undefined,
+    videoUrl: business.videoUrl ?? undefined,
+    searchKeywords: business.searchKeywords ?? [],
   };
 }
 
@@ -110,7 +122,12 @@ export async function submitOwnedBusiness(userId: string, businessId: string) {
     throw new Error("Business not found");
   }
 
-  businessSubmissionSchema.parse(toSubmissionPayload(business));
+  const payload = toSubmissionPayload(business);
+  if (isProListingTier(business.listingTier)) {
+    businessSubmissionSchema.parse(payload);
+  } else {
+    freeBusinessSubmissionSchema.parse(payload);
+  }
 
   if (!SUBMITTABLE_STATUSES.includes(business.status as (typeof SUBMITTABLE_STATUSES)[number])) {
     throw new Error("Business cannot be submitted in its current status");

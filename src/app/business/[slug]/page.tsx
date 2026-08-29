@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { BusinessListingTier } from "@prisma/client";
+import { isProListingTier } from "@/lib/services/listing-tier";
 import {
   MapPin,
   Phone,
@@ -100,11 +102,10 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
 
   if (!business) notFound();
 
-  const related = await getRelatedBusinesses(
-    business.id,
-    business.categoryId,
-    4
-  );
+  const isPro = isProListingTier(business.listingTier);
+  const related = isPro
+    ? await getRelatedBusinesses(business.id, business.categoryId, 4)
+    : [];
 
   const open = isOpenNow(business.hours);
   const hoursFormatted = formatHours(business.hours);
@@ -122,8 +123,8 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
 
       <div className="overflow-x-clip pb-16">
         {/* Cover / header */}
-        <div className="h-48 md:h-64 bg-gradient-to-br from-navy/10 to-navy/5 relative">
-          {cover && (
+        <div className={`h-48 md:h-64 bg-gradient-to-br from-navy/10 to-navy/5 relative ${!isPro ? "h-24 md:h-28" : ""}`}>
+          {isPro && cover && (
             <img
               src={resolveImageUrl(cover.url)}
               alt=""
@@ -133,7 +134,8 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
         </div>
 
         <div className="mx-auto max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8">
-          <div className="relative -mt-16 md:-mt-20 flex flex-col md:flex-row gap-6 items-start">
+          <div className={`relative flex flex-col md:flex-row gap-6 items-start ${isPro ? "-mt-16 md:-mt-20" : "mt-6"}`}>
+            {isPro && (
             <div className="size-28 md:size-32 rounded-xl border-4 border-white bg-white shadow-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
               {logo ? (
                 <img src={resolveImageUrl(logo.url)} alt={business.name} className="size-full object-cover" />
@@ -143,8 +145,9 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                 </span>
               )}
             </div>
+            )}
 
-            <div className="flex-1 pt-2 md:pt-8">
+            <div className={`flex-1 ${isPro ? "pt-2 md:pt-8" : ""}`}>
               <div className="flex flex-wrap items-center gap-3">
                 <h1 className="font-display text-3xl md:text-4xl font-bold text-navy">
                   {business.name}
@@ -166,12 +169,14 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
               )}
 
               <div className="flex flex-wrap items-center gap-4 mt-4 text-sm">
+                {isPro && (
                 <span
                   className={`flex items-center gap-1.5 font-medium ${open ? "text-green-600" : "text-muted"}`}
                 >
                   <Clock className="size-4" />
                   {getOpenStatusLabel(business.hours)}
                 </span>
+                )}
                 {business.city && (
                   <span className="flex items-center gap-1.5 text-muted">
                     <MapPin className="size-4" />
@@ -184,13 +189,13 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
 
           <div className="grid lg:grid-cols-3 gap-8 mt-10">
             <div className="lg:col-span-2 space-y-8">
-              {business.shortDescription && (
+              {isPro && business.shortDescription && (
                 <p className="text-lg text-muted leading-relaxed">
                   {business.shortDescription}
                 </p>
               )}
 
-              {business.description && (
+              {isPro && business.description && (
                 <section>
                   <h2 className="font-display text-2xl font-semibold text-navy mb-4">
                     About
@@ -201,7 +206,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                 </section>
               )}
 
-              {business.services.length > 0 && (
+              {isPro && business.services.length > 0 && (
                 <section>
                   <h2 className="font-display text-2xl font-semibold text-navy mb-4">
                     Services
@@ -216,7 +221,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                 </section>
               )}
 
-              {gallery.length > 0 && (
+              {isPro && gallery.length > 0 && (
                 <section>
                   <h2 className="font-display text-2xl font-semibold text-navy mb-4">
                     Gallery
@@ -238,7 +243,34 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                 </section>
               )}
 
-              {/* Map placeholder */}
+              {isPro && (business.couponText || business.discountCode) && (
+                <section>
+                  <h2 className="font-display text-2xl font-semibold text-navy mb-4">
+                    Offers
+                  </h2>
+                  {business.couponText && (
+                    <p className="text-muted leading-relaxed">{business.couponText}</p>
+                  )}
+                  {business.discountCode && (
+                    <p className="mt-2 font-mono text-lg font-semibold text-buffalo-red">
+                      Code: {business.discountCode}
+                    </p>
+                  )}
+                </section>
+              )}
+
+              {isPro && business.lgbEmail && (
+                <section>
+                  <h2 className="font-display text-2xl font-semibold text-navy mb-2">
+                    LetsGoBuffalo Email
+                  </h2>
+                  <a href={`mailto:${business.lgbEmail}`} className="text-buffalo-red hover:underline">
+                    {business.lgbEmail}
+                  </a>
+                </section>
+              )}
+
+              {/* Location */}
               <section>
                 <h2 className="font-display text-2xl font-semibold text-navy mb-4">
                   Location
@@ -279,7 +311,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                       {formatPhone(business.phone)}
                     </a>
                   )}
-                  {business.publicEmail && (
+                  {business.publicEmail && isPro && (
                     <a
                       href={`mailto:${business.publicEmail}`}
                       className="flex items-center gap-3 text-sm hover:text-buffalo-red transition-colors break-all"
@@ -314,6 +346,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                 </CardContent>
               </Card>
 
+              {isPro && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Hours</CardTitle>
@@ -329,8 +362,9 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                   </ul>
                 </CardContent>
               </Card>
+              )}
 
-              {business.socialLinks.length > 0 && (
+              {isPro && business.socialLinks.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg">Social</CardTitle>
@@ -352,6 +386,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                 </Card>
               )}
 
+              {isPro && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Send a Message</CardTitle>
@@ -363,6 +398,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                   />
                 </CardContent>
               </Card>
+              )}
             </div>
           </div>
 

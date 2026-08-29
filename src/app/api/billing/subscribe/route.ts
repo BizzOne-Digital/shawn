@@ -98,7 +98,11 @@ export async function POST(request: Request) {
       mode: "subscription",
       customer: customerId,
       line_items: lineItems,
-      success_url: absoluteUrl("/dashboard/billing?subscribed=true"),
+      success_url: absoluteUrl(
+        businessId
+          ? `/dashboard/submit?draft=${businessId}&upgraded=true`
+          : "/dashboard/billing?subscribed=true"
+      ),
       cancel_url: absoluteUrl("/pricing?cancelled=true"),
       metadata: {
         userId: result.user.id,

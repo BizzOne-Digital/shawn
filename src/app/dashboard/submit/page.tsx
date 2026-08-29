@@ -1,3 +1,4 @@
+import { BusinessListingTier } from "@prisma/client";
 import { db } from "@/lib/db";
 import { requireBusinessOwner } from "@/lib/auth-utils";
 import { SubmissionWizard } from "@/components/submission/submission-wizard";
@@ -25,6 +26,8 @@ export default async function SubmitBusinessPage({
 
   let initialData;
   let draftStatus: string | undefined;
+  let listingTier: BusinessListingTier = BusinessListingTier.FREE_BASIC;
+
   if (params.draft) {
     const user = await requireBusinessOwner();
     const draft = await db.business.findFirst({
@@ -38,6 +41,7 @@ export default async function SubmitBusinessPage({
     });
     if (draft) {
       draftStatus = draft.status;
+      listingTier = draft.listingTier;
       initialData = {
         id: draft.id,
         name: draft.name,
@@ -68,6 +72,11 @@ export default async function SubmitBusinessPage({
           alt: img.alt ?? undefined,
           sortOrder: img.sortOrder,
         })),
+        couponText: draft.couponText ?? "",
+        discountCode: draft.discountCode ?? "",
+        lgbEmail: draft.lgbEmail?.replace(/@LetsGoBuffalo\.com$/i, "") ?? "",
+        videoUrl: draft.videoUrl ?? "",
+        searchKeywords: draft.searchKeywords ?? [],
       };
     }
   }
@@ -77,13 +86,16 @@ export default async function SubmitBusinessPage({
       <div>
         <h1 className="font-display text-3xl font-bold text-navy">List Your Business</h1>
         <p className="text-muted mt-1">
-          Complete all steps to submit your business for review
+          {listingTier === BusinessListingTier.PRO || listingTier === BusinessListingTier.SELLER
+            ? "Complete all steps for your Pro listing"
+            : "Free Basic listing: company name, address, phone, and website"}
         </p>
       </div>
       <SubmissionWizard
         categories={categories}
         initialData={initialData}
         businessStatus={draftStatus}
+        listingTier={listingTier}
       />
     </div>
   );
