@@ -209,6 +209,7 @@ model User {
   campaigns      AdvertisingCampaign[]
   subscriptions  Subscription[]
   promoRedemptions PromoCodeRedemption[]
+  fanComments      FanComment[]
 
   @@index([role])
 }
@@ -804,6 +805,7 @@ model FanPost {
 model FanComment {
   id        String           @id @default(auto()) @map("_id") @db.ObjectId
   postId    String           @db.ObjectId
+  userId    String?          @db.ObjectId
   name      String
   email     String
   message   String
@@ -812,9 +814,11 @@ model FanComment {
   updatedAt DateTime         @updatedAt
 
   post FanPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([postId, status])
   @@index([status, createdAt])
+  @@index([userId])
 }
 
 model AuditLog {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { FanCommentStatus } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireAdminApi, recordAuditLog } from "@/lib/admin-utils";
@@ -30,7 +31,16 @@ export async function PATCH(
   const comment = await db.fanComment.update({
     where: { id },
     data: { status: parsed.data.status },
+    include: { post: { select: { slug: true } } },
   });
+
+  if (parsed.data.status === FanCommentStatus.APPROVED && comment.post.slug) {
+    revalidatePath("/community");
+    revalidatePath(`/community/${comment.post.slug}`);
+  }
+
+  revalidatePath("/admin/fan-page");
+  revalidatePath("/admin/fan-page/comments");
 
   await recordAuditLog({
     userId: user!.id,

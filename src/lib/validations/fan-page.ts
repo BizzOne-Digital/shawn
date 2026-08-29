@@ -2,8 +2,6 @@ import { z } from "zod";
 
 export const fanCommentSchema = z.object({
   postId: z.string().min(1, "Post is required"),
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
   message: z.string().min(5, "Comment must be at least 5 characters").max(2000),
 });
 

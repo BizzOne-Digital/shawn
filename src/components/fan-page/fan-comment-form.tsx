@@ -1,10 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { Loader2, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { submitFanComment } from "@/lib/actions/fan-page";
@@ -12,21 +12,44 @@ import { submitFanComment } from "@/lib/actions/fan-page";
 interface FanCommentFormProps {
   postId: string;
   postTitle: string;
+  loginHref: string;
+  user?: {
+    name: string | null;
+    email: string;
+  } | null;
 }
 
-export function FanCommentForm({ postId, postTitle }: FanCommentFormProps) {
+export function FanCommentForm({ postId, postTitle, loginHref, user }: FanCommentFormProps) {
   const [pending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
       const result = await submitFanComment(formData);
       if (result.success) {
-        toast.success("Comment submitted! It will appear after review.");
+        toast.success(
+          "Comment submitted! An admin will review it before it appears on the site."
+        );
         (document.getElementById(`fan-comment-form-${postId}`) as HTMLFormElement | null)?.reset();
       } else {
         toast.error(result.error ?? "Something went wrong.");
       }
     });
+  }
+
+  if (!user) {
+    return (
+      <div className="rounded-2xl border border-border bg-soft-gray p-6 text-center">
+        <MessageCircle className="mx-auto size-8 text-buffalo-red" />
+        <h3 className="mt-3 font-display text-lg font-bold text-navy">Business accounts only</h3>
+        <p className="mt-2 text-sm text-muted">
+          Sign in with your business account to leave a comment. Comments are reviewed by admin
+          before they are published.
+        </p>
+        <Button variant="accent" className="mt-4" asChild>
+          <Link href={loginHref}>Sign in to comment</Link>
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -40,16 +63,10 @@ export function FanCommentForm({ postId, postTitle }: FanCommentFormProps) {
         <MessageCircle className="size-5 text-buffalo-red" />
         Comment on &ldquo;{postTitle}&rdquo;
       </h3>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <Label htmlFor={`fan-name-${postId}`}>Your Name</Label>
-          <Input id={`fan-name-${postId}`} name="name" required className="mt-1" />
-        </div>
-        <div>
-          <Label htmlFor={`fan-email-${postId}`}>Email</Label>
-          <Input id={`fan-email-${postId}`} name="email" type="email" required className="mt-1" />
-        </div>
-      </div>
+      <p className="text-sm text-muted">
+        Posting as <span className="font-medium text-navy">{user.name || user.email}</span>.
+        Your comment will be sent to admin for approval before it appears publicly.
+      </p>
       <div>
         <Label htmlFor={`fan-message-${postId}`}>Your comment</Label>
         <Textarea
@@ -62,7 +79,7 @@ export function FanCommentForm({ postId, postTitle }: FanCommentFormProps) {
         />
       </div>
       <Button type="submit" variant="accent" disabled={pending}>
-        {pending ? <Loader2 className="animate-spin" /> : "Post Comment"}
+        {pending ? <Loader2 className="animate-spin" /> : "Submit Comment for Review"}
       </Button>
     </form>
   );

@@ -18,7 +18,6 @@ export default async function GearPage() {
     id: `product-${index}`,
     name: txt(content, `products.item_${index}.name`),
     description: txt(content, `products.item_${index}.description`),
-    price: parseFloat(txt(content, `products.item_${index}.price`) || "0"),
     image: resolveImageUrl(txt(content, `products.item_${index}.image`)),
   }));
 
@@ -44,8 +43,8 @@ export default async function GearPage() {
               </div>
               <h2 className="mt-4 font-semibold text-navy">{product.name}</h2>
               <p className="mt-1 text-sm text-muted">{product.description}</p>
-              <p className="mt-3 font-display text-xl font-bold text-buffalo-red">
-                ${product.price.toFixed(2)}
+              <p className="mt-3 font-display text-lg font-semibold text-buffalo-red">
+                Coming Soon
               </p>
               <GearOrderForm productName={product.name} />
             </div>

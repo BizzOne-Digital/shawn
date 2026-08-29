@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import { db } from "@/lib/db";
 import { FanCommentStatus } from "@prisma/client";
+import { auth } from "@/lib/auth";
 import { FanCommentForm } from "@/components/fan-page/fan-comment-form";
 import { Button } from "@/components/ui/button";
 
@@ -31,6 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CommunityPostPage({ params }: Props) {
   const { slug } = await params;
+  const session = await auth();
 
   const post = await db.fanPost.findFirst({
     where: { slug, isPublished: true },
@@ -91,7 +93,16 @@ export default async function CommunityPostPage({ params }: Props) {
             </div>
           )}
 
-          <FanCommentForm postId={post.id} postTitle={post.title} />
+          <FanCommentForm
+            postId={post.id}
+            postTitle={post.title}
+            loginHref={`/login?callbackUrl=${encodeURIComponent(`/community/${slug}`)}`}
+            user={
+              session?.user?.role === "BUSINESS_OWNER" && session.user.email
+                ? { name: session.user.name ?? null, email: session.user.email }
+                : null
+            }
+          />
         </section>
       </div>
     </div>
