@@ -48,6 +48,12 @@ export async function POST(request: Request) {
     if (error instanceof Error && error.message.includes("cannot be submitted")) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+    if (error instanceof Error && error.message === "Image URL is required") {
+      return NextResponse.json(
+        { error: "One or more images failed to save. Please re-upload your images and try again." },
+        { status: 400 }
+      );
+    }
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2031") {
       return NextResponse.json(
         {

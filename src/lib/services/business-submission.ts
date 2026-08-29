@@ -78,10 +78,18 @@ function toSubmissionPayload(
 }
 
 async function loadOwnedBusiness(userId: string, businessId: string) {
-  return db.business.findFirst({
-    where: { id: businessId, ownerId: userId, deletedAt: null },
-    include: businessInclude,
-  });
+  const query = () =>
+    db.business.findFirst({
+      where: { id: businessId, ownerId: userId, deletedAt: null },
+      include: businessInclude,
+    });
+
+  const business = await query();
+  if (business) return business;
+
+  // Brief retry — Atlas can lag immediately after a draft save in the same session.
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  return query();
 }
 
 export function hasBusinessFormPayload(data: Record<string, unknown>): boolean {

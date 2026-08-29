@@ -126,7 +126,13 @@ export function SubmissionWizard({ categories, initialData, businessStatus }: Su
       const imagesAlreadyStored =
         Boolean(businessId) &&
         imageUrls.length > 0 &&
-        imageUrls.every((url) => lastSaved.current.includes(url));
+        !imageUrls.some((url) => url.startsWith("data:")) &&
+        imageUrls.every(
+          (url) =>
+            url.startsWith("/api/uploads/") ||
+            url.startsWith("https://") ||
+            url.startsWith("http://")
+        );
 
       const data = prepareBusinessFormPayload(formData, {
         compactImages: imagesAlreadyStored,
