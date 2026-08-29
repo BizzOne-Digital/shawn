@@ -143,6 +143,18 @@ export async function getEligibleCampaigns(
   });
 
   const eligible: EligibleCampaign[] = [];
+  const ownerDailyTotals = new Map<string, number>();
+
+  for (const campaign of campaigns) {
+    if (campaign.business.deletedAt) continue;
+    if (campaign.business.status !== "PUBLISHED") continue;
+
+    const dailyBid = Number(campaign.dailyBid);
+    ownerDailyTotals.set(
+      campaign.ownerId,
+      (ownerDailyTotals.get(campaign.ownerId) ?? 0) + dailyBid
+    );
+  }
 
   for (const campaign of campaigns) {
     if (campaign.business.deletedAt) continue;
@@ -153,8 +165,9 @@ export async function getEligibleCampaigns(
       ? Number(campaign.owner.wallet.balance)
       : 0;
     const dailyBid = Number(campaign.dailyBid);
+    const totalDailyCommitment = ownerDailyTotals.get(campaign.ownerId) ?? dailyBid;
 
-    if (!hasSufficientBalance(walletBalance, dailyBid)) continue;
+    if (!hasSufficientBalance(walletBalance, totalDailyCommitment)) continue;
 
     const activeBid = campaign.bids[0];
     eligible.push({

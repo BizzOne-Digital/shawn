@@ -12,16 +12,20 @@ export default async function AdvertisingPage() {
   const user = await requireBusinessOwner();
   const minimumDailyBid = await getMinimumDailyBid();
 
-  const [campaigns, wallet] = await Promise.all([
+  const [campaigns, wallet, categories] = await Promise.all([
     db.advertisingCampaign.findMany({
       where: { ownerId: user.id },
       include: {
         business: { select: { name: true } },
+        targets: true,
       },
       orderBy: { createdAt: "desc" },
     }),
     db.wallet.findUnique({ where: { userId: user.id } }),
+    db.category.findMany({ select: { id: true, name: true } }),
   ]);
+
+  const categoryMap = new Map(categories.map((category) => [category.id, category.name]));
 
   const walletBalance = Number(wallet?.balance ?? 0);
 
@@ -41,13 +45,14 @@ export default async function AdvertisingPage() {
         <div>
           <h1 className="font-display text-3xl font-bold text-navy">Advertising</h1>
           <p className="text-muted mt-1">
-            Bid per category from {formatCurrency(minimumDailyBid)}/day. Highest bids appear at the top of search results.
+            Each category has its own bid (from {formatCurrency(minimumDailyBid)}/day). Bids compete
+            only within that category — not site-wide. Add multiple category bids as needed.
           </p>
         </div>
         <Link href="/dashboard/advertising/new">
           <Button variant="accent">
             <PlusCircle className="size-4" />
-            New Campaign
+            New Category Bid
           </Button>
         </Link>
       </div>
@@ -60,7 +65,7 @@ export default async function AdvertisingPage() {
               <p className="font-medium text-navy">Advertising wallet</p>
               <p className="text-sm text-muted">
                 Balance: <span className="font-semibold text-navy">{formatCurrency(walletBalance)}</span>
-                {" · "}Minimum bid: {formatCurrency(minimumDailyBid)}/day
+                {" · "}Minimum: {formatCurrency(minimumDailyBid)}/category/day
               </p>
             </div>
           </div>
@@ -82,7 +87,13 @@ export default async function AdvertisingPage() {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {campaigns.map((campaign) => (
+          {campaigns.map((campaign) => {
+            const categoryTarget = campaign.targets.find((t) => t.targetType === "CATEGORY");
+            const categoryName = categoryTarget?.value
+              ? categoryMap.get(categoryTarget.value)
+              : null;
+
+            return (
             <Card key={campaign.id}>
               <CardContent className="p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -93,11 +104,14 @@ export default async function AdvertisingPage() {
                         {campaign.status.replace(/_/g, " ")}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted mt-1">{campaign.business.name}</p>
+                    <p className="text-sm text-muted mt-1">
+                      {campaign.business.name}
+                      {categoryName ? ` · ${categoryName}` : ""}
+                    </p>
                     <div className="flex gap-4 mt-2 text-xs text-muted">
                       <span>{campaign.impressions.toLocaleString()} impressions</span>
                       <span>{campaign.clicks.toLocaleString()} clicks</span>
-                      <span>{formatCurrency(Number(campaign.dailyBid))}/day</span>
+                      <span>{formatCurrency(Number(campaign.dailyBid))}/category/day</span>
                     </div>
                   </div>
                   <Link href={`/dashboard/advertising/${campaign.id}`}>
@@ -106,7 +120,8 @@ export default async function AdvertisingPage() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

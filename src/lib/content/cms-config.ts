@@ -488,7 +488,7 @@ export const CMS_PAGES: CmsPage[] = [
         f(
           "hero.subtitle",
           "Subtitle",
-          "Put your business at the top of category search results when Buffalo-area customers browse your industry. Bid per category starting at just $0.25/day.",
+          "Put your business at the top of category search results when Buffalo-area customers browse your industry. Bidding is per category — not site-wide — starting at $0.25/day per category.",
           true
         ),
         f("hero.cta", "CTA button", "Go to Advertising Dashboard"),
@@ -498,14 +498,14 @@ export const CMS_PAGES: CmsPage[] = [
         f(
           "features.item_0.description",
           "Feature 1 description",
-          "Bid within specific categories like Restaurants, Home Services, or Retail. Your ad competes only in the categories you choose.",
+          "Bid within specific categories like Restaurants, Home Services, or Retail. Each category is its own auction — you are not bidding against every business on the site.",
           true
         ),
         f("features.item_1.title", "Feature 2 title", "Flexible Bidding"),
         f(
           "features.item_1.description",
           "Feature 2 description",
-          "Set your daily bid starting at $0.25 per category. Bid on multiple categories — create separate campaigns for different amounts.",
+          "Set your daily bid starting at $0.25 per category per day. Choose one or many categories — each category gets its own bid.",
           true
         ),
         f("features.item_2.title", "Feature 3 title", "Track Performance"),
@@ -528,7 +528,7 @@ export const CMS_PAGES: CmsPage[] = [
         f(
           "bidding.step_1",
           "Step 1",
-          "Create a campaign in your dashboard and set a daily bid (minimum $0.25).",
+          "Create a campaign in your dashboard and set a daily bid per category (minimum $0.25/day each).",
           true
         ),
         f(

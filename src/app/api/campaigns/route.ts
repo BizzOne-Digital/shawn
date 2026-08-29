@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     const minimumDailyBid = await getMinimumDailyBid();
     if (Number(data.dailyBid) < minimumDailyBid) {
       return NextResponse.json(
-        { error: `Minimum bid is $${minimumDailyBid.toFixed(2)} per day` },
+        { error: `Minimum bid is $${minimumDailyBid.toFixed(2)} per category per day` },
         { status: 400 }
       );
     }
@@ -60,16 +60,9 @@ export async function POST(request: Request) {
       where: { userId: result.user.id },
     });
 
-    if (!wallet || Number(wallet.balance) < Number(data.dailyBid)) {
-      return NextResponse.json(
-        { error: "Insufficient wallet balance. Please add funds first." },
-        { status: 400 }
-      );
-    }
-
     const categories = await db.category.findMany({
       where: { id: { in: data.categoryIds }, isActive: true },
-      select: { id: true },
+      select: { id: true, name: true },
     });
 
     if (categories.length !== data.categoryIds.length) {
@@ -79,33 +72,72 @@ export async function POST(request: Request) {
       );
     }
 
-    const campaign = await db.advertisingCampaign.create({
-      data: {
-        name: data.name,
-        businessId: data.businessId,
-        ownerId: result.user.id,
-        dailyBid: data.dailyBid,
-        totalBudget: data.totalBudget,
-        startDate: data.startDate,
-        endDate: data.endDate,
-        status: "PENDING_APPROVAL",
-        targets: {
-          create: data.categoryIds.map((categoryId) => ({
-            targetType: "CATEGORY",
-            value: categoryId,
-          })),
+    const requiredBalance = Number(data.dailyBid) * categories.length;
+    if (!wallet || Number(wallet.balance) < requiredBalance) {
+      return NextResponse.json(
+        {
+          error: `Insufficient wallet balance. You need at least $${requiredBalance.toFixed(2)} ($${Number(data.dailyBid).toFixed(2)} per category × ${categories.length}).`,
         },
-        bids: {
-          create: { amount: data.dailyBid },
-        },
-      },
-      include: {
-        business: { select: { id: true, name: true } },
-        targets: true,
-      },
-    });
+        { status: 400 }
+      );
+    }
 
-    return NextResponse.json(campaign, { status: 201 });
+    const createdCampaigns = [];
+
+    for (const category of categories) {
+      const existing = await db.advertisingCampaign.findFirst({
+        where: {
+          businessId: data.businessId,
+          status: { in: ["PENDING_APPROVAL", "ACTIVE", "PAUSED"] },
+          targets: {
+            some: { targetType: "CATEGORY", value: category.id },
+          },
+        },
+      });
+
+      if (existing) {
+        return NextResponse.json(
+          { error: `This business already has an active bid for ${category.name}. Edit or pause it before creating another.` },
+          { status: 400 }
+        );
+      }
+
+      const campaignName =
+        categories.length === 1 ? data.name : `${data.name} — ${category.name}`;
+
+      const campaign = await db.advertisingCampaign.create({
+        data: {
+          name: campaignName,
+          businessId: data.businessId,
+          ownerId: result.user.id,
+          dailyBid: data.dailyBid,
+          totalBudget: data.totalBudget,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          status: "PENDING_APPROVAL",
+          targets: {
+            create: {
+              targetType: "CATEGORY",
+              value: category.id,
+            },
+          },
+          bids: {
+            create: { amount: data.dailyBid },
+          },
+        },
+        include: {
+          business: { select: { id: true, name: true } },
+          targets: true,
+        },
+      });
+
+      createdCampaigns.push(campaign);
+    }
+
+    return NextResponse.json(
+      { campaigns: createdCampaigns, created: createdCampaigns.length },
+      { status: 201 }
+    );
   } catch (error) {
     return handleApiError(error);
   }

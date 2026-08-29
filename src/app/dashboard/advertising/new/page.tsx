@@ -109,14 +109,27 @@ export default function NewCampaignPage() {
         toast.error(json.error ?? "Failed to create campaign");
         return;
       }
-      toast.success("Campaign created!");
-      router.push(`/dashboard/advertising/${json.id}`);
+      const created = json.created ?? 1;
+      if (created === 1 && json.campaigns?.[0]?.id) {
+        toast.success("Category bid created!");
+        router.push(`/dashboard/advertising/${json.campaigns[0].id}`);
+      } else {
+        toast.success(`Created ${created} category bids at $${data.dailyBid.toFixed(2)}/day each`);
+        router.push("/dashboard/advertising");
+      }
     } catch {
       toast.error("Something went wrong");
     } finally {
       setLoading(false);
     }
   }
+
+  const selectedCategoryCount = selectedCategories.length || 0;
+  const bidAmount = Number(watch("dailyBid")) || minimumDailyBid;
+  const estimatedDailyTotal =
+    selectedCategoryCount > 0 ? bidAmount * selectedCategoryCount : bidAmount;
+  const hasEnoughBalance =
+    walletBalance === null || walletBalance >= estimatedDailyTotal;
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -127,21 +140,24 @@ export default function NewCampaignPage() {
             Back
           </Button>
         </Link>
-        <h1 className="font-display text-3xl font-bold text-navy">Create Campaign</h1>
+        <h1 className="font-display text-3xl font-bold text-navy">Create Category Bid</h1>
         <p className="text-muted mt-1">
-          Bid per category — choose one or more categories. Minimum ${minimumDailyBid.toFixed(2)}/day per campaign.
+          Bidding is per category, not site-wide. Select one or more categories — each gets its own
+          daily bid starting at ${minimumDailyBid.toFixed(2)}/day.
         </p>
       </div>
 
-      {walletBalance !== null && walletBalance < minimumDailyBid && (
+      {walletBalance !== null && !hasEnoughBalance && (
         <Card className="border-amber-200 bg-amber-50">
           <CardContent className="p-4 text-sm text-amber-900">
-            Your wallet balance (${walletBalance.toFixed(2)}) is below the minimum daily bid.
+            Your wallet balance (${walletBalance.toFixed(2)}) is below the estimated daily total
+            (${estimatedDailyTotal.toFixed(2)} for {selectedCategoryCount || 1} categor
+            {selectedCategoryCount === 1 ? "y" : "ies"}).
             {" "}
             <Link href="/dashboard/billing" className="font-medium underline">
               Add funds
             </Link>{" "}
-            before creating a campaign.
+            or ask an admin to add advertising credit to your account.
           </CardContent>
         </Card>
       )}
@@ -183,8 +199,9 @@ export default function NewCampaignPage() {
             <div>
               <Label>Categories to bid on</Label>
               <p className="text-xs text-muted mt-1 mb-3">
-                Your ad competes only within each selected category. Create separate campaigns for
-                different bids per category.
+                Each category is a separate bid — you only compete within that category, not across
+                the whole site. Select as many categories as you want; we create one bid per category
+                at the daily amount below.
               </p>
               {categories.length === 0 ? (
                 <p className="text-sm text-muted">No categories available yet. Ask an admin to add categories.</p>
@@ -211,7 +228,7 @@ export default function NewCampaignPage() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <Label htmlFor="dailyBid">Daily Bid ($)</Label>
+                <Label htmlFor="dailyBid">Daily Bid per Category ($)</Label>
                 <Input
                   id="dailyBid"
                   type="number"
@@ -221,9 +238,16 @@ export default function NewCampaignPage() {
                   className="mt-1"
                 />
                 <p className="text-xs text-muted mt-1">
-                  Minimum ${minimumDailyBid.toFixed(2)} per day
+                  Minimum ${minimumDailyBid.toFixed(2)} per category per day
                   {walletBalance !== null && (
                     <> · Wallet balance: ${walletBalance.toFixed(2)}</>
+                  )}
+                  {selectedCategoryCount > 0 && (
+                    <>
+                      {" "}
+                      · Estimated daily total: ${estimatedDailyTotal.toFixed(2)} (
+                      {selectedCategoryCount} categor{selectedCategoryCount === 1 ? "y" : "ies"})
+                    </>
                   )}
                 </p>
                 {errors.dailyBid && (
@@ -268,11 +292,12 @@ export default function NewCampaignPage() {
               disabled={
                 loading ||
                 categories.length === 0 ||
-                (walletBalance !== null && walletBalance < minimumDailyBid)
+                selectedCategoryCount === 0 ||
+                !hasEnoughBalance
               }
             >
               {loading && <Loader2 className="animate-spin" />}
-              Create Campaign
+              Create Category Bid{selectedCategoryCount > 1 ? "s" : ""}
             </Button>
           </form>
         </CardContent>

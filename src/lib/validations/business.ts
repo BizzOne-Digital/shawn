@@ -205,7 +205,7 @@ export const campaignSchema = z.object({
     .min(1, "Select at least one category to bid on"),
   dailyBid: z.coerce
     .number()
-    .min(0.25, "Minimum bid is $0.25 per day")
+    .min(0.25, "Minimum bid is $0.25 per category per day")
     .max(1000),
   totalBudget: z.coerce.number().min(0.25).optional(),
   startDate: z.coerce.date(),
