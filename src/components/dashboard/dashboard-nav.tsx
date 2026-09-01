@@ -20,7 +20,9 @@ import { SiteLogo } from "@/components/layout/site-logo";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const navItems = [
+import { UserRole } from "@prisma/client";
+
+const businessNavItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/businesses", label: "My Businesses", icon: Building2 },
   { href: "/dashboard/submit", label: "Add Business", icon: PlusCircle },
@@ -30,10 +32,19 @@ const navItems = [
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
+const individualNavItems = [
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/email-enrollment", label: "LGB Email", icon: Mail },
+  { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+];
+
 export function DashboardNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isIndividual = session?.user?.role === UserRole.INDIVIDUAL;
+  const navItems = isIndividual ? individualNavItems : businessNavItems;
 
   return (
     <>
@@ -59,7 +70,9 @@ export function DashboardNav() {
               height={53}
               imageClassName="h-10 w-auto"
             />
-            <p className="text-white/60 text-xs mt-2">Business Dashboard</p>
+            <p className="text-white/60 text-xs mt-2">
+              {isIndividual ? "Member Dashboard" : "Business Dashboard"}
+            </p>
           </div>
 
           <nav className="flex-1 p-4 space-y-1">

@@ -1,11 +1,11 @@
 import { type ReactNode } from "react";
-import { requireBusinessOwner } from "@/lib/auth-utils";
+import { requireDashboardUser } from "@/lib/auth-utils";
 import { DashboardNav } from "@/components/dashboard/dashboard-nav";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  await requireBusinessOwner();
+  await requireDashboardUser();
 
   return (
     <div className="min-h-screen overflow-x-clip bg-soft-gray">

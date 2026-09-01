@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { UserRole } from "@prisma/client";
 import { db } from "@/lib/db";
-import { requireBusinessOwner } from "@/lib/auth-utils";
+import { requireDashboardUser, isIndividualMember } from "@/lib/auth-utils";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,51 @@ import {
 import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 export default async function DashboardPage() {
-  const user = await requireBusinessOwner();
+  const user = await requireDashboardUser();
+  const isIndividual = isIndividualMember(user.role);
+
+  if (isIndividual) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="font-display text-3xl font-bold text-navy">
+            Welcome back{user.name ? `, ${user.name.split(" ")[0]}` : ""}
+          </h1>
+          <p className="text-muted mt-1">Your individual member account</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Get your @LetsGoBuffalo.com email</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted">
+                Request a custom @LetsGoBuffalo.com address with forwarding to your personal inbox.
+              </p>
+              <Link href="/email-enrollment">
+                <Button variant="accent">Request Email</Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Upgrade to Individual Pro</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted">
+                Unlock premium perks including priority email setup and member benefits.
+              </p>
+              <Link href="/dashboard/subscribe?plan=individual-pro">
+                <Button variant="outline">View Plans</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   const businesses = await db.business.findMany({
     where: { ownerId: user.id, ...NOT_DELETED },

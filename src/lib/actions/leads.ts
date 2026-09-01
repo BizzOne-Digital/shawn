@@ -8,6 +8,7 @@ import {
   normalizeLgbEmailAddress,
 } from "@/lib/services/lgb-email-availability";
 import { z } from "zod";
+import { verifyCaptcha } from "@/lib/captcha";
 
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -158,18 +159,27 @@ export async function submitLgbEmailRequest(formData: FormData) {
   const parsed = lgbEmailRequestSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
+    phone: formData.get("phone"),
     requestedAddress: formData.get("requestedLocalPart"),
     backupAddress: formData.get("backupLocalPart"),
     forwardTo: formData.get("forwardTo"),
     businessName: formData.get("businessName") || undefined,
+    captchaToken: formData.get("captchaToken"),
+    captchaAnswer: formData.get("captchaAnswer"),
   });
 
   if (!parsed.success) {
     return { success: false, error: parsed.error.errors[0]?.message ?? "Invalid request" };
   }
 
-  const requestedAddress = normalizeLgbEmailAddress(parsed.data.requestedAddress);
-  const backupAddress = normalizeLgbEmailAddress(parsed.data.backupAddress);
+  if (!verifyCaptcha(parsed.data.captchaToken, parsed.data.captchaAnswer)) {
+    return { success: false, error: "Incorrect security check answer. Please try again." };
+  }
+
+  const { captchaToken: _token, captchaAnswer: _answer, phone, ...request } = parsed.data;
+
+  const requestedAddress = normalizeLgbEmailAddress(request.requestedAddress);
+  const backupAddress = normalizeLgbEmailAddress(request.backupAddress);
 
   const [primaryTaken, backupTaken] = await Promise.all([
     isLgbEmailAddressTaken(requestedAddress),
@@ -186,16 +196,18 @@ export async function submitLgbEmailRequest(formData: FormData) {
   try {
     await db.lead.create({
       data: {
-        name: parsed.data.name,
-        email: parsed.data.email,
-        message: `LGB Email request: ${requestedAddress} (backup: ${backupAddress}) → forward to ${parsed.data.forwardTo}`,
+        name: request.name,
+        email: request.email,
+        phone,
+        message: `LGB Email request: ${requestedAddress} (backup: ${backupAddress}) → forward to ${request.forwardTo}`,
         source: LeadSource.LGB_EMAIL,
         consent: true,
         metadata: {
           requestedAddress,
           backupAddress,
-          forwardTo: parsed.data.forwardTo,
-          businessName: parsed.data.businessName ?? null,
+          forwardTo: request.forwardTo,
+          businessName: request.businessName ?? null,
+          phone,
           primaryAvailable: !primaryTaken,
           backupAvailable: !backupTaken,
         },
@@ -204,7 +216,8 @@ export async function submitLgbEmailRequest(formData: FormData) {
 
     const { sendLgbEmailNotification } = await import("@/lib/services/email");
     await sendLgbEmailNotification({
-      ...parsed.data,
+      ...request,
+      phone,
       requestedAddress,
       backupAddress,
     });

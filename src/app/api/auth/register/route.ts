@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { hash } from "bcryptjs";
-import { UserRole } from "@prisma/client";
+import { UserRole, MemberType } from "@prisma/client";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { registerSchema } from "@/lib/validations/auth";
@@ -24,13 +24,16 @@ export async function POST(request: Request) {
 
     const passwordHash = await hash(data.password, 12);
 
+    const isIndividual = data.memberType === MemberType.INDIVIDUAL;
+
     const user = await db.user.create({
       data: {
         name: data.name,
         email: data.email,
         passwordHash,
         phone: data.phone,
-        role: UserRole.BUSINESS_OWNER,
+        role: isIndividual ? UserRole.INDIVIDUAL : UserRole.BUSINESS_OWNER,
+        memberType: data.memberType,
       },
     });
 

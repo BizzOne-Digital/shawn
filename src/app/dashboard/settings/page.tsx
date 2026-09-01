@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { UserRole } from "@prisma/client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,7 +14,7 @@ import { toast } from "sonner";
 import { Loader2, User } from "lucide-react";
 
 const settingsSchema = z.object({
-  name: z.string().min(2, "Business name must be at least 2 characters"),
+  name: z.string().min(2, "Name must be at least 2 characters"),
   phone: z.string().optional(),
 });
 
@@ -22,6 +23,7 @@ type SettingsForm = z.infer<typeof settingsSchema>;
 export default function SettingsPage() {
   const { data: session, update } = useSession();
   const [loading, setLoading] = useState(false);
+  const isIndividual = session?.user?.role === UserRole.INDIVIDUAL;
 
   const {
     register,
@@ -86,7 +88,7 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <Label htmlFor="name">Business Name</Label>
+              <Label htmlFor="name">{isIndividual ? "Your Name" : "Business Name"}</Label>
               <Input id="name" {...register("name")} className="mt-1" />
               {errors.name && (
                 <p className="text-sm text-buffalo-red mt-1">{errors.name.message}</p>

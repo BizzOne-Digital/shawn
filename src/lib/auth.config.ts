@@ -1,5 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
-import type { UserRole } from "@prisma/client";
+import type { MemberType, UserRole } from "@prisma/client";
 
 export const authConfig = {
   pages: {
@@ -12,6 +12,7 @@ export const authConfig = {
       if (user) {
         token.id = user.id!;
         token.role = (user as { role: UserRole }).role;
+        token.memberType = (user as { memberType?: MemberType }).memberType;
       }
       return token;
     },
@@ -19,6 +20,7 @@ export const authConfig = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as UserRole;
+        session.user.memberType = token.memberType as MemberType;
       }
       return session;
     },

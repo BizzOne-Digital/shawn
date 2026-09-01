@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { db } from "@/lib/db";
 import { z } from "zod";
-import { getEmailAdapter } from "@/lib/services/email";
+import { sendPasswordResetEmail } from "@/lib/services/email";
 import { absoluteUrl } from "@/lib/utils";
 
 const schema = z.object({
@@ -24,13 +24,19 @@ export async function POST(request: Request) {
       await db.passwordResetToken.create({ data: { email, token, expires } });
 
       const resetUrl = absoluteUrl(`/reset-password?token=${token}`);
-      const emailAdapter = getEmailAdapter();
-      await emailAdapter.send({
-        to: email,
-        subject: "Reset your Let's Go Buffalo password",
-        html: `<p>Click <a href="${resetUrl}">here</a> to reset your password. This link expires in 1 hour.</p>`,
-        text: `Reset your password: ${resetUrl}`,
-      });
+
+      try {
+        await sendPasswordResetEmail(email, resetUrl);
+      } catch (emailError) {
+        console.error("[forgot-password] Failed to send reset email:", emailError);
+        return NextResponse.json(
+          {
+            error:
+              "We could not send the reset email right now. Please try again later or contact support.",
+          },
+          { status: 503 }
+        );
+      }
     }
 
     return NextResponse.json({ success: true });
@@ -38,6 +44,7 @@ export async function POST(request: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 });
     }
+    console.error("[forgot-password] Unexpected error:", error);
     return NextResponse.json({ error: "Request failed" }, { status: 500 });
   }
 }

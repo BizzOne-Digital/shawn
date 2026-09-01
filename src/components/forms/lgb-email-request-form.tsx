@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { submitLgbEmailRequest } from "@/lib/actions/leads";
 import { LGB_EMAIL_DOMAIN } from "@/lib/validations/lgb-email";
+import { CaptchaField } from "@/components/forms/captcha-field";
 
 type AvailabilityState = "idle" | "checking" | "available" | "taken" | "error";
 
@@ -149,14 +150,26 @@ export function LgbEmailRequestForm() {
           <Input id="lgb-name" name="name" required className="mt-1" placeholder="Sally Smith" />
         </div>
         <div>
-          <Label htmlFor="lgb-business-name">Business Name (optional)</Label>
+          <Label htmlFor="lgb-phone">Phone Number</Label>
           <Input
-            id="lgb-business-name"
-            name="businessName"
+            id="lgb-phone"
+            name="phone"
+            type="tel"
+            required
             className="mt-1"
-            placeholder="Joe's Pizza"
+            placeholder="(716) 555-0100"
           />
         </div>
+      </div>
+
+      <div>
+        <Label htmlFor="lgb-business-name">Business Name (optional)</Label>
+        <Input
+          id="lgb-business-name"
+          name="businessName"
+          className="mt-1"
+          placeholder="Joe's Pizza"
+        />
       </div>
 
       <div>
@@ -234,6 +247,8 @@ export function LgbEmailRequestForm() {
           Messages sent to your @LetsGoBuffalo.com address will forward here.
         </p>
       </div>
+
+      <CaptchaField />
 
       <Button type="submit" variant="accent" size="lg" disabled={pending} className="w-full sm:w-auto">
         {pending ? <Loader2 className="animate-spin" /> : "Send Request"}

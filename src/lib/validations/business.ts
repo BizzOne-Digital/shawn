@@ -247,6 +247,8 @@ export const STEP_LABELS = [
 
 export const FREE_STEP_FIELD_MAP: Partial<Record<number, (keyof BusinessSubmissionForm)[]>> = {
   0: ["name", "phone", "website"],
+  1: ["categoryId"],
+  3: ["address", "city", "state", "zipCode"],
 };
 
 export const campaignSchema = z.object({

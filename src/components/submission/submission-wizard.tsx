@@ -321,10 +321,11 @@ export function SubmissionWizard({
         return;
       }
 
+      const payload = prepareBusinessFormPayload(getValues());
       const res = await fetch("/api/businesses/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessId: savedId }),
+        body: JSON.stringify({ businessId: savedId, ...payload }),
       });
 
       if (!res.ok) {

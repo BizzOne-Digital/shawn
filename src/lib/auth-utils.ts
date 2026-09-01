@@ -36,6 +36,19 @@ export async function requireBusinessOwner() {
   );
 }
 
+export async function requireDashboardUser() {
+  return requireRole(
+    UserRole.BUSINESS_OWNER,
+    UserRole.INDIVIDUAL,
+    UserRole.ADMIN,
+    UserRole.MODERATOR
+  );
+}
+
+export function isIndividualMember(role: UserRole) {
+  return role === UserRole.INDIVIDUAL;
+}
+
 export function isAdmin(role: UserRole) {
   return role === UserRole.ADMIN || role === UserRole.MODERATOR;
 }

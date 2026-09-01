@@ -15,7 +15,8 @@ import {
 import { formatDate } from "@/lib/admin-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { truncate, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { LeadMessageDialog } from "@/components/admin/lead-message-dialog";
 
 interface Props {
   searchParams: Promise<{ status?: string; source?: string }>;
@@ -34,9 +35,10 @@ function getLgbEmailDetails(metadata: unknown) {
     typeof data.backupAddress === "string" ? data.backupAddress : null;
   const forwardTo = typeof data.forwardTo === "string" ? data.forwardTo : null;
   const businessName = typeof data.businessName === "string" ? data.businessName : null;
+  const phone = typeof data.phone === "string" ? data.phone : null;
 
   if (!requestedAddress && !forwardTo) return null;
-  return { requestedAddress, backupAddress, forwardTo, businessName };
+  return { requestedAddress, backupAddress, forwardTo, businessName, phone };
 }
 
 export default async function LeadsPage({ searchParams }: Props) {
@@ -137,6 +139,11 @@ export default async function LeadsPage({ searchParams }: Props) {
                                 <span className="text-muted">Forward to:</span> {lgbDetails.forwardTo}
                               </p>
                             )}
+                            {lgbDetails.phone && (
+                              <p>
+                                <span className="text-muted">Phone:</span> {lgbDetails.phone}
+                              </p>
+                            )}
                             {lgbDetails.businessName && (
                               <p>
                                 <span className="text-muted">Business:</span> {lgbDetails.businessName}
@@ -144,7 +151,17 @@ export default async function LeadsPage({ searchParams }: Props) {
                             )}
                           </div>
                         ) : (
-                          truncate(lead.message, 80)
+                          <div className="space-y-1">
+                            <p className="line-clamp-2">{lead.message}</p>
+                            <LeadMessageDialog
+                              name={lead.name}
+                              email={lead.email}
+                              phone={lead.phone}
+                              message={lead.message}
+                              source={formatLeadSource(lead.source)}
+                              createdAt={formatDate(lead.createdAt)}
+                            />
+                          </div>
                         )}
                       </TableCell>
                       <TableCell>

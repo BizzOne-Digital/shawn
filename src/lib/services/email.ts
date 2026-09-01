@@ -38,13 +38,21 @@ function getSmtpTransporter(): Transporter {
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT ?? 587),
       secure: process.env.SMTP_SECURE === "true",
+      requireTLS: true,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
+      tls: {
+        minVersion: "TLSv1.2",
+      },
     });
   }
   return smtpTransporter;
+}
+
+function isSmtpConfigured(): boolean {
+  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
 }
 
 class SmtpEmailAdapter implements EmailAdapter {
@@ -62,15 +70,48 @@ class SmtpEmailAdapter implements EmailAdapter {
 }
 
 export function getEmailAdapter(): EmailAdapter {
-  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  if (isSmtpConfigured()) {
     return new SmtpEmailAdapter();
   }
   return new ConsoleEmailAdapter();
 }
 
+export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
+  const email = getEmailAdapter();
+  const from = getFromAddress();
+
+  if (!isSmtpConfigured()) {
+    console.warn(
+      "[email] SMTP is not configured — password reset link logged to console instead of sent:",
+      resetUrl
+    );
+  }
+
+  await email.send({
+    to,
+    subject: "Reset your Let's Go Buffalo password",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto;">
+        <h2 style="color: #1a2744;">Reset your password</h2>
+        <p>We received a request to reset the password for your Let's Go Buffalo account.</p>
+        <p style="margin: 24px 0;">
+          <a href="${resetUrl}" style="background: #c8102e; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+            Reset Password
+          </a>
+        </p>
+        <p style="color: #666; font-size: 14px;">This link expires in 1 hour. If you did not request a reset, you can ignore this email.</p>
+        <p style="color: #999; font-size: 12px; word-break: break-all;">${resetUrl}</p>
+        <p style="color: #999; font-size: 12px;">Sent from ${from}</p>
+      </div>
+    `,
+    text: `Reset your Let's Go Buffalo password: ${resetUrl}\n\nThis link expires in 1 hour.`,
+  });
+}
+
 export async function sendLgbEmailNotification(request: {
   name: string;
   email: string;
+  phone?: string;
   requestedAddress: string;
   backupAddress: string;
   forwardTo: string;
@@ -86,12 +127,13 @@ export async function sendLgbEmailNotification(request: {
       <h2>New @LetsGoBuffalo.com Email Request</h2>
       <p><strong>Name:</strong> ${request.name}</p>
       <p><strong>Contact Email:</strong> ${request.email}</p>
+      ${request.phone ? `<p><strong>Phone:</strong> ${request.phone}</p>` : ""}
       ${request.businessName ? `<p><strong>Business:</strong> ${request.businessName}</p>` : ""}
       <p><strong>Preferred Address:</strong> ${request.requestedAddress}</p>
       <p><strong>Backup Address:</strong> ${request.backupAddress}</p>
       <p><strong>Forward To:</strong> ${request.forwardTo}</p>
     `,
-    text: `LGB email request from ${request.name} (${request.email}). Preferred: ${request.requestedAddress}. Backup: ${request.backupAddress}. Forward to: ${request.forwardTo}`,
+    text: `LGB email request from ${request.name} (${request.email}${request.phone ? `, ${request.phone}` : ""}). Preferred: ${request.requestedAddress}. Backup: ${request.backupAddress}. Forward to: ${request.forwardTo}`,
   });
 }
 

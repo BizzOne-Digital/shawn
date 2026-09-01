@@ -14,7 +14,7 @@ export default async function AdminPlansPage() {
     <div>
       <PageHeader
         title="Plans & Pricing"
-        description="Manage membership tiers, pricing, and promotional codes"
+        description="Manage membership tiers and pricing shown on the public /pricing page"
       />
       <PlansManager
         plans={plans.map((p) => ({

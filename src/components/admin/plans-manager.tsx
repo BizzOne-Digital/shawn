@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2, Plus, Pencil, Tag } from "lucide-react";
@@ -60,6 +60,14 @@ export function PlansManager({ plans: initialPlans, promoCodes: initialPromos }:
   });
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    setPlans(initialPlans);
+  }, [initialPlans]);
+
+  useEffect(() => {
+    setPromos(initialPromos);
+  }, [initialPromos]);
+
   function startEdit(plan: PlanRow) {
     setEditingId(plan.id);
     setEditForm({
@@ -78,6 +86,19 @@ export function PlansManager({ plans: initialPlans, promoCodes: initialPromos }:
         body: JSON.stringify(editForm),
       });
       if (!res.ok) throw new Error("Failed to save");
+      const updated = await res.json();
+      setPlans((prev) =>
+        prev.map((plan) =>
+          plan.id === id
+            ? {
+                ...plan,
+                monthlyPrice: Number(updated.monthlyPrice),
+                yearlyPrice: Number(updated.yearlyPrice),
+                isActive: updated.isActive,
+              }
+            : plan
+        )
+      );
       toast.success("Plan updated");
       setEditingId(null);
       router.refresh();

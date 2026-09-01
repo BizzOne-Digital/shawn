@@ -47,6 +47,9 @@ export const lgbEmailRequestSchema = z
     backupAddress: requestedAddressField("Choose a backup @LetsGoBuffalo.com address"),
     forwardTo: z.string().email("Enter the email where mail should forward"),
     businessName: z.string().optional(),
+    phone: z.string().min(10, "Phone number is required").max(20),
+    captchaToken: z.string().min(1, "Captcha is required"),
+    captchaAnswer: z.string().min(1, "Please answer the security check"),
   })
   .refine((data) => data.requestedAddress !== data.backupAddress, {
     message: "Backup address must be different from your first choice",

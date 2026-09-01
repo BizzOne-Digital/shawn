@@ -1,3 +1,4 @@
+import { BusinessListingTier } from "@prisma/client";
 import { db } from "@/lib/db";
 import {
   generateUniqueSlug,
@@ -7,6 +8,7 @@ import {
   businessSubmissionSchema,
   freeBusinessSubmissionSchema,
   type BusinessSubmissionForm,
+  type FreeBusinessSubmissionForm,
 } from "@/lib/validations/business";
 import { isProListingTier } from "@/lib/services/listing-tier";
 import { sendListingStatusEmail } from "@/lib/services/email";
@@ -21,6 +23,22 @@ const businessInclude = {
   images: true,
   socialLinks: true,
 } as const;
+
+function buildFreeBusinessData(data: FreeBusinessSubmissionForm) {
+  return {
+    name: data.name,
+    phone: data.phone,
+    website: data.website || null,
+    categoryId: data.categoryId || null,
+    subcategoryId: data.subcategoryId || null,
+    suggestedCategory: data.suggestedCategory || null,
+    address: data.address,
+    city: data.city,
+    state: data.state,
+    zipCode: data.zipCode,
+    locationId: data.locationId || null,
+  };
+}
 
 function buildBusinessData(data: BusinessSubmissionForm) {
   return {
@@ -47,6 +65,15 @@ function buildBusinessData(data: BusinessSubmissionForm) {
     videoUrl: data.videoUrl || null,
     searchKeywords: data.searchKeywords ?? [],
   };
+}
+
+function parseSubmissionData(rawData: unknown, tier: BusinessListingTier) {
+  const schema = isProListingTier(tier) ? businessSubmissionSchema : freeBusinessSubmissionSchema;
+  const result = schema.safeParse(rawData);
+  if (!result.success) {
+    throw result.error;
+  }
+  return result.data;
 }
 
 function toSubmissionPayload(
@@ -123,11 +150,7 @@ export async function submitOwnedBusiness(userId: string, businessId: string) {
   }
 
   const payload = toSubmissionPayload(business);
-  if (isProListingTier(business.listingTier)) {
-    businessSubmissionSchema.parse(payload);
-  } else {
-    freeBusinessSubmissionSchema.parse(payload);
-  }
+  parseSubmissionData(payload, business.listingTier);
 
   if (!SUBMITTABLE_STATUSES.includes(business.status as (typeof SUBMITTABLE_STATUSES)[number])) {
     throw new Error("Business cannot be submitted in its current status");
@@ -180,14 +203,17 @@ export async function saveAndSubmitBusiness(
   businessId: string | undefined,
   rawData: unknown
 ) {
-  const data = businessSubmissionSchema.parse(rawData);
   const normalizedId = businessId?.trim() || undefined;
 
-  const existing =
-    normalizedId &&
-    (await db.business.findFirst({
-      where: { id: normalizedId, ownerId: userId, ...NOT_DELETED },
-    }));
+  const existing = normalizedId
+    ? await db.business.findFirst({
+        where: { id: normalizedId, ownerId: userId, ...NOT_DELETED },
+      })
+    : null;
+
+  const tier = existing?.listingTier ?? BusinessListingTier.FREE_BASIC;
+  const isPro = isProListingTier(tier);
+  const data = parseSubmissionData(rawData, tier);
 
   let businessIdToUse: string;
 
@@ -200,7 +226,9 @@ export async function saveAndSubmitBusiness(
     const updated = await db.business.update({
       where: { id: existing.id },
       data: {
-        ...buildBusinessData(data),
+        ...(isPro
+          ? buildBusinessData(data as BusinessSubmissionForm)
+          : buildFreeBusinessData(data as FreeBusinessSubmissionForm)),
         slug,
       },
     });
@@ -209,16 +237,21 @@ export async function saveAndSubmitBusiness(
     const slug = await generateUniqueSlug(data.name);
     const created = await db.business.create({
       data: {
-        ...buildBusinessData(data),
+        ...(isPro
+          ? buildBusinessData(data as BusinessSubmissionForm)
+          : buildFreeBusinessData(data as FreeBusinessSubmissionForm)),
         slug,
         ownerId: userId,
         status: "DRAFT",
+        listingTier: tier,
       },
     });
     businessIdToUse = created.id;
   }
 
-  await syncBusinessRelations(businessIdToUse, data);
+  if (isPro) {
+    await syncBusinessRelations(businessIdToUse, data as BusinessSubmissionForm);
+  }
 
   return submitOwnedBusiness(userId, businessIdToUse);
 }
