@@ -47,6 +47,21 @@ export function LocationManager({ locations: initial }: { locations: LocationRow
         const data = await res.json();
         throw new Error(data.error ?? "Failed to create");
       }
+      const created = await res.json();
+      setLocations((prev) => [
+        ...prev,
+        {
+          id: created.id,
+          city: created.city,
+          state: created.state,
+          region: created.region,
+          zipCode: created.zipCode ?? null,
+          slug: created.slug,
+          isActive: created.isActive ?? true,
+          businessCount: 0,
+        },
+      ]);
+      setForm({ city: "", state: "NY", zipCode: "", region: "Western New York" });
       toast.success("Location created");
       setOpen(false);
       router.refresh();

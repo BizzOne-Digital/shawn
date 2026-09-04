@@ -40,10 +40,10 @@ export function FanCommentForm({ postId, postTitle, loginHref, user }: FanCommen
     return (
       <div className="rounded-2xl border border-border bg-soft-gray p-6 text-center">
         <MessageCircle className="mx-auto size-8 text-buffalo-red" />
-        <h3 className="mt-3 font-display text-lg font-bold text-navy">Business accounts only</h3>
+        <h3 className="mt-3 font-display text-lg font-bold text-navy">Members only</h3>
         <p className="mt-2 text-sm text-muted">
-          Sign in with your business account to leave a comment. Comments are reviewed by admin
-          before they are published.
+          Sign in with your business or personal account to leave a comment. Comments are reviewed
+          by admin before they are published.
         </p>
         <Button variant="accent" className="mt-4" asChild>
           <Link href={loginHref}>Sign in to comment</Link>

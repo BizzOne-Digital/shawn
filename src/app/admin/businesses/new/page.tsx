@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { ListingStatus } from "@prisma/client";
+import { ListingStatus, BusinessListingTier } from "@prisma/client";
 import { PageHeader } from "@/components/admin/page-header";
 import { BusinessEditForm } from "@/components/admin/business-edit-form";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,7 @@ export default async function NewBusinessPage() {
           isFeatured: false,
           categoryId: "",
           subcategoryId: "",
+          listingTier: BusinessListingTier.FREE_BASIC,
         }}
       />
     </div>

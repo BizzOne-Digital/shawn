@@ -122,7 +122,7 @@ export async function sendLgbEmailNotification(request: {
 
   await email.send({
     to: destination,
-    subject: `New LGB email request: ${request.requestedAddress}`,
+    subject: `New custom email request: ${request.requestedAddress}`,
     html: `
       <h2>New @LetsGoBuffalo.com Email Request</h2>
       <p><strong>Name:</strong> ${request.name}</p>
@@ -133,7 +133,7 @@ export async function sendLgbEmailNotification(request: {
       <p><strong>Backup Address:</strong> ${request.backupAddress}</p>
       <p><strong>Forward To:</strong> ${request.forwardTo}</p>
     `,
-    text: `LGB email request from ${request.name} (${request.email}${request.phone ? `, ${request.phone}` : ""}). Preferred: ${request.requestedAddress}. Backup: ${request.backupAddress}. Forward to: ${request.forwardTo}`,
+    text: `Custom email request from ${request.name} (${request.email}${request.phone ? `, ${request.phone}` : ""}). Preferred: ${request.requestedAddress}. Backup: ${request.backupAddress}. Forward to: ${request.forwardTo}`,
   });
 }
 

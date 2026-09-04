@@ -31,8 +31,29 @@ export function CaptchaField({ error }: CaptchaFieldProps) {
   }, []);
 
   useEffect(() => {
-    void loadChallenge();
-  }, [loadChallenge]);
+    let active = true;
+
+    async function fetchChallenge() {
+      try {
+        const res = await fetch("/api/public/captcha");
+        const data = await res.json();
+        if (!active) return;
+        setQuestion(data.question ?? "");
+        setToken(data.token ?? "");
+      } catch {
+        if (!active) return;
+        setQuestion("");
+        setToken("");
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    void fetchChallenge();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <div className="rounded-lg border border-border bg-soft-gray/50 p-4">

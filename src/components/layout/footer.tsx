@@ -12,10 +12,11 @@ import { txt } from "@/lib/content/content-text";
 
 const footerNav = {
   explore: [
+    { href: "/pricing", label: "Join" },
     { href: "/directory", label: "Business Directory" },
     { href: "/community", label: "Community Fan Page" },
     { href: "/gear", label: "Gear Shop" },
-    { href: "/email-enrollment", label: "@LetsGoBuffalo Email" },
+    { href: "/email-enrollment", label: "Custom Email" },
     { href: "/search", label: "Search" },
     { href: "/advertise", label: "Advertise" },
   ],

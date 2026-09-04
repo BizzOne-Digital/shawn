@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { ListingStatus } from "@prisma/client";
+import type { BusinessListingTier, ListingStatus } from "@prisma/client";
 import { ListingImagesField, type ListingImageValue } from "@/components/forms/listing-images-field";
 
 interface Category {
@@ -43,6 +43,7 @@ interface BusinessFormData {
   isFeatured: boolean;
   categoryId: string;
   subcategoryId: string;
+  listingTier: BusinessListingTier;
 }
 
 interface BusinessEditFormProps {
@@ -139,6 +140,22 @@ export function BusinessEditForm({
                 {(["DRAFT", "PENDING_REVIEW", "CHANGES_REQUESTED", "APPROVED", "PUBLISHED", "REJECTED", "SUSPENDED", "ARCHIVED"] as ListingStatus[]).map((s) => (
                   <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="listingTier">Listing Tier</Label>
+            <Select
+              value={form.listingTier}
+              onValueChange={(v) => updateField("listingTier", v as BusinessListingTier)}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="FREE_BASIC">Free Basic</SelectItem>
+                <SelectItem value="PRO">Pro</SelectItem>
+                <SelectItem value="SELLER">Seller</SelectItem>
               </SelectContent>
             </Select>
           </div>

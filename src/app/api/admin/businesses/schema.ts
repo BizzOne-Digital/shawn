@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ListingStatus, ImageType } from "@prisma/client";
+import { ListingStatus, ImageType, BusinessListingTier } from "@prisma/client";
 
 const adminBusinessImageSchema = z.object({
   url: z.string().min(1),
@@ -26,5 +26,6 @@ export const businessSchema = z.object({
   isFeatured: z.boolean().optional(),
   categoryId: z.string().optional(),
   subcategoryId: z.string().optional(),
+  listingTier: z.nativeEnum(BusinessListingTier).optional(),
   images: z.array(adminBusinessImageSchema).optional(),
 });

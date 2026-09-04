@@ -57,7 +57,7 @@ export const descriptionSchema = z.object({
   description: z
     .string()
     .min(50, "Description must be at least 50 characters")
-    .max(5000),
+    .max(1000, "Pro listings allow up to 1000 characters"),
   services: z.array(z.string().min(1)),
   tags: z.array(z.string().min(1)).max(10),
 });
@@ -168,6 +168,14 @@ export const businessSubmissionSchema = basicInfoSchema
 
 export const freeBusinessSubmissionSchema = freeBasicInfoSchema
   .merge(categorySchema)
+  .merge(
+    z.object({
+      shortDescription: z
+        .string()
+        .min(1, "Short description is required")
+        .max(60, "Free listings allow up to 60 characters"),
+    })
+  )
   .merge(locationSchema);
 
 export type BasicInfoForm = z.infer<typeof basicInfoSchema>;
@@ -248,8 +256,16 @@ export const STEP_LABELS = [
 export const FREE_STEP_FIELD_MAP: Partial<Record<number, (keyof BusinessSubmissionForm)[]>> = {
   0: ["name", "phone", "website"],
   1: ["categoryId"],
+  2: ["shortDescription"],
   3: ["address", "city", "state", "zipCode"],
 };
+
+export const freeShortDescriptionSchema = z.object({
+  shortDescription: z
+    .string()
+    .min(1, "Description is required")
+    .max(60, "Free listings allow up to 60 characters"),
+});
 
 export const campaignSchema = z.object({
   name: z.string().min(3).max(100),

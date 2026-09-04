@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { UserRole } from "@prisma/client";
 import { useForm } from "react-hook-form";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Loader2, User } from "lucide-react";
 
@@ -23,7 +24,20 @@ type SettingsForm = z.infer<typeof settingsSchema>;
 export default function SettingsPage() {
   const { data: session, update } = useSession();
   const [loading, setLoading] = useState(false);
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
   const isIndividual = session?.user?.role === UserRole.INDIVIDUAL;
+
+  useEffect(() => {
+    fetch("/api/user/newsletter")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && typeof data.subscribed === "boolean") {
+          setNewsletterSubscribed(data.subscribed);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
 
   const {
     register,
@@ -56,6 +70,27 @@ export default function SettingsPage() {
       toast.error("Something went wrong");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function toggleNewsletter(subscribed: boolean) {
+    setNewsletterLoading(true);
+    try {
+      const res = await fetch("/api/user/newsletter", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscribed }),
+      });
+      if (!res.ok) {
+        toast.error("Unable to update newsletter preference");
+        return;
+      }
+      setNewsletterSubscribed(subscribed);
+      toast.success(subscribed ? "Subscribed to newsletter" : "Unsubscribed from newsletter");
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setNewsletterLoading(false);
     }
   }
 
@@ -105,6 +140,25 @@ export default function SettingsPage() {
               Save Changes
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Newsletter</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <Checkbox
+              checked={newsletterSubscribed}
+              disabled={newsletterLoading}
+              onCheckedChange={(checked) => void toggleNewsletter(checked === true)}
+              className="mt-0.5"
+            />
+            <span className="text-sm text-muted leading-snug">
+              Email me local business updates, community news, and Let&apos;s Go Buffalo announcements.
+            </span>
+          </label>
         </CardContent>
       </Card>
 

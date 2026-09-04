@@ -62,6 +62,27 @@ export async function submitContactForm(formData: FormData) {
         consent: true,
       },
     });
+
+    try {
+      const { getEmailAdapter } = await import("@/lib/services/email");
+      const email = getEmailAdapter();
+      await email.send({
+        to: process.env.CONTACT_FORM_EMAIL_TO ?? "ContactForm@letsgobuffalo.com",
+        subject: `Contact form: ${parsed.data.name}`,
+        html: `
+          <h2>New contact form submission</h2>
+          <p><strong>Name:</strong> ${parsed.data.name}</p>
+          <p><strong>Email:</strong> ${parsed.data.email}</p>
+          ${parsed.data.phone ? `<p><strong>Phone:</strong> ${parsed.data.phone}</p>` : ""}
+          <p><strong>Message:</strong></p>
+          <p>${parsed.data.message}</p>
+        `,
+        text: `Contact from ${parsed.data.name} (${parsed.data.email}): ${parsed.data.message}`,
+      });
+    } catch (emailError) {
+      console.error("Contact form email notification failed:", emailError);
+    }
+
     return { success: true };
   } catch (error) {
     console.error("submitContactForm failed:", error);
@@ -199,7 +220,7 @@ export async function submitLgbEmailRequest(formData: FormData) {
         name: request.name,
         email: request.email,
         phone,
-        message: `LGB Email request: ${requestedAddress} (backup: ${backupAddress}) → forward to ${request.forwardTo}`,
+        message: `Custom Email request: ${requestedAddress} (backup: ${backupAddress}) → forward to ${request.forwardTo}`,
         source: LeadSource.LGB_EMAIL,
         consent: true,
         metadata: {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { hash } from "bcryptjs";
-import { UserRole, MemberType } from "@prisma/client";
+import { UserRole, MemberType, LeadSource } from "@prisma/client";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { registerSchema } from "@/lib/validations/auth";
@@ -47,6 +47,24 @@ export async function POST(request: Request) {
     } catch (walletError) {
       await db.user.delete({ where: { id: user.id } }).catch(() => undefined);
       throw walletError;
+    }
+
+    if (data.subscribeNewsletter) {
+      const existingLead = await db.lead.findFirst({
+        where: { email: data.email, source: LeadSource.NEWSLETTER },
+      });
+      if (!existingLead) {
+        await db.lead.create({
+          data: {
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            message: "Newsletter signup during registration",
+            source: LeadSource.NEWSLETTER,
+            consent: true,
+          },
+        });
+      }
     }
 
     return NextResponse.json(

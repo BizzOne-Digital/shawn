@@ -704,7 +704,7 @@ export const CMS_PAGES: CmsPage[] = [
   },
   {
     slug: "lgb-email",
-    title: "LGB Email",
+    title: "Custom Email",
     path: "/email-enrollment",
     sections: [
       section("hero", "Page Header", [

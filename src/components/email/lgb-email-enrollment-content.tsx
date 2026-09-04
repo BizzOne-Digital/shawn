@@ -92,7 +92,7 @@ export async function LgbEmailEnrollmentContent() {
           <div>
             <p className="font-medium text-navy">{txt(content, "footer.text")}</p>
             <p className="mt-1 text-sm text-muted">
-              Pro business and individual memberships include a custom @LetsGoBuffalo.com address.
+              Pro business or Pro individual memberships include a custom @LetsGoBuffalo.com address.
             </p>
           </div>
           <Link href="/pricing">

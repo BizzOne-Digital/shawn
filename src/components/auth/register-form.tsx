@@ -10,6 +10,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { SiteLogo } from "@/components/layout/site-logo";
 import { PasswordInput } from "@/components/auth/password-input";
 import { PasswordRequirements } from "@/components/auth/password-requirements";
@@ -40,6 +41,7 @@ interface RegisterFormProps {
 export function RegisterForm({ isIndividual = false }: RegisterFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [subscribeNewsletter, setSubscribeNewsletter] = useState(true);
   const registerSchema = buildRegisterSchema(isIndividual);
 
   type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -64,6 +66,7 @@ export function RegisterForm({ isIndividual = false }: RegisterFormProps) {
           password: data.password,
           phone: data.phone,
           memberType: isIndividual ? "INDIVIDUAL" : "BUSINESS",
+          subscribeNewsletter,
         }),
       });
 
@@ -176,6 +179,17 @@ export function RegisterForm({ isIndividual = false }: RegisterFormProps) {
                 <p className="text-sm text-buffalo-red mt-1">{errors.confirmPassword.message}</p>
               )}
             </div>
+
+            <label className="flex items-start gap-3 cursor-pointer">
+              <Checkbox
+                checked={subscribeNewsletter}
+                onCheckedChange={(checked) => setSubscribeNewsletter(checked === true)}
+                className="mt-0.5"
+              />
+              <span className="text-sm text-muted leading-snug">
+                Subscribe to the Let&apos;s Go Buffalo newsletter for local business updates and community news.
+              </span>
+            </label>
 
             <Button type="submit" className="w-full" variant="accent" disabled={loading}>
               {loading && <Loader2 className="animate-spin" />}

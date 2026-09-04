@@ -59,6 +59,7 @@ export function getWizardStepFlow(tier: BusinessListingTier): number[] {
   return [
     WIZARD_STEP.BASIC,
     WIZARD_STEP.CATEGORY,
+    WIZARD_STEP.DESCRIPTION,
     WIZARD_STEP.LOCATION,
     WIZARD_STEP.PREVIEW,
     WIZARD_STEP.SUBMIT,

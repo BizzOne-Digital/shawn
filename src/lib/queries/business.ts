@@ -13,9 +13,9 @@ export const publishedBusinessWhere: Prisma.BusinessWhereInput = {
 export const businessCardInclude = {
   category: { select: { name: true, slug: true } },
   images: {
-    where: { type: "LOGO" as const },
+    orderBy: { sortOrder: "asc" as const },
     take: 1,
-    select: { url: true },
+    select: { url: true, type: true },
   },
   hours: true,
 } satisfies Prisma.BusinessInclude;

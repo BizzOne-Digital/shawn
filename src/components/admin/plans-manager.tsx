@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2, Plus, Pencil, Tag } from "lucide-react";
@@ -49,6 +49,8 @@ export function PlansManager({ plans: initialPlans, promoCodes: initialPromos }:
   const router = useRouter();
   const [plans, setPlans] = useState(initialPlans);
   const [promos, setPromos] = useState(initialPromos);
+  const [plansSnapshot, setPlansSnapshot] = useState(initialPlans);
+  const [promosSnapshot, setPromosSnapshot] = useState(initialPromos);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ monthlyPrice: 0, yearlyPrice: 0, isActive: true });
   const [newPromo, setNewPromo] = useState({
@@ -60,13 +62,15 @@ export function PlansManager({ plans: initialPlans, promoCodes: initialPromos }:
   });
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  if (initialPlans !== plansSnapshot) {
+    setPlansSnapshot(initialPlans);
     setPlans(initialPlans);
-  }, [initialPlans]);
+  }
 
-  useEffect(() => {
+  if (initialPromos !== promosSnapshot) {
+    setPromosSnapshot(initialPromos);
     setPromos(initialPromos);
-  }, [initialPromos]);
+  }
 
   function startEdit(plan: PlanRow) {
     setEditingId(plan.id);

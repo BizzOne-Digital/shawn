@@ -106,6 +106,7 @@ export default async function BusinessEditPage({ params }: Props) {
           isFeatured: business.isFeatured,
           categoryId: business.categoryId ?? "",
           subcategoryId: business.subcategoryId ?? "",
+          listingTier: business.listingTier,
         }}
         initialImages={business.images.map((img) => ({
           url: img.url,

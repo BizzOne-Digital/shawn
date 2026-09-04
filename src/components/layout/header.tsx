@@ -24,9 +24,10 @@ const navLinks = [
   { href: "/directory", label: "Categories" },
   { href: "/community", label: "Fan Page" },
   { href: "/gear", label: "Gear" },
-  { href: "/email-enrollment", label: "LGB Email" },
+  { href: "/email-enrollment", label: "Custom Email" },
   { href: "/advertise", label: "Advertise" },
   { href: "/#how-it-works", label: "How It Works" },
+  { href: "/pricing", label: "Join" },
 ];
 
 export function Header({ bannerText }: { bannerText?: string }) {

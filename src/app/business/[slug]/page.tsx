@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { BusinessListingTier } from "@prisma/client";
 import { isProListingTier } from "@/lib/services/listing-tier";
 import {
   MapPin,
@@ -14,6 +13,7 @@ import {
 } from "lucide-react";
 import { getBusinessBySlug, getRelatedBusinesses } from "@/lib/queries/business";
 import { formatHours, isOpenNow, getOpenStatusLabel } from "@/lib/services/business-hours";
+import { BusinessLocationMap } from "@/components/business/business-location-map";
 import { BusinessCard } from "@/components/business/business-card";
 import { resolveImageUrl } from "@/lib/utils/image-url";
 import { BusinessEnquiryForm } from "@/components/forms/business-enquiry-form";
@@ -275,24 +275,28 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                 <h2 className="font-display text-2xl font-semibold text-navy mb-4">
                   Location
                 </h2>
-                <div className="map-grid rounded-xl border border-border h-64 flex items-center justify-center bg-soft-gray relative overflow-hidden">
-                  <div className="text-center z-10">
-                    <MapPin className="size-8 text-navy/40 mx-auto mb-2" />
-                    {business.address && (
-                      <p className="text-sm text-muted">
-                        {business.address}
-                        {business.addressLine2 && `, ${business.addressLine2}`}
-                        <br />
-                        {business.city}, {business.state} {business.zipCode}
-                      </p>
-                    )}
-                    {!business.address && business.city && (
-                      <p className="text-sm text-muted">
-                        {business.city}, {business.state}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                <BusinessLocationMap
+                  address={business.address}
+                  addressLine2={business.addressLine2}
+                  city={business.city}
+                  state={business.state}
+                  zipCode={business.zipCode}
+                />
+                {(business.address || business.city) && (
+                  <p className="mt-3 flex items-start gap-2 text-sm text-muted">
+                    <MapPin className="mt-0.5 size-4 shrink-0 text-buffalo-red" />
+                    <span>
+                      {business.address && (
+                        <>
+                          {business.address}
+                          {business.addressLine2 && `, ${business.addressLine2}`}
+                          <br />
+                        </>
+                      )}
+                      {business.city}, {business.state} {business.zipCode}
+                    </span>
+                  </p>
+                )}
               </section>
             </div>
 

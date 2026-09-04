@@ -1,3 +1,4 @@
+import { BusinessListingTier } from "@prisma/client";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireBusinessOwner } from "@/lib/auth-utils";
@@ -60,6 +61,11 @@ export default async function EditBusinessPage({ params }: PageProps) {
       alt: img.alt ?? undefined,
       sortOrder: img.sortOrder,
     })),
+    couponText: business.couponText ?? "",
+    discountCode: business.discountCode ?? "",
+    lgbEmail: business.lgbEmail?.replace(/@LetsGoBuffalo\.com$/i, "") ?? "",
+    videoUrl: business.videoUrl ?? "",
+    searchKeywords: business.searchKeywords ?? [],
   };
 
   return (
@@ -72,14 +78,27 @@ export default async function EditBusinessPage({ params }: PageProps) {
           </div>
           <p className="text-muted mt-1">{business.name}</p>
         </div>
-        <Link href={`/dashboard/businesses/${id}/status`}>
-          <Button variant="outline">View Status</Button>
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          {business.listingTier === BusinessListingTier.FREE_BASIC && (
+            <Link href="/dashboard/subscribe?plan=business-pro">
+              <Button variant="accent">Upgrade to Pro</Button>
+            </Link>
+          )}
+          <Link href={`/dashboard/businesses/${id}/status`}>
+            <Button variant="outline">View Status</Button>
+          </Link>
+        </div>
       </div>
+      {business.listingTier === BusinessListingTier.FREE_BASIC && (
+        <div className="rounded-lg border border-buffalo-red/30 bg-buffalo-red/5 px-4 py-3 text-sm text-navy">
+          You&apos;re on a Free listing. Upgrade to Pro for logo, gallery images, full description, coupons, and more.
+        </div>
+      )}
       <SubmissionWizard
         categories={categories}
         initialData={initialData}
         businessStatus={business.status}
+        listingTier={business.listingTier}
       />
     </div>
   );

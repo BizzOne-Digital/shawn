@@ -5,7 +5,7 @@ export const LGB_EMAIL_REQUEST_TO = "emailrequest@letsgobuffalo.com";
 
 const localPartSchema = z
   .string()
-  .min(1, "Choose a name for your email address")
+  .min(5, "Email name must be at least 5 characters")
   .max(64, "Email name is too long")
   .regex(
     /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/,

@@ -59,7 +59,7 @@ export default async function LeadsPage({ searchParams }: Props) {
 
   const sourceFilters: Array<{ label: string; value?: LeadSource }> = [
     { label: "All" },
-    { label: "LGB Email", value: LeadSource.LGB_EMAIL },
+    { label: "Custom Email", value: LeadSource.LGB_EMAIL },
     { label: "Contact", value: LeadSource.CONTACT_PAGE },
     { label: "Newsletter", value: LeadSource.NEWSLETTER },
     { label: "Business Enquiry", value: LeadSource.BUSINESS_ENQUIRY },

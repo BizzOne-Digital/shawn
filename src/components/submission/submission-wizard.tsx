@@ -28,6 +28,10 @@ import {
   STEP_SCHEMAS,
   FREE_STEP_FIELD_MAP,
   freeBusinessSubmissionSchema,
+  freeBasicInfoSchema,
+  categorySchema,
+  freeShortDescriptionSchema,
+  locationSchema,
   type BusinessSubmissionForm,
 } from "@/lib/validations/business";
 import { getWizardStepFlow, isProListingTier, WIZARD_STEP } from "@/lib/services/listing-tier";
@@ -141,7 +145,7 @@ export function SubmissionWizard({
     mode: "onChange",
   });
 
-  const { register, watch, setValue, getValues, trigger, formState: { errors } } = methods;
+  const { register, watch, setValue, getValues, trigger, setError, formState: { errors } } = methods;
   const formValues = watch();
   const selectedCategory = categories.find((c) => c.id === formValues.categoryId);
   const currentStep = stepFlow[step] ?? stepFlow[0];
@@ -244,6 +248,29 @@ export function SubmissionWizard({
 
     const freeFields = !isPro ? FREE_STEP_FIELD_MAP[currentStep] : undefined;
     if (freeFields) {
+      const values = getValues();
+      const freeStepSchemas = [
+        freeBasicInfoSchema,
+        categorySchema,
+        freeShortDescriptionSchema,
+        locationSchema,
+      ] as const;
+      const schema = freeStepSchemas[currentStep];
+      if (schema) {
+        const parsed = schema.safeParse(values);
+        if (!parsed.success) {
+          for (const issue of parsed.error.issues) {
+            const field = issue.path[0];
+            if (typeof field === "string") {
+              setError(field as keyof BusinessSubmissionForm, { message: issue.message });
+            }
+          }
+          toast.error("Please fix the errors before continuing");
+          return false;
+        }
+        return true;
+      }
+
       const valid = await trigger(freeFields);
       if (!valid) {
         toast.error("Please fix the errors before continuing");
@@ -513,15 +540,29 @@ export function SubmissionWizard({
             {currentStep === WIZARD_STEP.DESCRIPTION && (
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="shortDescription">Short Description *</Label>
-                  <Input id="shortDescription" {...register("shortDescription")} className="mt-1" maxLength={200} />
+                  <Label htmlFor="shortDescription">
+                    {isPro ? "Short Description *" : "Brief Description * (max 60 characters)"}
+                  </Label>
+                  <Input
+                    id="shortDescription"
+                    {...register("shortDescription")}
+                    className="mt-1"
+                    maxLength={isPro ? 200 : 60}
+                  />
+                  {!isPro && (
+                    <p className="text-xs text-muted mt-1">
+                      Free listings include a short description only (up to 60 characters).
+                    </p>
+                  )}
                   {errors.shortDescription && (
                     <p className="text-sm text-buffalo-red mt-1">{errors.shortDescription.message}</p>
                   )}
                 </div>
+                {isPro && (
+                  <>
                 <div>
-                  <Label htmlFor="description">Full Description *</Label>
-                  <Textarea id="description" {...register("description")} className="mt-1 min-h-32" />
+                  <Label htmlFor="description">Full Description * (max 1000 characters)</Label>
+                  <Textarea id="description" {...register("description")} className="mt-1 min-h-32" maxLength={1000} />
                   {errors.description && (
                     <p className="text-sm text-buffalo-red mt-1">{errors.description.message}</p>
                   )}
@@ -570,6 +611,8 @@ export function SubmissionWizard({
                     ))}
                   </div>
                 </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -776,7 +819,7 @@ export function SubmissionWizard({
                     <PreviewSection title="Pro Features" items={[
                       ["Coupon", formValues.couponText || "—"],
                       ["Promo Code", formValues.discountCode || "—"],
-                      ["LGB Email", formValues.lgbEmail ? `${formValues.lgbEmail}@LetsGoBuffalo.com` : "—"],
+                      ["Custom Email", formValues.lgbEmail ? `${formValues.lgbEmail}@LetsGoBuffalo.com` : "—"],
                     ]} />
                     <PreviewSection title="Images" items={[
                       ["Total", String(formValues.images?.length ?? 0)],

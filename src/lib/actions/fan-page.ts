@@ -12,10 +12,13 @@ export async function submitFanComment(formData: FormData) {
     return { success: false, error: "Please sign in with your business account to comment." };
   }
 
-  if (session.user.role !== UserRole.BUSINESS_OWNER) {
+  if (
+    session.user.role !== UserRole.BUSINESS_OWNER &&
+    session.user.role !== UserRole.INDIVIDUAL
+  ) {
     return {
       success: false,
-      error: "Only registered business accounts can comment on fan page posts.",
+      error: "Please sign in with your business or personal account to comment.",
     };
   }
 

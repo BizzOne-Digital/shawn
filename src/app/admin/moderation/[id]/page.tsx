@@ -113,6 +113,7 @@ export default async function ModerationDetailPage({ params }: Props) {
                   isFeatured: business.isFeatured,
                   categoryId: business.categoryId ?? "",
                   subcategoryId: business.subcategoryId ?? "",
+                  listingTier: business.listingTier,
                 }}
               />
             </CardContent>

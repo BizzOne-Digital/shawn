@@ -15,6 +15,7 @@ export const registerSchema = z.object({
   password: passwordSchema,
   phone: z.string().optional(),
   memberType: z.enum(["BUSINESS", "INDIVIDUAL"]).default("BUSINESS"),
+  subscribeNewsletter: z.boolean().optional(),
 });
 
 export const forgotPasswordSchema = z.object({

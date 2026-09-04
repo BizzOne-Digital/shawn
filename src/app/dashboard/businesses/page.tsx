@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PlusCircle, Building2, Eye, Edit } from "lucide-react";
 import { CmsImage } from "@/components/ui/cms-image";
+import { BusinessListingTier } from "@prisma/client";
 import { NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 export default async function MyBusinessesPage() {
@@ -87,6 +88,13 @@ export default async function MyBusinessesPage() {
                     <Badge variant={business.status === "PUBLISHED" ? "default" : "secondary"}>
                       {getListingStatusLabel(business.status)}
                     </Badge>
+                    {business.listingTier === BusinessListingTier.FREE_BASIC && (
+                      <Link href="/dashboard/subscribe?plan=business-pro">
+                        <Button variant="accent" size="sm">
+                          Upgrade to Pro
+                        </Button>
+                      </Link>
+                    )}
                     <Link href={`/dashboard/businesses/${business.id}/status`}>
                       <Button variant="ghost" size="sm">Status</Button>
                     </Link>
