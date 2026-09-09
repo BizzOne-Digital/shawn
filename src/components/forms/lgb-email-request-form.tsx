@@ -10,7 +10,7 @@ import { submitLgbEmailRequest } from "@/lib/actions/leads";
 import { LGB_EMAIL_DOMAIN } from "@/lib/validations/lgb-email";
 import { CaptchaField } from "@/components/forms/captcha-field";
 
-type AvailabilityState = "idle" | "checking" | "available" | "taken" | "error";
+type AvailabilityState = "idle" | "checking" | "available" | "taken" | "unavailable" | "error";
 
 function AvailabilityHint({
   state,
@@ -48,6 +48,15 @@ function AvailabilityHint({
     );
   }
 
+  if (state === "unavailable") {
+    return (
+      <p className="mt-1 flex items-center gap-1 text-xs text-buffalo-red">
+        <XCircle className="size-3" />
+        {address ? `${address} is not available` : "This name is not available (minimum 5 characters required)"}
+      </p>
+    );
+  }
+
   return <p className="mt-1 text-xs text-buffalo-red">Could not check availability</p>;
 }
 
@@ -73,6 +82,17 @@ export function LgbEmailRequestForm() {
       return;
     }
 
+    if (trimmed.length < 5) {
+      if (which === "primary") {
+        setPrimaryStatus(trimmed ? "unavailable" : "idle");
+        setPrimaryAddress(trimmed ? `${trimmed.toLowerCase()}@${LGB_EMAIL_DOMAIN}` : "");
+      } else {
+        setBackupStatus(trimmed ? "unavailable" : "idle");
+        setBackupAddress(trimmed ? `${trimmed.toLowerCase()}@${LGB_EMAIL_DOMAIN}` : "");
+      }
+      return;
+    }
+
     if (which === "primary") setPrimaryStatus("checking");
     else setBackupStatus("checking");
 
@@ -81,7 +101,11 @@ export function LgbEmailRequestForm() {
         `/api/public/lgb-email/check?localPart=${encodeURIComponent(trimmed)}`
       );
       const data = await res.json();
-      const nextStatus: AvailabilityState = data.available ? "available" : "taken";
+      const nextStatus: AvailabilityState = data.available
+        ? "available"
+        : data.reason === "taken"
+          ? "taken"
+          : "unavailable";
 
       if (which === "primary") {
         setPrimaryStatus(nextStatus);
@@ -120,6 +144,11 @@ export function LgbEmailRequestForm() {
 
     if (primaryStatus === "taken" && backupStatus === "taken") {
       toast.error("Both email choices are taken. Please try different names.");
+      return;
+    }
+
+    if (primaryStatus === "unavailable" || backupStatus === "unavailable") {
+      toast.error("One or both email names are not available. Use at least 5 characters and avoid reserved names.");
       return;
     }
 
@@ -194,7 +223,8 @@ export function LgbEmailRequestForm() {
             required
             value={primaryLocalPart}
             onChange={(e) => setPrimaryLocalPart(e.target.value)}
-            placeholder="Sally"
+            minLength={5}
+            placeholder="SallySmith"
             className="border-0 shadow-none focus-visible:ring-0"
             autoComplete="off"
             spellCheck={false}
@@ -205,7 +235,7 @@ export function LgbEmailRequestForm() {
         </div>
         <AvailabilityHint state={primaryStatus} address={primaryAddress} />
         <p className="mt-1 text-xs text-muted">
-          Examples: Sally, JoesPizza, BuffaloBakery — letters and numbers only
+          Examples: SallySmith, JoesPizza, BuffaloBakery — at least 5 characters
         </p>
       </div>
 
@@ -218,7 +248,8 @@ export function LgbEmailRequestForm() {
             required
             value={backupLocalPart}
             onChange={(e) => setBackupLocalPart(e.target.value)}
-            placeholder="SallySmith"
+            minLength={5}
+            placeholder="SallySmith716"
             className="border-0 shadow-none focus-visible:ring-0"
             autoComplete="off"
             spellCheck={false}

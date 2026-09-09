@@ -189,10 +189,17 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
 
           <div className="grid lg:grid-cols-3 gap-8 mt-10">
             <div className="lg:col-span-2 space-y-8">
-              {isPro && business.shortDescription && (
-                <p className="text-lg text-muted leading-relaxed">
-                  {business.shortDescription}
-                </p>
+              {business.shortDescription && (
+                <section>
+                  {!isPro && (
+                    <h2 className="font-display text-2xl font-semibold text-navy mb-4">
+                      About
+                    </h2>
+                  )}
+                  <p className={`leading-relaxed text-muted ${isPro ? "text-lg" : "text-base"}`}>
+                    {business.shortDescription}
+                  </p>
+                </section>
               )}
 
               {isPro && business.description && (

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { CheckCircle, Building2, User } from "lucide-react";
 import { formatPlanPrice } from "@/lib/services/membership";
+import { formatPlanFeatureLabel } from "@/lib/services/membership-display";
 import { getPageContent, txt } from "@/lib/content/page-content";
 
 export const metadata: Metadata = {
@@ -92,7 +93,7 @@ export default async function PricingPage() {
                       {features.map((f) => (
                         <li key={f} className="flex items-start gap-2 text-sm text-muted">
                           <CheckCircle className="size-4 text-buffalo-red flex-shrink-0 mt-0.5" />
-                          {f}
+                          {formatPlanFeatureLabel(f)}
                         </li>
                       ))}
                     </ul>
@@ -143,7 +144,7 @@ export default async function PricingPage() {
                       {features.map((f) => (
                         <li key={f} className="flex items-start gap-2 text-sm text-muted">
                           <CheckCircle className="size-4 text-buffalo-red flex-shrink-0 mt-0.5" />
-                          {f}
+                          {formatPlanFeatureLabel(f)}
                         </li>
                       ))}
                     </ul>

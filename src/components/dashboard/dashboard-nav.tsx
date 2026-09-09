@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   Mail,
+  MessageSquare,
 } from "lucide-react";
 import { useState } from "react";
 import { SiteLogo } from "@/components/layout/site-logo";
@@ -25,6 +26,7 @@ import { UserRole } from "@prisma/client";
 const businessNavItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/businesses", label: "My Businesses", icon: Building2 },
+  { href: "/dashboard/inquiries", label: "Customer Inquiries", icon: MessageSquare },
   { href: "/dashboard/submit", label: "Add Business", icon: PlusCircle },
   { href: "/dashboard/advertising", label: "Advertising", icon: Megaphone },
   { href: "/email-enrollment", label: "Custom Email", icon: Mail },

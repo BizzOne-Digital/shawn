@@ -1,16 +1,9 @@
 import { z } from "zod";
+import { normalizeLocalPart } from "@/lib/services/lgb-email-reserved";
 
 export const LGB_EMAIL_DOMAIN = "letsgobuffalo.com";
 export const LGB_EMAIL_REQUEST_TO = "emailrequest@letsgobuffalo.com";
-
-const localPartSchema = z
-  .string()
-  .min(5, "Email name must be at least 5 characters")
-  .max(64, "Email name is too long")
-  .regex(
-    /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/,
-    "Use letters, numbers, dots, dashes, or underscores (must start with a letter or number)"
-  );
+export const LGB_EMAIL_MIN_LOCAL_PART_LENGTH = 5;
 
 export function buildLgbEmailAddress(input: string): string {
   const trimmed = input.trim();
@@ -28,6 +21,15 @@ function requestedAddressField(label: string) {
   return z
     .string()
     .min(1, label)
+    .superRefine((value, ctx) => {
+      const localPart = normalizeLocalPart(value);
+      if (localPart.length < LGB_EMAIL_MIN_LOCAL_PART_LENGTH) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Email name must be at least ${LGB_EMAIL_MIN_LOCAL_PART_LENGTH} characters`,
+        });
+      }
+    })
     .transform(buildLgbEmailAddress)
     .pipe(
       z

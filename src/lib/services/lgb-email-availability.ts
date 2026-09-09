@@ -1,6 +1,12 @@
 import { LeadSource } from "@prisma/client";
 import { db } from "@/lib/db";
-import { buildLgbEmailAddress, LGB_EMAIL_DOMAIN } from "@/lib/validations/lgb-email";
+import { buildLgbEmailAddress, LGB_EMAIL_DOMAIN, LGB_EMAIL_MIN_LOCAL_PART_LENGTH } from "@/lib/validations/lgb-email";
+import {
+  isReservedLgbEmailLocalPart,
+  normalizeLocalPart,
+} from "@/lib/services/lgb-email-reserved";
+
+export { LGB_EMAIL_MIN_LOCAL_PART_LENGTH };
 
 export function normalizeLgbEmailAddress(input: string): string {
   return buildLgbEmailAddress(input).toLowerCase();
@@ -44,11 +50,26 @@ export async function isLgbEmailAddressTaken(address: string): Promise<boolean> 
 }
 
 export async function checkLgbEmailLocalPart(localPart: string) {
+  const normalizedPart = normalizeLocalPart(localPart);
   const address = normalizeLgbEmailAddress(localPart);
+
+  if (!normalizedPart || normalizedPart.length < LGB_EMAIL_MIN_LOCAL_PART_LENGTH) {
+    return {
+      available: false,
+      address,
+      reason: "too_short" as const,
+      error: `Email name must be at least ${LGB_EMAIL_MIN_LOCAL_PART_LENGTH} characters`,
+    };
+  }
+
   if (!address.endsWith(`@${LGB_EMAIL_DOMAIN}`)) {
-    return { available: false, address, error: "Invalid email address" };
+    return { available: false, address, reason: "invalid" as const, error: "Invalid email address" };
+  }
+
+  if (await isReservedLgbEmailLocalPart(normalizedPart)) {
+    return { available: false, address, reason: "reserved" as const, error: "This address is not available" };
   }
 
   const taken = await isLgbEmailAddressTaken(address);
-  return { available: !taken, address };
+  return { available: !taken, address, reason: taken ? ("taken" as const) : undefined };
 }

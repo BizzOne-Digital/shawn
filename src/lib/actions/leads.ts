@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { LeadSource } from "@prisma/client";
 import { lgbEmailRequestSchema } from "@/lib/validations/lgb-email";
 import {
-  isLgbEmailAddressTaken,
+  checkLgbEmailLocalPart,
   normalizeLgbEmailAddress,
 } from "@/lib/services/lgb-email-availability";
 import { z } from "zod";
@@ -202,10 +202,23 @@ export async function submitLgbEmailRequest(formData: FormData) {
   const requestedAddress = normalizeLgbEmailAddress(request.requestedAddress);
   const backupAddress = normalizeLgbEmailAddress(request.backupAddress);
 
-  const [primaryTaken, backupTaken] = await Promise.all([
-    isLgbEmailAddressTaken(requestedAddress),
-    isLgbEmailAddressTaken(backupAddress),
+  const [primaryCheck, backupCheck] = await Promise.all([
+    checkLgbEmailLocalPart(request.requestedAddress.replace(/@.*/, "")),
+    checkLgbEmailLocalPart(request.backupAddress.replace(/@.*/, "")),
   ]);
+
+  if (!primaryCheck.available && !backupCheck.available) {
+    return {
+      success: false,
+      error:
+        primaryCheck.error ??
+        backupCheck.error ??
+        "Both email choices are unavailable. Please try different names.",
+    };
+  }
+
+  const primaryTaken = !primaryCheck.available && primaryCheck.reason === "taken";
+  const backupTaken = !backupCheck.available && backupCheck.reason === "taken";
 
   if (primaryTaken && backupTaken) {
     return {
@@ -229,8 +242,8 @@ export async function submitLgbEmailRequest(formData: FormData) {
           forwardTo: request.forwardTo,
           businessName: request.businessName ?? null,
           phone,
-          primaryAvailable: !primaryTaken,
-          backupAvailable: !backupTaken,
+          primaryAvailable: primaryCheck.available,
+          backupAvailable: backupCheck.available,
         },
       },
     });

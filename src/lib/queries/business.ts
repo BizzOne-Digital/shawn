@@ -133,10 +133,14 @@ export async function getSiteStats() {
 }
 
 export function enrichBusinessWithOpenStatus<
-  T extends { hours: Parameters<typeof isOpenNow>[0] },
+  T extends {
+    hours: Parameters<typeof isOpenNow>[0];
+    images?: { url: string }[];
+  },
 >(business: T) {
   return {
     ...business,
+    imageUrl: business.images?.[0]?.url ?? null,
     isOpen: isOpenNow(business.hours),
   };
 }
