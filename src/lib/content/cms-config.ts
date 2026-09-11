@@ -410,6 +410,10 @@ export const CMS_PAGES: CmsPage[] = [
           "Copyright",
           "Let's Go Buffalo. All rights reserved."
         ),
+        f("footer.facebook_url", "Facebook URL", "https://www.facebook.com/"),
+        f("footer.instagram_url", "Instagram URL", "https://www.instagram.com/"),
+        f("footer.twitter_url", "Twitter / X URL", "https://twitter.com/"),
+        f("footer.linkedin_url", "LinkedIn URL", "https://www.linkedin.com/"),
       ]),
     ],
   },
@@ -647,7 +651,7 @@ export const CMS_PAGES: CmsPage[] = [
         f(
           "footer.text",
           "Footer text",
-          "Want a custom @LetsGoBuffalo.com email? Request one here"
+          "Want a custom @LetsGoBuffalo.com email?"
         ),
       ]),
     ],

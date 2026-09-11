@@ -1,10 +1,7 @@
 import { LeadSource } from "@prisma/client";
 import { db } from "@/lib/db";
-import { buildLgbEmailAddress, LGB_EMAIL_DOMAIN, LGB_EMAIL_MIN_LOCAL_PART_LENGTH } from "@/lib/validations/lgb-email";
-import {
-  isReservedLgbEmailLocalPart,
-  normalizeLocalPart,
-} from "@/lib/services/lgb-email-reserved";
+import { buildLgbEmailAddress, LGB_EMAIL_DOMAIN, LGB_EMAIL_MIN_LOCAL_PART_LENGTH, normalizeLocalPart } from "@/lib/lgb-email-utils";
+import { isReservedLgbEmailLocalPart } from "@/lib/services/lgb-email-reserved";
 
 export { LGB_EMAIL_MIN_LOCAL_PART_LENGTH };
 

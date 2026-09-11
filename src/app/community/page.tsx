@@ -4,6 +4,9 @@ import { MessageCircle, Users } from "lucide-react";
 import { db } from "@/lib/db";
 import { FanCommentStatus } from "@prisma/client";
 import { FanPostCard } from "@/components/fan-page/fan-post-card";
+import { FanPostSubmitForm } from "@/components/fan-page/fan-post-submit-form";
+import { auth } from "@/lib/auth";
+import { UserRole } from "@prisma/client";
 import { getPageContent, txt } from "@/lib/content/page-content";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +19,10 @@ export const metadata: Metadata = {
 
 export default async function CommunityPage() {
   const content = await getPageContent("community");
+  const session = await auth();
+  const canPost =
+    session?.user?.email &&
+    (session.user.role === UserRole.BUSINESS_OWNER || session.user.role === UserRole.INDIVIDUAL);
 
   const posts = await db.fanPost.findMany({
     where: { isPublished: true },
@@ -46,6 +53,17 @@ export default async function CommunityPage() {
       </section>
 
       <div className="mx-auto max-w-3xl min-w-0 px-4 py-12 sm:px-6 md:py-16 lg:px-8">
+        <div className="mb-10">
+          <FanPostSubmitForm
+            loginHref="/login?callbackUrl=/community"
+            user={
+              canPost
+                ? { name: session?.user?.name ?? null, email: session!.user!.email! }
+                : null
+            }
+          />
+        </div>
+
         {posts.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-soft-gray p-10 text-center">
             <MessageCircle className="mx-auto size-10 text-muted" />
@@ -61,7 +79,7 @@ export default async function CommunityPage() {
         )}
 
         <p className="mt-10 text-center text-sm text-muted">
-          {txt(content, "footer.text")}{" "}
+          Want a custom @LetsGoBuffalo.com email?{" "}
           <Link href="/email-enrollment" className="text-buffalo-red hover:underline">
             Request one here
           </Link>

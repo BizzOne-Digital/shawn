@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { submitLgbEmailRequest } from "@/lib/actions/leads";
-import { LGB_EMAIL_DOMAIN } from "@/lib/validations/lgb-email";
+import { LGB_EMAIL_DOMAIN } from "@/lib/lgb-email-utils";
 import { CaptchaField } from "@/components/forms/captcha-field";
 
 type AvailabilityState = "idle" | "checking" | "available" | "taken" | "unavailable" | "error";

@@ -1,21 +1,17 @@
 import { z } from "zod";
-import { normalizeLocalPart } from "@/lib/services/lgb-email-reserved";
+import {
+  buildLgbEmailAddress,
+  LGB_EMAIL_DOMAIN,
+  LGB_EMAIL_MIN_LOCAL_PART_LENGTH,
+  normalizeLocalPart,
+} from "@/lib/lgb-email-utils";
 
-export const LGB_EMAIL_DOMAIN = "letsgobuffalo.com";
-export const LGB_EMAIL_REQUEST_TO = "emailrequest@letsgobuffalo.com";
-export const LGB_EMAIL_MIN_LOCAL_PART_LENGTH = 5;
-
-export function buildLgbEmailAddress(input: string): string {
-  const trimmed = input.trim();
-  if (!trimmed) return "";
-
-  if (trimmed.includes("@")) {
-    const [localPart] = trimmed.split("@");
-    return `${localPart.toLowerCase()}@${LGB_EMAIL_DOMAIN}`;
-  }
-
-  return `${trimmed.toLowerCase()}@${LGB_EMAIL_DOMAIN}`;
-}
+export {
+  LGB_EMAIL_DOMAIN,
+  LGB_EMAIL_REQUEST_TO,
+  LGB_EMAIL_MIN_LOCAL_PART_LENGTH,
+  buildLgbEmailAddress,
+} from "@/lib/lgb-email-utils";
 
 function requestedAddressField(label: string) {
   return z

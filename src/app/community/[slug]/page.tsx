@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import { db } from "@/lib/db";
-import { FanCommentStatus } from "@prisma/client";
+import { FanCommentStatus, UserRole } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { FanCommentForm } from "@/components/fan-page/fan-comment-form";
 import { Button } from "@/components/ui/button";
@@ -98,7 +98,9 @@ export default async function CommunityPostPage({ params }: Props) {
             postTitle={post.title}
             loginHref={`/login?callbackUrl=${encodeURIComponent(`/community/${slug}`)}`}
             user={
-              session?.user?.role === "BUSINESS_OWNER" && session.user.email
+              session?.user?.email &&
+              (session.user.role === UserRole.BUSINESS_OWNER ||
+                session.user.role === UserRole.INDIVIDUAL)
                 ? { name: session.user.name ?? null, email: session.user.email }
                 : null
             }

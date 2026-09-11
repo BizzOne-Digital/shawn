@@ -60,7 +60,7 @@ export function BusinessEnquiryForm({ businessId, businessName }: BusinessEnquir
             Sending…
           </>
         ) : (
-          "Send Enquiry"
+          "Send Inquiry"
         )}
       </Button>
     </form>

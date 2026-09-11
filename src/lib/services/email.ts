@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
-import { LGB_EMAIL_REQUEST_TO } from "@/lib/validations/lgb-email";
+import { LGB_EMAIL_REQUEST_TO } from "@/lib/lgb-email-utils";
 
 export interface EmailOptions {
   to: string;

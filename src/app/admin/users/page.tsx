@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { PageHeader } from "@/components/admin/page-header";
 import { UserRoleEditor } from "@/components/admin/user-role-editor";
+import { AdminSetPasswordForm } from "@/components/admin/admin-set-password-form";
 import { WalletCreditForm } from "@/components/admin/wallet-credit-form";
 import {
   Table,
@@ -75,6 +76,7 @@ export default async function UsersPage() {
                         userEmail={user.email}
                         currentBalance={Number(user.wallet?.balance ?? 0)}
                       />
+                      <AdminSetPasswordForm userId={user.id} userEmail={user.email} />
                     </div>
                   </TableCell>
                 </TableRow>

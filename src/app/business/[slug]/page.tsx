@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { BusinessListingTier } from "@prisma/client";
 import { isProListingTier } from "@/lib/services/listing-tier";
 import {
   MapPin,
@@ -245,6 +246,43 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                           className="size-full object-cover"
                         />
                       </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {business.listingTier === BusinessListingTier.SELLER &&
+                business.sellerProducts.length > 0 && (
+                <section>
+                  <h2 className="font-display text-2xl font-semibold text-navy mb-4">
+                    Products
+                  </h2>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+                    {business.sellerProducts.map((product) => (
+                      <a
+                        key={product.id}
+                        href={product.purchaseUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group overflow-hidden rounded-lg border border-border bg-white transition-shadow hover:shadow-md"
+                      >
+                        {product.imageUrl && (
+                          <div className="aspect-square overflow-hidden bg-soft-gray">
+                            <img
+                              src={resolveImageUrl(product.imageUrl)}
+                              alt={product.name}
+                              className="size-full object-cover transition-transform group-hover:scale-105"
+                            />
+                          </div>
+                        )}
+                        <div className="p-3">
+                          <p className="font-medium text-navy group-hover:text-buffalo-red">{product.name}</p>
+                          <p className="mt-1 text-xs text-muted inline-flex items-center gap-1">
+                            View product
+                            <ExternalLink className="size-3" />
+                          </p>
+                        </div>
+                      </a>
                     ))}
                   </div>
                 </section>

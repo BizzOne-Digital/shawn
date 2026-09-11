@@ -278,6 +278,10 @@ export async function getBusinessBySlug(slug: string) {
       hours: true,
       images: { orderBy: { sortOrder: "asc" } },
       socialLinks: true,
+      sellerProducts: {
+        where: { isActive: true },
+        orderBy: { sortOrder: "asc" },
+      },
     },
   });
 }

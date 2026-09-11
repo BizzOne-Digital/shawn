@@ -28,12 +28,12 @@ const footerNav = {
   ],
 };
 
-const socialLinks = [
-  { href: "#", label: "Facebook", icon: Share2 },
-  { href: "#", label: "Instagram", icon: Share2 },
-  { href: "#", label: "Twitter", icon: Share2 },
-  { href: "#", label: "LinkedIn", icon: Share2 },
-];
+const socialLinkConfig = [
+  { key: "footer.facebook_url", label: "Facebook" },
+  { key: "footer.instagram_url", label: "Instagram" },
+  { key: "footer.twitter_url", label: "Twitter / X" },
+  { key: "footer.linkedin_url", label: "LinkedIn" },
+] as const;
 
 interface FooterProps {
   content?: PageContentMap;
@@ -129,17 +129,24 @@ export function Footer({ content = {} }: FooterProps) {
               <h3 className="font-display text-sm font-semibold uppercase tracking-wider text-white">
                 Follow Us
               </h3>
-              <div className="mt-4 flex gap-2">
-                {socialLinks.map(({ href, label, icon: Icon }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    aria-label={label}
-                    className="flex size-9 items-center justify-center rounded-lg bg-white/10 text-white/85 transition-colors hover:bg-buffalo-red hover:text-white"
-                  >
-                    <Icon className="size-4" />
-                  </a>
-                ))}
+              <div className="mt-4 flex flex-wrap gap-2">
+                {socialLinkConfig.map(({ key, label }) => {
+                  const href = txt(content, key).trim();
+                  if (!href || href === "#") return null;
+                  return (
+                    <a
+                      key={key}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={label}
+                      title={label}
+                      className="flex size-9 items-center justify-center rounded-lg bg-white/10 text-white/85 transition-colors hover:bg-buffalo-red hover:text-white"
+                    >
+                      <Share2 className="size-4" />
+                    </a>
+                  );
+                })}
               </div>
             </div>
           </div>

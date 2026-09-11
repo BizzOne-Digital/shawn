@@ -67,7 +67,10 @@ export default async function AboutPage() {
               </Button>
             </Link>
             <Link href="/contact">
-              <Button variant="outline" className="border-white/30 text-white hover:bg-white/10">
+              <Button
+                variant="outline"
+                className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white"
+              >
                 {txt(content, "cta.secondary")}
               </Button>
             </Link>

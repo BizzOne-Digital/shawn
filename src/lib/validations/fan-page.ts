@@ -5,6 +5,11 @@ export const fanCommentSchema = z.object({
   message: z.string().min(5, "Comment must be at least 5 characters").max(2000),
 });
 
+export const fanPostSubmissionSchema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters").max(200),
+  body: z.string().min(10, "Post must be at least 10 characters").max(5000),
+});
+
 export const fanPostSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters").max(200),
   slug: z.string().min(1).max(120).optional(),
@@ -17,3 +22,4 @@ export const fanPostSchema = z.object({
 
 export type FanCommentInput = z.infer<typeof fanCommentSchema>;
 export type FanPostInput = z.infer<typeof fanPostSchema>;
+export type FanPostSubmissionInput = z.infer<typeof fanPostSubmissionSchema>;

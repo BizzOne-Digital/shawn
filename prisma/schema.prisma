@@ -770,7 +770,8 @@ model SellerProduct {
   businessId  String   @db.ObjectId
   name        String
   description String?
-  price       Float
+  imageUrl    String?
+  price       Float?
   currency    String   @default("USD")
   purchaseUrl String
   sortOrder   Int      @default(0)

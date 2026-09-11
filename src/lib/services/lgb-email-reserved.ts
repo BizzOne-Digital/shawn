@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { normalizeLocalPart } from "@/lib/lgb-email-utils";
 
 export const LGB_EMAIL_RESERVED_SETTING_KEY = "lgb_email_reserved_local_parts";
 
@@ -19,10 +20,6 @@ export const DEFAULT_RESERVED_LGB_EMAIL_LOCAL_PARTS = [
   "billing",
   "listings",
 ];
-
-export function normalizeLocalPart(value: string): string {
-  return value.trim().toLowerCase().split("@")[0] ?? "";
-}
 
 export async function getReservedLgbEmailLocalParts(): Promise<string[]> {
   const setting = await db.siteSetting.findUnique({
