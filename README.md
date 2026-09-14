@@ -126,9 +126,14 @@ Open [http://localhost:3000](http://localhost:3000).
 STRIPE_SECRET_KEY="sk_test_..."
 STRIPE_PUBLISHABLE_KEY="pk_test_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
+CONTACT_FORM_EMAIL_TO="support@letsgobuffalo.com"
 ```
 
-4. For local webhook testing:
+4. In Stripe Dashboard, create **Products / Prices** for each membership tier and paste the `price_...` IDs into **Admin → Plans & Pricing** (edit each plan).
+
+5. **Production (Vercel):** Developers → Webhooks → add endpoint `https://lets-go-buffalo.vercel.app/api/billing/webhook` with events `checkout.session.completed`, `customer.subscription.updated`, and `customer.subscription.deleted`. Copy the signing secret into Vercel as `STRIPE_WEBHOOK_SECRET`.
+
+6. For local webhook testing:
 
 ```bash
 stripe listen --forward-to localhost:3000/api/billing/webhook

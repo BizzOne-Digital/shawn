@@ -67,7 +67,7 @@ export async function submitContactForm(formData: FormData) {
       const { getEmailAdapter } = await import("@/lib/services/email");
       const email = getEmailAdapter();
       await email.send({
-        to: process.env.CONTACT_FORM_EMAIL_TO ?? "ContactForm@letsgobuffalo.com",
+        to: process.env.CONTACT_FORM_EMAIL_TO ?? "support@letsgobuffalo.com",
         subject: `Contact form: ${parsed.data.name}`,
         html: `
           <h2>New contact form submission</h2>

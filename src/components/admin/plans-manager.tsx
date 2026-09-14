@@ -27,6 +27,8 @@ interface PlanRow {
   yearlyPrice: number;
   isActive: boolean;
   isPreLaunchPricing: boolean;
+  stripeMonthlyPriceId: string | null;
+  stripeYearlyPriceId: string | null;
 }
 
 interface PromoRow {
@@ -52,7 +54,13 @@ export function PlansManager({ plans: initialPlans, promoCodes: initialPromos }:
   const [plansSnapshot, setPlansSnapshot] = useState(initialPlans);
   const [promosSnapshot, setPromosSnapshot] = useState(initialPromos);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ monthlyPrice: 0, yearlyPrice: 0, isActive: true });
+  const [editForm, setEditForm] = useState({
+    monthlyPrice: 0,
+    yearlyPrice: 0,
+    isActive: true,
+    stripeMonthlyPriceId: "",
+    stripeYearlyPriceId: "",
+  });
   const [newPromo, setNewPromo] = useState({
     code: "",
     type: "PERCENTAGE",
@@ -78,6 +86,8 @@ export function PlansManager({ plans: initialPlans, promoCodes: initialPromos }:
       monthlyPrice: plan.monthlyPrice,
       yearlyPrice: plan.yearlyPrice,
       isActive: plan.isActive,
+      stripeMonthlyPriceId: plan.stripeMonthlyPriceId ?? "",
+      stripeYearlyPriceId: plan.stripeYearlyPriceId ?? "",
     });
   }
 
@@ -87,7 +97,13 @@ export function PlansManager({ plans: initialPlans, promoCodes: initialPromos }:
       const res = await fetch(`/api/admin/plans/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify({
+          monthlyPrice: editForm.monthlyPrice,
+          yearlyPrice: editForm.yearlyPrice,
+          isActive: editForm.isActive,
+          stripeMonthlyPriceId: editForm.stripeMonthlyPriceId.trim() || null,
+          stripeYearlyPriceId: editForm.stripeYearlyPriceId.trim() || null,
+        }),
       });
       if (!res.ok) throw new Error("Failed to save");
       const updated = await res.json();
@@ -99,6 +115,8 @@ export function PlansManager({ plans: initialPlans, promoCodes: initialPromos }:
                 monthlyPrice: Number(updated.monthlyPrice),
                 yearlyPrice: Number(updated.yearlyPrice),
                 isActive: updated.isActive,
+                stripeMonthlyPriceId: updated.stripeMonthlyPriceId ?? null,
+                stripeYearlyPriceId: updated.stripeYearlyPriceId ?? null,
               }
             : plan
         )
@@ -170,6 +188,11 @@ export function PlansManager({ plans: initialPlans, promoCodes: initialPromos }:
                     {!plan.isActive && <Badge variant="outline">Inactive</Badge>}
                   </div>
                   <p className="text-sm text-muted mt-1">{plan.slug}</p>
+                  {(plan.stripeMonthlyPriceId || plan.stripeYearlyPriceId) && (
+                    <p className="text-xs text-muted mt-1 font-mono">
+                      Stripe: {plan.stripeMonthlyPriceId ?? "—"} / {plan.stripeYearlyPriceId ?? "—"}
+                    </p>
+                  )}
                 </div>
                 {editingId !== plan.id ? (
                   <div className="flex items-center gap-4">
@@ -181,7 +204,8 @@ export function PlansManager({ plans: initialPlans, promoCodes: initialPromos }:
                     </Button>
                   </div>
                 ) : (
-                  <div className="flex flex-wrap items-end gap-3">
+                  <div className="flex w-full flex-col gap-3 lg:max-w-2xl">
+                    <div className="flex flex-wrap items-end gap-3">
                     <div>
                       <Label className="text-xs">Monthly ($)</Label>
                       <Input
@@ -213,6 +237,31 @@ export function PlansManager({ plans: initialPlans, promoCodes: initialPromos }:
                       Save
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>Cancel</Button>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <Label className="text-xs">Stripe monthly price ID</Label>
+                        <Input
+                          value={editForm.stripeMonthlyPriceId}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, stripeMonthlyPriceId: e.target.value })
+                          }
+                          placeholder="price_..."
+                          className="mt-1 h-8 font-mono text-xs"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Stripe yearly price ID</Label>
+                        <Input
+                          value={editForm.stripeYearlyPriceId}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, stripeYearlyPriceId: e.target.value })
+                          }
+                          placeholder="price_..."
+                          className="mt-1 h-8 font-mono text-xs"
+                        />
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

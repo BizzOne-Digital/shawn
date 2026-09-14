@@ -4,6 +4,7 @@ import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { CookieConsentBanner } from "@/components/layout/cookie-consent-banner";
 import { metadata as siteMetadata } from "./metadata";
 import { getPageContent, txt } from "@/lib/content/page-content";
 import "./globals.css";
@@ -33,6 +34,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <main className="min-w-0 flex-1 overflow-x-clip">{children}</main>
           <Footer content={layoutContent} />
           <Toaster position="top-right" richColors closeButton />
+          <CookieConsentBanner />
         </Providers>
       </body>
     </html>

@@ -14,7 +14,7 @@ export default async function AdminPlansPage() {
     <div>
       <PageHeader
         title="Plans & Pricing"
-        description="Manage membership tiers and pricing shown on the public /pricing page"
+        description="Manage membership tiers, Stripe price IDs, and pricing shown on the public /pricing page"
       />
       <PlansManager
         plans={plans.map((p) => ({
@@ -26,6 +26,8 @@ export default async function AdminPlansPage() {
           yearlyPrice: Number(p.yearlyPrice),
           isActive: p.isActive,
           isPreLaunchPricing: p.isPreLaunchPricing,
+          stripeMonthlyPriceId: p.stripeMonthlyPriceId,
+          stripeYearlyPriceId: p.stripeYearlyPriceId,
         }))}
         promoCodes={promoCodes.map((p) => ({
           id: p.id,

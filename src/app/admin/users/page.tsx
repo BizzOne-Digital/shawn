@@ -14,11 +14,29 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/admin-utils";
 import { Card, CardContent } from "@/components/ui/card";
+import { UserFilters } from "@/components/admin/user-filters";
 import { USER_NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
-export default async function UsersPage() {
+interface Props {
+  searchParams: Promise<{ q?: string }>;
+}
+
+export default async function UsersPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const q = params.q?.trim() ?? "";
+
   const users = await db.user.findMany({
-    where: { ...USER_NOT_DELETED },
+    where: {
+      ...USER_NOT_DELETED,
+      ...(q
+        ? {
+            OR: [
+              { name: { contains: q, mode: "insensitive" as const } },
+              { email: { contains: q, mode: "insensitive" as const } },
+            ],
+          }
+        : {}),
+    },
     orderBy: { createdAt: "desc" },
     include: {
       wallet: true,
@@ -28,7 +46,16 @@ export default async function UsersPage() {
 
   return (
     <div>
-      <PageHeader title="Users" description={`${users.length} registered users`} />
+      <PageHeader
+        title="Users"
+        description={`${users.length} registered user${users.length === 1 ? "" : "s"}${q ? ` matching “${q}”` : ""}`}
+      />
+
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <UserFilters />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="pt-6">

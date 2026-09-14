@@ -9,6 +9,8 @@ const updatePlanSchema = z.object({
   isActive: z.boolean().optional(),
   isPreLaunchPricing: z.boolean().optional(),
   description: z.string().optional(),
+  stripeMonthlyPriceId: z.string().nullable().optional(),
+  stripeYearlyPriceId: z.string().nullable().optional(),
 });
 
 export async function PATCH(

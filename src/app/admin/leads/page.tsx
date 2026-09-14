@@ -17,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { LeadMessageDialog } from "@/components/admin/lead-message-dialog";
+import { LeadStatusGuide } from "@/components/admin/lead-status-guide";
 
 interface Props {
   searchParams: Promise<{ status?: string; source?: string }>;
@@ -71,8 +72,10 @@ export default async function LeadsPage({ searchParams }: Props) {
         title="Leads"
         description={`${leads.length} lead${leads.length === 1 ? "" : "s"}${
           source ? ` · ${formatLeadSource(source)}` : ""
-        }`}
+        }. Newsletter signups appear under the Newsletter filter; bulk email is not sent from admin yet.`}
       />
+
+      <LeadStatusGuide />
 
       <div className="mb-4 flex flex-wrap gap-2">
         {sourceFilters.map((filter) => {

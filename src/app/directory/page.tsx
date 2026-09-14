@@ -40,7 +40,7 @@ async function DirectoryResults({
   const verified = getParam(searchParams, "verified") === "true";
   const featured = getParam(searchParams, "featured") === "true";
   const sort = (getParam(searchParams, "sort") as "name" | "newest" | "popular") ?? "newest";
-  const view = getParam(searchParams, "view") === "list" ? "list" : "grid";
+  const view = getParam(searchParams, "view") === "grid" ? "grid" : "list";
   const page = Math.max(1, parseInt(getParam(searchParams, "page") ?? "1", 10) || 1);
 
   let businesses: Awaited<ReturnType<typeof getDirectoryBusinesses>>["businesses"] = [];
@@ -150,7 +150,7 @@ export default async function DirectoryPage({ searchParams }: DirectoryPageProps
     verified: getParam(params, "verified") === "true",
     featured: getParam(params, "featured") === "true",
     sort: getParam(params, "sort") ?? "newest",
-    view: getParam(params, "view") ?? "grid",
+    view: getParam(params, "view") ?? "list",
   };
 
   return (

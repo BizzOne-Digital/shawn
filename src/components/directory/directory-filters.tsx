@@ -175,7 +175,7 @@ export function DirectoryFilters({ categories, cities, current }: DirectoryFilte
 
       <div className="flex gap-2 pt-2">
         <Button
-          variant={current.view === "list" ? "default" : "outline"}
+          variant={current.view !== "grid" ? "default" : "outline"}
           size="sm"
           className="flex-1"
           onClick={() => updateParams({ view: "list" })}
@@ -183,7 +183,7 @@ export function DirectoryFilters({ categories, cities, current }: DirectoryFilte
           List
         </Button>
         <Button
-          variant={current.view !== "list" ? "default" : "outline"}
+          variant={current.view === "grid" ? "default" : "outline"}
           size="sm"
           className="flex-1"
           onClick={() => updateParams({ view: "grid" })}
