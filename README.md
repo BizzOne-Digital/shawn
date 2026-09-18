@@ -116,22 +116,34 @@ Open [http://localhost:3000](http://localhost:3000).
 
 > **Never use these credentials in production.**
 
-## Stripe Test Mode
+## Stripe (live / test)
 
 1. Create a [Stripe account](https://dashboard.stripe.com/register)
-2. Get test API keys from Dashboard → Developers → API keys
-3. Add to `.env`:
+2. Add API keys to `.env` and **Vercel** (same names):
 
 ```env
-STRIPE_SECRET_KEY="sk_test_..."
-STRIPE_PUBLISHABLE_KEY="pk_test_..."
+STRIPE_SECRET_KEY="sk_..."
+STRIPE_PUBLISHABLE_KEY="pk_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
-CONTACT_FORM_EMAIL_TO="support@letsgobuffalo.com"
+NEXT_PUBLIC_SITE_URL="https://lets-go-buffalo.vercel.app"
 ```
 
-4. In Stripe Dashboard, create **Products / Prices** for each membership tier and paste the `price_...` IDs into **Admin → Plans & Pricing** (edit each plan).
+3. Link membership plans to Stripe (creates Products + Prices in Stripe and saves `price_...` IDs in the database):
 
-5. **Production (Vercel):** Developers → Webhooks → add endpoint `https://lets-go-buffalo.vercel.app/api/billing/webhook` with events `checkout.session.completed`, `customer.subscription.updated`, and `customer.subscription.deleted`. Copy the signing secret into Vercel as `STRIPE_WEBHOOK_SECRET`.
+```bash
+npm run stripe:sync-plans
+npm run stripe:verify
+```
+
+4. Register the production webhook (or use Stripe Dashboard):
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://lets-go-buffalo.vercel.app npm run stripe:setup-webhook
+```
+
+Copy the printed `whsec_...` into `STRIPE_WEBHOOK_SECRET` on Vercel. Events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`.
+
+5. You can also paste price IDs manually under **Admin → Plans & Pricing**.
 
 6. For local webhook testing:
 

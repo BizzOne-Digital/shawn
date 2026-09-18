@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
 import { db } from "@/lib/db";
 import { requireSessionUser, handleApiError } from "@/lib/api-utils";
 import { absoluteUrl } from "@/lib/utils";
+import { getStripeClient, isStripeConfigured, isStripeLiveMode } from "@/lib/stripe";
 import { z } from "zod";
 import { BillingInterval } from "@prisma/client";
+import type Stripe from "stripe";
 
 const subscribeSchema = z.object({
   planSlug: z.string().min(1),
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
     const result = await requireSessionUser();
     if ("error" in result) return result.error;
 
-    if (!process.env.STRIPE_SECRET_KEY) {
+    if (!isStripeConfigured()) {
       return NextResponse.json({ error: "Stripe is not configured" }, { status: 503 });
     }
 
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const stripe = getStripeClient();
 
     let customerId = dbUser.stripeCustomerId ?? undefined;
     if (!customerId) {
@@ -76,6 +77,16 @@ export async function POST(request: Request) {
     const priceId = interval === BillingInterval.MONTHLY
       ? plan.stripeMonthlyPriceId
       : plan.stripeYearlyPriceId;
+
+    if (isStripeLiveMode() && !priceId) {
+      return NextResponse.json(
+        {
+          error:
+            "This plan is not linked to Stripe yet. Run sync-stripe-plans or add price IDs in Admin → Plans & Pricing.",
+        },
+        { status: 503 }
+      );
+    }
 
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = priceId
       ? [{ price: priceId, quantity: 1 }]

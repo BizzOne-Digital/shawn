@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
 import { db } from "@/lib/db";
 import { requireSessionUser, handleApiError } from "@/lib/api-utils";
 import { absoluteUrl } from "@/lib/utils";
+import { getStripeClient, isStripeConfigured } from "@/lib/stripe";
 import { z } from "zod";
 
 const checkoutSchema = z.object({
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const result = await requireSessionUser();
     if ("error" in result) return result.error;
 
-    if (!process.env.STRIPE_SECRET_KEY) {
+    if (!isStripeConfigured()) {
       return NextResponse.json(
         { error: "Stripe is not configured" },
         { status: 503 }
@@ -24,7 +24,25 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { amount } = checkoutSchema.parse(body);
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const stripe = getStripeClient();
+    const dbUser = await db.user.findUnique({ where: { id: result.user.id } });
+    if (!dbUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    let customerId = dbUser.stripeCustomerId ?? undefined;
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: dbUser.email,
+        name: dbUser.name ?? undefined,
+        metadata: { userId: dbUser.id },
+      });
+      customerId = customer.id;
+      await db.user.update({
+        where: { id: dbUser.id },
+        data: { stripeCustomerId: customerId },
+      });
+    }
 
     const transaction = await db.transaction.create({
       data: {
@@ -38,6 +56,7 @@ export async function POST(request: Request) {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      customer: customerId,
       payment_method_types: ["card"],
       line_items: [
         {

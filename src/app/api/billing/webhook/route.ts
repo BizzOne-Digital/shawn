@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
 import { db } from "@/lib/db";
 import { headers } from "next/headers";
 import { BillingInterval } from "@prisma/client";
+import type Stripe from "stripe";
+import {
+  getStripeClient,
+  getStripeWebhookSecret,
+  isStripeWebhookConfigured,
+} from "@/lib/stripe";
 
 function getSubscriptionPeriod(sub: Stripe.Subscription) {
   const raw = sub as unknown as {
@@ -18,8 +23,8 @@ function getSubscriptionPeriod(sub: Stripe.Subscription) {
 }
 
 export async function POST(request: Request) {
-  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
-    return NextResponse.json({ error: "Stripe not configured" }, { status: 503 });
+  if (!isStripeWebhookConfigured()) {
+    return NextResponse.json({ error: "Stripe webhook is not configured" }, { status: 503 });
   }
 
   const body = await request.text();
@@ -30,15 +35,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing signature" }, { status: 400 });
   }
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  const stripe = getStripeClient();
+  const webhookSecret = getStripeWebhookSecret()!;
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
+    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
@@ -54,64 +56,70 @@ export async function POST(request: Request) {
 
       if (userId && planId) {
         const sub = await stripe.subscriptions.retrieve(session.subscription as string);
-        const period = getSubscriptionPeriod(sub);
-
-        await db.subscription.create({
-          data: {
-            userId,
-            planId,
-            businessId,
-            status: "ACTIVE",
-            billingInterval: interval,
-            stripeSubscriptionId: sub.id,
-            stripeCustomerId: sub.customer as string,
-            currentPeriodStart: new Date(period.start * 1000),
-            currentPeriodEnd: new Date(period.end * 1000),
-          },
+        const existingSub = await db.subscription.findFirst({
+          where: { stripeSubscriptionId: sub.id },
         });
 
-        const plan = await db.membershipPlan.findUnique({ where: { id: planId } });
-        if (plan?.businessTier && businessId) {
-          await db.business.update({
-            where: { id: businessId },
-            data: { listingTier: plan.businessTier },
-          });
-        }
-        if (plan?.individualTier) {
-          await db.user.update({
-            where: { id: userId },
-            data: { individualTier: plan.individualTier, memberType: "INDIVIDUAL" },
-          });
-        }
+        if (!existingSub) {
+          const period = getSubscriptionPeriod(sub);
 
-        const user = await db.user.findUnique({
-          where: { id: userId },
-          select: { email: true, name: true },
-        });
-        const business = businessId
-          ? await db.business.findUnique({
+          await db.subscription.create({
+            data: {
+              userId,
+              planId,
+              businessId,
+              status: "ACTIVE",
+              billingInterval: interval,
+              stripeSubscriptionId: sub.id,
+              stripeCustomerId: sub.customer as string,
+              currentPeriodStart: new Date(period.start * 1000),
+              currentPeriodEnd: new Date(period.end * 1000),
+            },
+          });
+
+          const plan = await db.membershipPlan.findUnique({ where: { id: planId } });
+          if (plan?.businessTier && businessId) {
+            await db.business.update({
               where: { id: businessId },
-              select: { name: true },
-            })
-          : null;
-
-        if (user?.email && plan) {
-          const amount =
-            interval === BillingInterval.MONTHLY
-              ? Number(plan.monthlyPrice)
-              : Number(plan.yearlyPrice);
-          try {
-            const { sendSubscriptionConfirmationEmail } = await import("@/lib/services/email");
-            await sendSubscriptionConfirmationEmail({
-              to: user.email,
-              customerName: user.name,
-              planName: plan.name,
-              amount,
-              interval,
-              businessName: business?.name ?? null,
+              data: { listingTier: plan.businessTier },
             });
-          } catch (emailError) {
-            console.error("[stripe webhook] Subscription confirmation email failed:", emailError);
+          }
+          if (plan?.individualTier) {
+            await db.user.update({
+              where: { id: userId },
+              data: { individualTier: plan.individualTier, memberType: "INDIVIDUAL" },
+            });
+          }
+
+          const user = await db.user.findUnique({
+            where: { id: userId },
+            select: { email: true, name: true },
+          });
+          const business = businessId
+            ? await db.business.findUnique({
+                where: { id: businessId },
+                select: { name: true },
+              })
+            : null;
+
+          if (user?.email && plan) {
+            const amount =
+              interval === BillingInterval.MONTHLY
+                ? Number(plan.monthlyPrice)
+                : Number(plan.yearlyPrice);
+            try {
+              const { sendSubscriptionConfirmationEmail } = await import("@/lib/services/email");
+              await sendSubscriptionConfirmationEmail({
+                to: user.email,
+                customerName: user.name,
+                planName: plan.name,
+                amount,
+                interval,
+                businessName: business?.name ?? null,
+              });
+            } catch (emailError) {
+              console.error("[stripe webhook] Subscription confirmation email failed:", emailError);
+            }
           }
         }
       }

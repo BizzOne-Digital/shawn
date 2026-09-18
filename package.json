@@ -21,6 +21,9 @@
     "db:cleanup": "tsx scripts/cleanup-demo-data.ts",
     "db:studio": "prisma studio",
     "db:setup": "prisma db push && tsx prisma/seed-native.ts",
+    "stripe:verify": "tsx scripts/verify-stripe-setup.ts",
+    "stripe:sync-plans": "tsx scripts/sync-stripe-plans.ts",
+    "stripe:setup-webhook": "tsx scripts/setup-stripe-webhook.ts",
     "db:up": "docker compose up -d",
     "postinstall": "prisma generate"
   },
