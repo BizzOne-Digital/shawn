@@ -14,6 +14,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_MAPBOX_TOKEN: z.string().optional(),
   NEXT_PUBLIC_SITE_URL: z.string().url().default("http://localhost:3000"),
   NEXT_PUBLIC_SITE_NAME: z.string().default("Let's Go Buffalo"),
+  NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

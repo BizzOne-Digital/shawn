@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { LeadMessageDialog } from "@/components/admin/lead-message-dialog";
 import { LeadStatusGuide } from "@/components/admin/lead-status-guide";
+import { LeadDeleteButton } from "@/components/admin/lead-delete-button";
 
 interface Props {
   searchParams: Promise<{ status?: string; source?: string }>;
@@ -104,6 +105,7 @@ export default async function LeadsPage({ searchParams }: Props) {
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Update</TableHead>
+                  <TableHead className="text-right">Remove</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -197,6 +199,9 @@ export default async function LeadsPage({ searchParams }: Props) {
                       </TableCell>
                       <TableCell>
                         <LeadStatusSelect leadId={lead.id} status={lead.status} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <LeadDeleteButton leadId={lead.id} leadName={lead.name} />
                       </TableCell>
                     </TableRow>
                   );

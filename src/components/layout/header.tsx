@@ -79,7 +79,7 @@ export function Header({ bannerText }: { bannerText?: string }) {
           <SiteLogo href="/" width={200} height={60} priority imageClassName="h-14 w-auto sm:h-16" />
 
           <nav
-            className="hidden items-center gap-1 xl:flex"
+            className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 lg:flex xl:gap-1"
             aria-label="Main navigation"
           >
             {navLinks.map((link) => {
@@ -93,7 +93,7 @@ export function Header({ bannerText }: { bannerText?: string }) {
                   key={`${link.href}-${link.label}`}
                   href={link.href}
                   className={cn(
-                    "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                    "whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium transition-colors xl:px-4",
                     active
                       ? "text-buffalo-red"
                       : "text-navy/80 hover:text-navy"

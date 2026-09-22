@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { CookieConsentBanner } from "@/components/layout/cookie-consent-banner";
+import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { metadata as siteMetadata } from "./metadata";
 import { getPageContent, txt } from "@/lib/content/page-content";
 import "./globals.css";
@@ -29,6 +30,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable} h-full overflow-x-clip`}>
       <body className="flex min-h-full min-w-0 flex-col overflow-x-clip antialiased">
+        <GoogleAnalytics />
         <Providers>
           <Header bannerText={txt(layoutContent, "header.banner")} />
           <main className="min-w-0 flex-1 overflow-x-clip">{children}</main>

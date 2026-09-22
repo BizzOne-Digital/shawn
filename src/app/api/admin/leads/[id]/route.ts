@@ -37,3 +37,24 @@ export async function PATCH(
 
   return NextResponse.json(lead);
 }
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { user, error } = await requireAdminApi();
+  if (error) return error;
+
+  const { id } = await params;
+
+  await db.lead.delete({ where: { id } });
+
+  await recordAuditLog({
+    userId: user!.id,
+    action: "DELETE_LEAD",
+    entity: "Lead",
+    entityId: id,
+  });
+
+  return NextResponse.json({ success: true });
+}

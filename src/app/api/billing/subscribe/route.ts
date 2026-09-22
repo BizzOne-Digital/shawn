@@ -31,7 +31,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const plan = await db.membershipPlan.findUnique({ where: { slug: planSlug, isActive: true } });
+    const plan = await db.membershipPlan.findFirst({
+      where: { slug: planSlug, isActive: true },
+    });
     if (!plan) {
       return NextResponse.json({ error: "Plan not found" }, { status: 404 });
     }
@@ -135,7 +137,15 @@ export async function POST(request: Request) {
       sessionParams.subscription_data!.trial_period_days = Number(promoCodeRecord.value);
     }
 
-    const session = await stripe.checkout.sessions.create(sessionParams);
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create(sessionParams);
+    } catch (stripeError) {
+      console.error("[billing/subscribe] Stripe checkout failed:", stripeError);
+      const message =
+        stripeError instanceof Error ? stripeError.message : "Stripe checkout failed";
+      return NextResponse.json({ error: message }, { status: 502 });
+    }
 
     return NextResponse.json({ url: session.url });
   } catch (error) {

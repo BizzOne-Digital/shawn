@@ -14,12 +14,14 @@ export const metadata: Metadata = {
 export default async function GearPage() {
   const content = await getPageContent("gear");
 
-  const products = [0, 1, 2, 3].map((index) => ({
-    id: `product-${index}`,
-    name: txt(content, `products.item_${index}.name`),
-    description: txt(content, `products.item_${index}.description`),
-    image: resolveImageUrl(txt(content, `products.item_${index}.image`)),
-  }));
+  const products = [0, 1, 2, 3]
+    .map((index) => ({
+      id: `product-${index}`,
+      name: txt(content, `products.item_${index}.name`),
+      description: txt(content, `products.item_${index}.description`),
+      image: resolveImageUrl(txt(content, `products.item_${index}.image`)),
+    }))
+    .filter((product) => product.name.trim().length > 0);
 
   return (
     <div className="overflow-x-clip py-12 md:py-16">
@@ -30,6 +32,9 @@ export default async function GearPage() {
         </div>
 
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {products.length === 0 ? (
+            <p className="text-muted col-span-full">No gear items are published yet. Add products in Admin → Content → Gear Shop.</p>
+          ) : null}
           {products.map((product) => (
             <div key={product.id} className="rounded-2xl border border-border bg-white p-5 shadow-sm">
               <div className="flex h-36 items-center justify-center rounded-xl bg-soft-gray p-4">
