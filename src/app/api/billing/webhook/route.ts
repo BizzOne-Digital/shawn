@@ -62,6 +62,9 @@ export async function POST(request: Request) {
 
         if (!existingSub) {
           const period = getSubscriptionPeriod(sub);
+          const termsVersion = session.metadata?.termsVersion ?? null;
+          const termsAcceptedAtRaw = session.metadata?.termsAcceptedAt;
+          const termsAcceptedAt = termsAcceptedAtRaw ? new Date(termsAcceptedAtRaw) : new Date();
 
           await db.subscription.create({
             data: {
@@ -74,6 +77,8 @@ export async function POST(request: Request) {
               stripeCustomerId: sub.customer as string,
               currentPeriodStart: new Date(period.start * 1000),
               currentPeriodEnd: new Date(period.end * 1000),
+              termsVersion,
+              termsAcceptedAt,
             },
           });
 

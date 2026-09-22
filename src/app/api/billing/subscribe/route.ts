@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireSessionUser, handleApiError } from "@/lib/api-utils";
 import { absoluteUrl } from "@/lib/utils";
 import { getStripeClient, isStripeConfigured, isStripeLiveMode } from "@/lib/stripe";
+import { TERMS_VERSION } from "@/lib/constants/terms";
 import { z } from "zod";
 import { BillingInterval } from "@prisma/client";
 import type Stripe from "stripe";
@@ -12,6 +13,9 @@ const subscribeSchema = z.object({
   interval: z.enum(["MONTHLY", "YEARLY"]),
   businessId: z.string().optional(),
   promoCode: z.string().optional(),
+  acceptTerms: z.literal(true, {
+    errorMap: () => ({ message: "You must agree to the Terms & Conditions" }),
+  }),
 });
 
 export async function POST(request: Request) {
@@ -25,6 +29,12 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const { planSlug, interval, businessId, promoCode } = subscribeSchema.parse(body);
+
+    const termsAcceptedAt = new Date();
+    await db.user.update({
+      where: { id: result.user.id },
+      data: { termsAcceptedAt, termsVersion: TERMS_VERSION },
+    });
 
     const dbUser = await db.user.findUnique({ where: { id: result.user.id } });
     if (!dbUser) {
@@ -123,6 +133,8 @@ export async function POST(request: Request) {
         planSlug: plan.slug,
         businessId: businessId ?? "",
         interval,
+        termsVersion: TERMS_VERSION,
+        termsAcceptedAt: termsAcceptedAt.toISOString(),
       },
       subscription_data: {
         metadata: {

@@ -26,6 +26,7 @@ const navLinks = [
   { href: "/gear", label: "Gear" },
   { href: "/email-enrollment", label: "Custom Email" },
   { href: "/advertise", label: "Advertise" },
+  { href: "/faq", label: "FAQ" },
   { href: "/#how-it-works", label: "How It Works" },
   { href: "/pricing", label: "Join" },
 ];

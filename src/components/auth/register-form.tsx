@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { SiteLogo } from "@/components/layout/site-logo";
 import { PasswordInput } from "@/components/auth/password-input";
 import { PasswordRequirements } from "@/components/auth/password-requirements";
+import { TermsAcceptanceCheckbox } from "@/components/forms/terms-acceptance-checkbox";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -42,6 +43,7 @@ export function RegisterForm({ isIndividual = false }: RegisterFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [subscribeNewsletter, setSubscribeNewsletter] = useState(true);
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const registerSchema = buildRegisterSchema(isIndividual);
 
   type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -55,6 +57,10 @@ export function RegisterForm({ isIndividual = false }: RegisterFormProps) {
   });
 
   async function onSubmit(data: RegisterFormValues) {
+    if (!acceptTerms) {
+      toast.error("Please agree to the Terms & Conditions to create an account.");
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/auth/register", {
@@ -67,6 +73,7 @@ export function RegisterForm({ isIndividual = false }: RegisterFormProps) {
           phone: data.phone,
           memberType: isIndividual ? "INDIVIDUAL" : "BUSINESS",
           subscribeNewsletter,
+          acceptTerms: true,
         }),
       });
 
@@ -180,6 +187,8 @@ export function RegisterForm({ isIndividual = false }: RegisterFormProps) {
               )}
             </div>
 
+            <TermsAcceptanceCheckbox checked={acceptTerms} onCheckedChange={setAcceptTerms} />
+
             <label className="flex items-start gap-3 cursor-pointer">
               <Checkbox
                 checked={subscribeNewsletter}
@@ -191,7 +200,7 @@ export function RegisterForm({ isIndividual = false }: RegisterFormProps) {
               </span>
             </label>
 
-            <Button type="submit" className="w-full" variant="accent" disabled={loading}>
+            <Button type="submit" className="w-full" variant="accent" disabled={loading || !acceptTerms}>
               {loading && <Loader2 className="animate-spin" />}
               Create Account
             </Button>

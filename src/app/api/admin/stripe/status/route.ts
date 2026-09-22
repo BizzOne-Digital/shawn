@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/admin-utils";
 import {
   getStripeCheckoutBaseUrl,
-  getStripeSecretKey,
-  getStripeWebhookSecret,
   isStripeConfigured,
   isStripeLiveMode,
   isStripeWebhookConfigured,

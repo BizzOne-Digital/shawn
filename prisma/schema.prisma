@@ -191,6 +191,8 @@ model User {
   lgbEmail      String?
   lgbEmailForwardTo String?
   stripeCustomerId String?
+  termsAcceptedAt DateTime?
+  termsVersion     String?
   isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -674,6 +676,18 @@ model SiteSetting {
   updatedAt DateTime @updatedAt
 }
 
+model FaqEntry {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  question  String
+  answer    String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
 model MembershipPlan {
   id                   String               @id @default(auto()) @map("_id") @db.ObjectId
   slug                 String               @unique
@@ -721,6 +735,8 @@ model Subscription {
   cancelAtPeriodEnd    Boolean            @default(false)
   canceledAt           DateTime?
   promoCodeId          String?            @db.ObjectId
+  termsAcceptedAt      DateTime?
+  termsVersion         String?
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
 

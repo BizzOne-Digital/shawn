@@ -5,6 +5,7 @@ import { UserRole, MemberType, LeadSource } from "@prisma/client";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { registerSchema } from "@/lib/validations/auth";
+import { TERMS_VERSION } from "@/lib/constants/terms";
 
 export async function POST(request: Request) {
   try {
@@ -34,6 +35,8 @@ export async function POST(request: Request) {
         phone: data.phone,
         role: isIndividual ? UserRole.INDIVIDUAL : UserRole.BUSINESS_OWNER,
         memberType: data.memberType,
+        termsAcceptedAt: new Date(),
+        termsVersion: TERMS_VERSION,
       },
     });
 

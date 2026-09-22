@@ -22,6 +22,7 @@ import {
   Menu,
   X,
   Newspaper,
+  CircleHelp,
 } from "lucide-react";
 import { SiteLogo } from "@/components/layout/site-logo";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,7 @@ const navItems = [
   { href: "/admin/campaigns", label: "Campaigns", icon: Megaphone },
   { href: "/admin/plans", label: "Plans & Pricing", icon: Tags },
   { href: "/admin/leads", label: "Leads", icon: Mail },
+  { href: "/admin/faq", label: "FAQ", icon: CircleHelp },
   { href: "/admin/reports", label: "Reports", icon: Flag },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/content", label: "Page Content", icon: FileText },

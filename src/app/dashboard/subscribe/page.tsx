@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, CheckCircle } from "lucide-react";
+import { TermsAcceptanceCheckbox } from "@/components/forms/terms-acceptance-checkbox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -45,6 +46,7 @@ export default function SubscribePage() {
   const [interval, setInterval] = useState<"MONTHLY" | "YEARLY">("MONTHLY");
   const [loading, setLoading] = useState(true);
   const [checkingOut, setCheckingOut] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -69,6 +71,10 @@ export default function SubscribePage() {
       toast.error("Select a business to upgrade");
       return;
     }
+    if (!acceptTerms) {
+      toast.error("Please agree to the Terms & Conditions to continue.");
+      return;
+    }
 
     setCheckingOut(true);
     try {
@@ -79,6 +85,7 @@ export default function SubscribePage() {
           planSlug: plan.slug,
           interval,
           businessId: plan.memberType === "BUSINESS" ? businessId : undefined,
+          acceptTerms: true,
         }),
       });
       const data = await res.json();
@@ -196,10 +203,12 @@ export default function SubscribePage() {
             <p className="text-xs text-muted mt-1">Secure payment via Stripe</p>
           </div>
 
+          <TermsAcceptanceCheckbox checked={acceptTerms} onCheckedChange={setAcceptTerms} />
+
           <Button
             variant="accent"
             className="w-full"
-            disabled={checkingOut || (plan.memberType === "BUSINESS" && !businessId)}
+            disabled={checkingOut || (plan.memberType === "BUSINESS" && !businessId) || !acceptTerms}
             onClick={handleCheckout}
           >
             {checkingOut ? <Loader2 className="animate-spin" /> : "Continue to Stripe Checkout"}

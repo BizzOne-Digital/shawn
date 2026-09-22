@@ -16,6 +16,9 @@ export const registerSchema = z.object({
   phone: z.string().optional(),
   memberType: z.enum(["BUSINESS", "INDIVIDUAL"]).default("BUSINESS"),
   subscribeNewsletter: z.boolean().optional(),
+  acceptTerms: z.literal(true, {
+    errorMap: () => ({ message: "You must agree to the Terms & Conditions" }),
+  }),
 });
 
 export const forgotPasswordSchema = z.object({
