@@ -70,7 +70,9 @@ export default async function AdvertisingPage() {
             </div>
           </div>
           <Link href="/dashboard/billing">
-            <Button variant="outline" size="sm">Add Funds</Button>
+            <Button variant="accent" size="sm">
+              Add funds with Stripe
+            </Button>
           </Link>
         </CardContent>
       </Card>

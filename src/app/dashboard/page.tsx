@@ -170,7 +170,9 @@ export default async function DashboardPage() {
             </p>
             <p className="text-sm text-muted mt-1">Available for advertising</p>
             <Link href="/dashboard/billing" className="block mt-4">
-              <Button className="w-full" variant="outline">Add Funds</Button>
+              <Button className="w-full" variant="accent">
+                Add funds with Stripe
+              </Button>
             </Link>
           </CardContent>
         </Card>

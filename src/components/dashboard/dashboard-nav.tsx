@@ -32,14 +32,14 @@ const businessNavItems = [
   { href: "/dashboard/submit", label: "Add Business", icon: PlusCircle },
   { href: "/dashboard/advertising", label: "Advertising", icon: Megaphone },
   { href: "/email-enrollment", label: "Custom Email", icon: Mail },
-  { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
+  { href: "/dashboard/billing", label: "Wallet & Billing", icon: CreditCard },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
 const individualNavItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/email-enrollment", label: "Custom Email", icon: Mail },
-  { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
+  { href: "/dashboard/billing", label: "Wallet & Billing", icon: CreditCard },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 

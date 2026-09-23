@@ -72,8 +72,10 @@ function BillingContent() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl font-bold text-navy">Billing</h1>
-        <p className="text-muted mt-1">Manage your advertising wallet</p>
+        <h1 className="font-display text-3xl font-bold text-navy">Wallet &amp; Billing</h1>
+        <p className="text-muted mt-1">
+          Add money to your advertising wallet with Stripe, then spend it on category bids under Advertising.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -124,8 +126,11 @@ function BillingContent() {
             </div>
             <Button variant="accent" onClick={handleAddFunds} disabled={loading} className="w-full">
               {loading && <Loader2 className="animate-spin" />}
-              Add Funds via Stripe
+              Pay with Stripe — Add to Wallet
             </Button>
+            <p className="text-xs text-center text-muted">
+              Secure checkout powered by Stripe. Minimum $10. Balance updates after payment completes.
+            </p>
           </CardContent>
         </Card>
       </div>
