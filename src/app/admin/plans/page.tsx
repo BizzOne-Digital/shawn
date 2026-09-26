@@ -1,3 +1,4 @@
+import { PromoCodeScope } from "@prisma/client";
 import { db } from "@/lib/db";
 import { PageHeader } from "@/components/admin/page-header";
 import { PlansManager } from "@/components/admin/plans-manager";
@@ -7,7 +8,10 @@ export const dynamic = "force-dynamic";
 export default async function AdminPlansPage() {
   const [plans, promoCodes] = await Promise.all([
     db.membershipPlan.findMany({ orderBy: { sortOrder: "asc" } }),
-    db.promoCode.findMany({ orderBy: { createdAt: "desc" } }),
+    db.promoCode.findMany({
+      where: { scope: PromoCodeScope.MEMBERSHIP },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   return (

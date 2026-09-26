@@ -8,6 +8,7 @@ import {
   ClipboardCheck,
   Building2,
   Tags,
+  Tag,
   MapPin,
   Users,
   Megaphone,
@@ -23,6 +24,7 @@ import {
   X,
   Newspaper,
   CircleHelp,
+  Send,
 } from "lucide-react";
 import { SiteLogo } from "@/components/layout/site-logo";
 import { cn } from "@/lib/utils";
@@ -40,6 +42,8 @@ const navItems = [
   { href: "/admin/campaigns", label: "Campaigns", icon: Megaphone },
   { href: "/admin/plans", label: "Plans & Pricing", icon: Tags },
   { href: "/admin/leads", label: "Leads", icon: Mail },
+  { href: "/admin/newsletters", label: "Newsletters", icon: Send },
+  { href: "/admin/email-discounts", label: "Email Discounts", icon: Tag },
   { href: "/admin/faq", label: "FAQ", icon: CircleHelp },
   { href: "/admin/reports", label: "Reports", icon: Flag },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },

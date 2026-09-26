@@ -9,6 +9,10 @@ import {
 } from "@/lib/services/lgb-email-availability";
 import { z } from "zod";
 import { verifyCaptcha } from "@/lib/captcha";
+import {
+  findActiveEmailPromoCode,
+  formatEmailPromoSummary,
+} from "@/lib/services/email-promo";
 
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -187,6 +191,7 @@ export async function submitLgbEmailRequest(formData: FormData) {
     businessName: formData.get("businessName") || undefined,
     captchaToken: formData.get("captchaToken"),
     captchaAnswer: formData.get("captchaAnswer"),
+    promoCode: (formData.get("promoCode") as string | null)?.trim() || undefined,
   });
 
   if (!parsed.success) {
@@ -227,6 +232,20 @@ export async function submitLgbEmailRequest(formData: FormData) {
     };
   }
 
+  let promoMetadata: Record<string, string | number> | null = null;
+  if (parsed.data.promoCode) {
+    const promo = await findActiveEmailPromoCode(parsed.data.promoCode);
+    if (!promo) {
+      return { success: false, error: "Invalid or expired discount code" };
+    }
+    promoMetadata = {
+      promoCode: promo.code,
+      promoType: promo.type,
+      promoValue: Number(promo.value),
+      promoSummary: formatEmailPromoSummary(promo.type, Number(promo.value)),
+    };
+  }
+
   try {
     await db.lead.create({
       data: {
@@ -244,6 +263,7 @@ export async function submitLgbEmailRequest(formData: FormData) {
           phone,
           primaryAvailable: primaryCheck.available,
           backupAvailable: backupCheck.available,
+          ...promoMetadata,
         },
       },
     });

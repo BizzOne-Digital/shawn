@@ -38,9 +38,11 @@ function getLgbEmailDetails(metadata: unknown) {
   const forwardTo = typeof data.forwardTo === "string" ? data.forwardTo : null;
   const businessName = typeof data.businessName === "string" ? data.businessName : null;
   const phone = typeof data.phone === "string" ? data.phone : null;
+  const promoCode = typeof data.promoCode === "string" ? data.promoCode : null;
+  const promoSummary = typeof data.promoSummary === "string" ? data.promoSummary : null;
 
   if (!requestedAddress && !forwardTo) return null;
-  return { requestedAddress, backupAddress, forwardTo, businessName, phone };
+  return { requestedAddress, backupAddress, forwardTo, businessName, phone, promoCode, promoSummary };
 }
 
 export default async function LeadsPage({ searchParams }: Props) {
@@ -73,7 +75,7 @@ export default async function LeadsPage({ searchParams }: Props) {
         title="Leads"
         description={`${leads.length} lead${leads.length === 1 ? "" : "s"}${
           source ? ` · ${formatLeadSource(source)}` : ""
-        }. Newsletter signups appear under the Newsletter filter; bulk email is not sent from admin yet.`}
+        }. Set newsletter subscribers to **Contacted** or **Converted** in Leads before sending from **Admin → Newsletters**.`}
       />
 
       <LeadStatusGuide />
@@ -152,6 +154,15 @@ export default async function LeadsPage({ searchParams }: Props) {
                             {lgbDetails.businessName && (
                               <p>
                                 <span className="text-muted">Business:</span> {lgbDetails.businessName}
+                              </p>
+                            )}
+                            {lgbDetails.promoCode && (
+                              <p>
+                                <span className="text-muted">Discount:</span>{" "}
+                                <span className="font-mono font-medium">{lgbDetails.promoCode}</span>
+                                {lgbDetails.promoSummary ? (
+                                  <span className="text-muted"> ({lgbDetails.promoSummary})</span>
+                                ) : null}
                               </p>
                             )}
                           </div>

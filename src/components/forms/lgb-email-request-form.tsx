@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, Loader2, Mail, XCircle } from "lucide-react";
+import { CheckCircle2, Loader2, Mail, Tag, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,6 +68,35 @@ export function LgbEmailRequestForm() {
   const [backupStatus, setBackupStatus] = useState<AvailabilityState>("idle");
   const [primaryAddress, setPrimaryAddress] = useState("");
   const [backupAddress, setBackupAddress] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [promoSummary, setPromoSummary] = useState<string | null>(null);
+  const [promoValidating, setPromoValidating] = useState(false);
+
+  const validatePromoCode = useCallback(async () => {
+    const trimmed = promoCode.trim();
+    if (!trimmed) {
+      setPromoSummary(null);
+      return;
+    }
+    setPromoValidating(true);
+    try {
+      const res = await fetch(`/api/public/lgb-email/promo?code=${encodeURIComponent(trimmed)}`);
+      const data = (await res.json()) as { valid?: boolean; summary?: string; error?: string };
+      if (data.valid && data.summary) {
+        setPromoSummary(data.summary);
+        setPromoCode(trimmed.toUpperCase());
+        toast.success("Discount code applied");
+      } else {
+        setPromoSummary(null);
+        toast.error(data.error ?? "Invalid discount code");
+      }
+    } catch {
+      setPromoSummary(null);
+      toast.error("Could not validate discount code");
+    } finally {
+      setPromoValidating(false);
+    }
+  }, [promoCode]);
 
   const checkAvailability = useCallback(async (localPart: string, which: "primary" | "backup") => {
     const trimmed = localPart.trim();
@@ -161,6 +190,8 @@ export function LgbEmailRequestForm() {
         setBackupLocalPart("");
         setPrimaryStatus("idle");
         setBackupStatus("idle");
+        setPromoCode("");
+        setPromoSummary(null);
       } else {
         toast.error(result.error ?? "Something went wrong.");
       }
@@ -277,6 +308,41 @@ export function LgbEmailRequestForm() {
         <p className="mt-1 text-xs text-muted">
           Messages sent to your @LetsGoBuffalo.com address will forward here.
         </p>
+      </div>
+
+      <div>
+        <Label htmlFor="promoCode">Discount code (optional)</Label>
+        <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Input
+            id="promoCode"
+            name="promoCode"
+            value={promoCode}
+            onChange={(e) => {
+              setPromoCode(e.target.value.toUpperCase());
+              setPromoSummary(null);
+            }}
+            placeholder="EMAIL20"
+            className="font-mono sm:max-w-xs"
+            autoComplete="off"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            disabled={promoValidating || !promoCode.trim()}
+            onClick={() => void validatePromoCode()}
+          >
+            {promoValidating ? <Loader2 className="size-4 animate-spin" /> : <Tag className="size-4" />}
+            Apply
+          </Button>
+        </div>
+        {promoSummary ? (
+          <p className="mt-1 flex items-center gap-1 text-xs text-green-700">
+            <CheckCircle2 className="size-3" />
+            {promoSummary}
+          </p>
+        ) : (
+          <p className="mt-1 text-xs text-muted">Have a promo code from Let&apos;s Go Buffalo? Apply it here.</p>
+        )}
       </div>
 
       <CaptchaField />

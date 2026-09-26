@@ -48,6 +48,7 @@ export const lgbEmailRequestSchema = z
     phone: z.string().min(10, "Phone number is required").max(20),
     captchaToken: z.string().min(1, "Captcha is required"),
     captchaAnswer: z.string().min(1, "Please answer the security check"),
+    promoCode: z.string().optional(),
   })
   .refine((data) => data.requestedAddress !== data.backupAddress, {
     message: "Backup address must be different from your first choice",

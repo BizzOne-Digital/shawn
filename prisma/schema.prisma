@@ -51,6 +51,11 @@ enum PromoCodeType {
   FREE_TRIAL_DAYS
 }
 
+enum PromoCodeScope {
+  MEMBERSHIP
+  LGB_EMAIL
+}
+
 enum ListingStatus {
   DRAFT
   PENDING_REVIEW
@@ -624,6 +629,7 @@ model Lead {
   @@index([status])
   @@index([businessId])
   @@index([createdAt])
+  @@index([source, status])
 }
 
 model SavedBusiness {
@@ -688,6 +694,28 @@ model FaqEntry {
   @@index([isActive, sortOrder])
 }
 
+enum NewsletterBroadcastStatus {
+  SENT
+  PARTIAL
+  FAILED
+}
+
+model NewsletterBroadcast {
+  id              String                    @id @default(auto()) @map("_id") @db.ObjectId
+  subject         String
+  bodyHtml        String
+  bodyText        String?
+  sentByUserId    String?                   @db.ObjectId
+  recipientCount  Int                       @default(0)
+  failedCount     Int                       @default(0)
+  status          NewsletterBroadcastStatus @default(SENT)
+  createdAt       DateTime                  @default(now())
+  sentAt          DateTime?
+
+  @@index([sentAt])
+  @@index([createdAt])
+}
+
 model MembershipPlan {
   id                   String               @id @default(auto()) @map("_id") @db.ObjectId
   slug                 String               @unique
@@ -749,24 +777,26 @@ model Subscription {
 }
 
 model PromoCode {
-  id                String        @id @default(auto()) @map("_id") @db.ObjectId
-  code              String        @unique
+  id                String         @id @default(auto()) @map("_id") @db.ObjectId
+  code              String         @unique
   description       String?
+  scope             PromoCodeScope @default(MEMBERSHIP)
   type              PromoCodeType
   value             Float
-  applicablePlanIds String[]      @default([])
+  applicablePlanIds String[]       @default([])
   maxRedemptions    Int?
-  redemptionCount   Int           @default(0)
+  redemptionCount   Int            @default(0)
   validFrom         DateTime?
   validUntil        DateTime?
-  isActive          Boolean       @default(true)
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  isActive          Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
   subscriptions Subscription[]
   redemptions   PromoCodeRedemption[]
 
   @@index([code, isActive])
+  @@index([scope, isActive])
 }
 
 model PromoCodeRedemption {

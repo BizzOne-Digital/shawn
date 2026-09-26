@@ -7,13 +7,15 @@ export function LeadStatusGuide() {
           <strong className="text-foreground">New</strong> — Just submitted; not yet reviewed.
         </li>
         <li>
-          <strong className="text-foreground">Contacted</strong> — You reached out to the person.
+          <strong className="text-foreground">Contacted</strong> — Reached out; include in{" "}
+          <strong>newsletter sends</strong>.
         </li>
         <li>
           <strong className="text-foreground">Qualified</strong> — A real opportunity worth pursuing.
         </li>
         <li>
-          <strong className="text-foreground">Converted</strong> — Became a customer, member, or listing.
+          <strong className="text-foreground">Converted</strong> — Became a customer/member; include in{" "}
+          <strong>newsletter sends</strong>.
         </li>
         <li>
           <strong className="text-foreground">Closed</strong> — Done or no longer active (won or lost).

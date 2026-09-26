@@ -5,7 +5,7 @@ import { absoluteUrl } from "@/lib/utils";
 import { getStripeClient, isStripeConfigured, isStripeLiveMode } from "@/lib/stripe";
 import { TERMS_VERSION } from "@/lib/constants/terms";
 import { z } from "zod";
-import { BillingInterval } from "@prisma/client";
+import { BillingInterval, PromoCodeScope } from "@prisma/client";
 import type Stripe from "stripe";
 
 const subscribeSchema = z.object({
@@ -61,6 +61,7 @@ export async function POST(request: Request) {
       promoCodeRecord = await db.promoCode.findFirst({
         where: {
           code: promoCode.toUpperCase(),
+          scope: PromoCodeScope.MEMBERSHIP,
           isActive: true,
           OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
         },

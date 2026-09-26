@@ -140,6 +140,7 @@ export function PlansManager({ plans: initialPlans, promoCodes: initialPromos }:
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...newPromo,
+          scope: "MEMBERSHIP",
           maxRedemptions: newPromo.maxRedemptions ? parseInt(newPromo.maxRedemptions) : null,
         }),
       });
