@@ -19,9 +19,8 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Let's Go Buffalo" }],
   icons: {
-    icon: [{ url: "/icon.png", type: "image/png" }],
-    apple: [{ url: "/apple-icon.png", type: "image/png" }],
-    shortcut: "/icon.png",
+    icon: [{ url: "/favicon.png", sizes: "48x48", type: "image/png" }],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
   },
   openGraph: {
     type: "website",

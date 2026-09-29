@@ -24,6 +24,7 @@
     "smoke:db": "tsx scripts/smoke-db.ts",
     "smoke:http": "tsx scripts/smoke-http.ts",
     "smoke": "tsx scripts/smoke-db.ts && tsx scripts/smoke-http.ts",
+    "favicons": "node scripts/generate-favicons.mjs",
     "stripe:verify": "tsx scripts/verify-stripe-setup.ts",
     "stripe:sync-plans": "tsx scripts/sync-stripe-plans.ts",
     "stripe:setup-webhook": "tsx scripts/setup-stripe-webhook.ts",
