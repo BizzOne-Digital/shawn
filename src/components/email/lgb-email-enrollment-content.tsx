@@ -78,6 +78,23 @@ export async function LgbEmailEnrollmentContent() {
           ))}
         </ul>
 
+        <div className="mt-10 rounded-2xl border border-buffalo-red/25 bg-buffalo-red/5 p-6">
+          <h2 className="font-display text-xl font-bold text-navy">Subscribe for your @LetsGoBuffalo.com email</h2>
+          <p className="mt-2 text-sm text-muted">
+            Individual Pro includes a custom email address with forwarding —{" "}
+            <strong className="text-navy">$0.99/month</strong> or about{" "}
+            <strong className="text-navy">$10/year</strong> (annual plan shown at checkout).
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link href="/login?callbackUrl=%2Fdashboard%2Fsubscribe">
+              <Button variant="accent">Log in to subscribe</Button>
+            </Link>
+            <Link href="/pricing">
+              <Button variant="outline">View pricing</Button>
+            </Link>
+          </div>
+        </div>
+
         <div className="mt-10" id="request-form">
           <h2 className="font-display text-2xl font-bold text-navy">
             {txt(content, "form.title")}

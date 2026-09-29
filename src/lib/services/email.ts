@@ -55,6 +55,8 @@ function isSmtpConfigured(): boolean {
   return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
 }
 
+export { isSmtpConfigured };
+
 class SmtpEmailAdapter implements EmailAdapter {
   async send(options: EmailOptions): Promise<void> {
     const transporter = getSmtpTransporter();

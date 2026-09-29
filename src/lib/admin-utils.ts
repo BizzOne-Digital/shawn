@@ -8,12 +8,36 @@ import {
   type CampaignStatus,
 } from "@prisma/client";
 import { db } from "@/lib/db";
-import { getCurrentUser, isAdmin } from "@/lib/auth-utils";
+import { getCurrentUser } from "@/lib/auth-utils";
+import {
+  canAccessAdminApi,
+  canAccessAdminPanel,
+  isFullAdmin,
+} from "@/lib/admin-permissions";
 
-export async function requireAdminApi() {
+export async function requireAdminApi(request?: Request) {
   const user = await getCurrentUser();
-  if (!user || !isAdmin(user.role)) {
+  if (!user || !canAccessAdminPanel(user.role)) {
     return { user: null, error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  }
+
+  if (request && !isFullAdmin(user.role)) {
+    const pathname = new URL(request.url).pathname;
+    if (!canAccessAdminApi(user.role, pathname)) {
+      return { user: null, error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+    }
+  }
+
+  return { user, error: null };
+}
+
+export async function requireFullAdminApi() {
+  const user = await getCurrentUser();
+  if (!user || !isFullAdmin(user.role)) {
+    return {
+      user: null,
+      error: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+    };
   }
   return { user, error: null };
 }

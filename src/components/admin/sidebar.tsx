@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { UserRole } from "@prisma/client";
+import { canAccessAdminPath } from "@/lib/admin-permissions";
 import { signOut } from "next-auth/react";
 import {
   LayoutDashboard,
@@ -66,6 +68,8 @@ export function AdminSidebar({
   onMobileOpenChange,
 }: AdminSidebarProps) {
   const pathname = usePathname();
+  const role = (userRole as UserRole | undefined) ?? UserRole.ADMIN;
+  const visibleNavItems = navItems.filter((item) => canAccessAdminPath(role, item.href));
 
   function isActive(href: string, exact?: boolean) {
     if (exact) return pathname === href;
@@ -110,7 +114,7 @@ export function AdminSidebar({
         <Separator className="bg-white/10" />
 
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href, item.exact);
             return (

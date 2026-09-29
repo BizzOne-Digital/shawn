@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireAdminApi } from "@/lib/admin-utils";
+import {requireAdminApi, requireFullAdminApi } from "@/lib/admin-utils";
 import { z } from "zod";
 import { PromoCodeType, PromoCodeScope } from "@prisma/client";
 
@@ -16,7 +16,7 @@ const createPromoSchema = z.object({
 });
 
 export async function GET(request: Request) {
-  const auth = await requireAdminApi();
+  const auth = await requireFullAdminApi();
   if (auth.error) return auth.error;
 
   const scopeParam = new URL(request.url).searchParams.get("scope");
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireAdminApi();
+  const auth = await requireFullAdminApi();
   if (auth.error) return auth.error;
 
   const body = createPromoSchema.parse(await request.json());

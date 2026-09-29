@@ -4,8 +4,8 @@ import { db } from "@/lib/db";
 import { requireAdminApi, recordAuditLog, slugify } from "@/lib/admin-utils";
 import { fanPostSchema } from "@/lib/validations/fan-page";
 
-export async function GET() {
-  const { error } = await requireAdminApi();
+export async function GET(request: Request) {
+  const { error } = await requireAdminApi(request);
   if (error) return error;
 
   const posts = await db.fanPost.findMany({
@@ -23,7 +23,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { user, error } = await requireAdminApi();
+  const { user, error } = await requireAdminApi(request);
   if (error) return error;
 
   const body = await request.json();

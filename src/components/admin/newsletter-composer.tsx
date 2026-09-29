@@ -30,9 +30,14 @@ interface HistoryRow {
 interface NewsletterComposerProps {
   initialAudience: AudienceInfo;
   initialHistory: HistoryRow[];
+  smtpConfigured: boolean;
 }
 
-export function NewsletterComposer({ initialAudience, initialHistory }: NewsletterComposerProps) {
+export function NewsletterComposer({
+  initialAudience,
+  initialHistory,
+  smtpConfigured,
+}: NewsletterComposerProps) {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [audience, setAudience] = useState(initialAudience);
@@ -98,6 +103,16 @@ export function NewsletterComposer({ initialAudience, initialHistory }: Newslett
 
   return (
     <div className="space-y-8">
+      {!smtpConfigured ? (
+        <Card className="border-buffalo-red/40 bg-buffalo-red/5">
+          <CardContent className="py-4 text-sm">
+            <strong className="text-navy">Newsletter email is not configured.</strong> Set{" "}
+            <code className="text-xs">SMTP_HOST</code>, <code className="text-xs">SMTP_USER</code>, and{" "}
+            <code className="text-xs">SMTP_PASS</code> on Vercel (same values as password reset mail). Until
+            then, sends will fail in production.
+          </CardContent>
+        </Card>
+      ) : null}
       <Card className="border-dashed">
         <CardContent className="py-4 text-sm text-muted space-y-2">
           <p>
@@ -167,7 +182,7 @@ export function NewsletterComposer({ initialAudience, initialHistory }: Newslett
           <Button
             type="button"
             variant="accent"
-            disabled={sending || (audience?.eligibleCount ?? 0) === 0}
+            disabled={sending || !smtpConfigured || (audience?.eligibleCount ?? 0) === 0}
             onClick={() => void handleSend()}
           >
             {sending ? <Loader2 className="animate-spin" /> : <Send className="size-4" />}

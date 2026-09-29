@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { getNewsletterAudienceStats } from "@/lib/newsletter-audience";
+import { isSmtpConfigured } from "@/lib/services/email";
 
 export async function getNewsletterAdminData() {
   const [stats, history] = await Promise.all([
@@ -11,6 +12,7 @@ export async function getNewsletterAdminData() {
   ]);
 
   return {
+    smtpConfigured: isSmtpConfigured(),
     audience: {
       eligibleCount: stats.eligibleCount,
       pendingNewCount: stats.pendingNewCount,

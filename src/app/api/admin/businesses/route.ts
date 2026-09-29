@@ -6,7 +6,7 @@ import { syncBusinessRelations } from "@/lib/business-utils";
 import { businessSchema } from "./schema";
 
 export async function POST(request: Request) {
-  const { user, error } = await requireAdminApi();
+  const { user, error } = await requireAdminApi(request);
   if (error) return error;
 
   const body = await request.json();

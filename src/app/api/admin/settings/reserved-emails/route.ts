@@ -8,7 +8,7 @@ const schema = z.object({
 });
 
 export async function PUT(request: Request) {
-  const { user, error } = await requireAdminApi();
+  const { user, error } = await requireAdminApi(request);
   if (error) return error;
 
   const body = await request.json();

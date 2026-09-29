@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { LeadSource, LeadStatus } from "@prisma/client";
 import { db } from "@/lib/db";
-import { requireAdminApi, recordAuditLog } from "@/lib/admin-utils";
+import {requireAdminApi, recordAuditLog, requireFullAdminApi } from "@/lib/admin-utils";
 
 export async function POST() {
-  const auth = await requireAdminApi();
+  const auth = await requireFullAdminApi();
   if (auth.error) return auth.error;
 
   const result = await db.lead.updateMany({

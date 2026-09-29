@@ -1,5 +1,10 @@
 import { edgeAuth } from "@/lib/auth-edge";
 import { NextResponse } from "next/server";
+import {
+  isModeratorRole,
+  isStaffRole,
+  moderatorCanAccessAdminPath,
+} from "@/lib/admin-route-access";
 
 const ADMIN_LOGIN_PATH = "/admin-login";
 
@@ -7,11 +12,13 @@ export default edgeAuth((req) => {
   const { pathname } = req.nextUrl;
   const isLoggedIn = !!req.auth;
   const role = req.auth?.user?.role;
-  const isAdmin = role === "ADMIN" || role === "MODERATOR";
+  const isStaff = isStaffRole(role);
+  const isModerator = isModeratorRole(role);
 
   if (pathname === ADMIN_LOGIN_PATH) {
-    if (isLoggedIn && isAdmin) {
-      return NextResponse.redirect(new URL("/admin", req.url));
+    if (isLoggedIn && isStaff) {
+      const dest = isModerator ? "/admin/moderation" : "/admin";
+      return NextResponse.redirect(new URL(dest, req.url));
     }
     return NextResponse.next();
   }
@@ -22,8 +29,16 @@ export default edgeAuth((req) => {
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
     }
-    if (!isAdmin) {
+    if (!isStaff) {
       return NextResponse.redirect(new URL("/", req.url));
+    }
+    if (isModerator) {
+      if (pathname === "/admin") {
+        return NextResponse.redirect(new URL("/admin/moderation", req.url));
+      }
+      if (!moderatorCanAccessAdminPath(pathname)) {
+        return NextResponse.redirect(new URL("/admin/moderation", req.url));
+      }
     }
   }
 
@@ -31,8 +46,9 @@ export default edgeAuth((req) => {
     if (!isLoggedIn) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
-    if (isAdmin) {
-      return NextResponse.redirect(new URL("/admin", req.url));
+    if (isStaff) {
+      const dest = isModerator ? "/admin/moderation" : "/admin";
+      return NextResponse.redirect(new URL(dest, req.url));
     }
   }
 

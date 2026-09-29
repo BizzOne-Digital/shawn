@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/admin/page-header";
 import { PageContentEditor } from "@/components/admin/page-content-editor";
+import { GearShopManager } from "@/components/admin/gear-shop-manager";
 import { getCmsPage } from "@/lib/content/cms-config";
 import { getPageContent } from "@/lib/content/page-content";
+import { getGearShopProducts } from "@/lib/gear-shop";
 import { Button } from "@/components/ui/button";
 
 interface AdminContentEditPageProps {
@@ -19,6 +21,7 @@ export default async function AdminContentEditPage({
   if (!page) notFound();
 
   const content = await getPageContent(slug);
+  const gearProducts = slug === "gear" ? await getGearShopProducts() : [];
 
   return (
     <div>
@@ -35,6 +38,7 @@ export default async function AdminContentEditPage({
         description={`Edit content for ${page.path}. Changes appear on the live site after saving.`}
       />
       <PageContentEditor page={page} initialContent={content} />
+      {slug === "gear" ? <GearShopManager initialProducts={gearProducts} /> : null}
     </div>
   );
 }

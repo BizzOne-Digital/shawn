@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { CampaignStatus } from "@prisma/client";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireAdminApi, recordAuditLog } from "@/lib/admin-utils";
+import {requireAdminApi, recordAuditLog, requireFullAdminApi } from "@/lib/admin-utils";
 
 const schema = z.object({
   reason: z.string().min(1, "Rejection reason is required"),
@@ -12,7 +12,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { user, error } = await requireAdminApi();
+  const { user, error } = await requireFullAdminApi();
   if (error) return error;
 
   const { id } = await params;

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireAdminApi, recordAuditLog } from "@/lib/admin-utils";
+import {requireAdminApi, recordAuditLog, requireFullAdminApi } from "@/lib/admin-utils";
 import { handleApiError } from "@/lib/api-utils";
 import { USER_NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
@@ -15,7 +15,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 export async function POST(request: Request, context: RouteContext) {
   try {
-    const { user: admin, error } = await requireAdminApi();
+    const { user: admin, error } = await requireFullAdminApi();
     if (error) return error;
 
     const { id: userId } = await context.params;

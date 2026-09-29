@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireAdminApi, recordAuditLog } from "@/lib/admin-utils";
+import {requireAdminApi, recordAuditLog, requireFullAdminApi } from "@/lib/admin-utils";
 
 const schema = z.object({
   isActive: z.boolean(),
@@ -11,7 +11,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { user, error } = await requireAdminApi();
+  const { user, error } = await requireFullAdminApi();
   if (error) return error;
 
   const { id } = await params;

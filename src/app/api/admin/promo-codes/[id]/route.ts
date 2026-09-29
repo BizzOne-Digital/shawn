@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireAdminApi } from "@/lib/admin-utils";
+import {requireAdminApi, requireFullAdminApi } from "@/lib/admin-utils";
 import { z } from "zod";
 
 const updatePromoSchema = z.object({
@@ -13,7 +13,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAdminApi();
+  const auth = await requireFullAdminApi();
   if (auth.error) return auth.error;
 
   const { id } = await params;

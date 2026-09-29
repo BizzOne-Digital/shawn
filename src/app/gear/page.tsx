@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import { GearOrderForm } from "@/components/forms/gear-order-form";
 import { CmsImage } from "@/components/ui/cms-image";
+import { Button } from "@/components/ui/button";
 import { getPageContent, txt } from "@/lib/content/page-content";
+import { getGearShopProducts } from "@/lib/gear-shop";
 import { resolveImageUrl } from "@/lib/utils/image-url";
 
 export const dynamic = "force-dynamic";
@@ -12,16 +16,33 @@ export const metadata: Metadata = {
 };
 
 export default async function GearPage() {
-  const content = await getPageContent("gear");
+  const [content, managedProducts] = await Promise.all([
+    getPageContent("gear"),
+    getGearShopProducts(),
+  ]);
 
-  const products = [0, 1, 2, 3]
+  const cmsProducts = [0, 1, 2, 3]
     .map((index) => ({
-      id: `product-${index}`,
+      id: `cms-${index}`,
       name: txt(content, `products.item_${index}.name`),
       description: txt(content, `products.item_${index}.description`),
       image: resolveImageUrl(txt(content, `products.item_${index}.image`)),
+      priceLabel: txt(content, `products.item_${index}.price`),
+      stripePaymentLink: "",
     }))
     .filter((product) => product.name.trim().length > 0);
+
+  const products =
+    managedProducts.length > 0
+      ? managedProducts.map((p) => ({
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          image: resolveImageUrl(p.image),
+          priceLabel: p.priceLabel,
+          stripePaymentLink: p.stripePaymentLink,
+        }))
+      : cmsProducts;
 
   return (
     <div className="overflow-x-clip py-12 md:py-16">
@@ -33,7 +54,9 @@ export default async function GearPage() {
 
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {products.length === 0 ? (
-            <p className="text-muted col-span-full">No gear items are published yet. Add products in Admin → Content → Gear Shop.</p>
+            <p className="text-muted col-span-full">
+              No gear items yet. Add products in Admin → Page Content → Gear Shop.
+            </p>
           ) : null}
           {products.map((product) => (
             <div key={product.id} className="rounded-2xl border border-border bg-white p-5 shadow-sm">
@@ -48,10 +71,24 @@ export default async function GearPage() {
               </div>
               <h2 className="mt-4 font-semibold text-navy">{product.name}</h2>
               <p className="mt-1 text-sm text-muted">{product.description}</p>
-              <p className="mt-3 font-display text-lg font-semibold text-buffalo-red">
-                Coming Soon
-              </p>
-              <GearOrderForm productName={product.name} />
+              {product.priceLabel ? (
+                <p className="mt-3 font-display text-lg font-semibold text-buffalo-red">
+                  {product.priceLabel.startsWith("$") ? product.priceLabel : `$${product.priceLabel}`}
+                </p>
+              ) : null}
+              {product.stripePaymentLink ? (
+                <Button variant="accent" className="mt-4 w-full" asChild>
+                  <a href={product.stripePaymentLink} target="_blank" rel="noopener noreferrer">
+                    Buy now
+                    <ExternalLink className="size-4" />
+                  </a>
+                </Button>
+              ) : (
+                <>
+                  <p className="mt-3 text-sm text-muted">Order inquiry</p>
+                  <GearOrderForm productName={product.name} />
+                </>
+              )}
             </div>
           ))}
         </div>

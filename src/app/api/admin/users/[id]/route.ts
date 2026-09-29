@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { UserRole } from "@prisma/client";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireAdminApi, recordAuditLog } from "@/lib/admin-utils";
+import {requireAdminApi, recordAuditLog, requireFullAdminApi } from "@/lib/admin-utils";
 
 const schema = z.object({
   role: z.nativeEnum(UserRole).optional(),
@@ -15,7 +15,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { user, error } = await requireAdminApi();
+  const { user, error } = await requireFullAdminApi();
   if (error) return error;
 
   const { id } = await params;
@@ -53,4 +53,37 @@ export async function PATCH(
   });
 
   return NextResponse.json(updated);
+}
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { user, error } = await requireFullAdminApi();
+  if (error) return error;
+
+  const { id } = await params;
+  if (id === user!.id) {
+    return NextResponse.json({ error: "Cannot delete your own account" }, { status: 400 });
+  }
+
+  const targetUser = await db.user.findUnique({ where: { id } });
+  if (!targetUser) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+
+  await db.user.update({
+    where: { id },
+    data: { deletedAt: new Date(), isActive: false },
+  });
+
+  await recordAuditLog({
+    userId: user!.id,
+    action: "DELETE_USER",
+    entity: "User",
+    entityId: id,
+    metadata: { email: targetUser.email },
+  });
+
+  return NextResponse.json({ success: true });
 }

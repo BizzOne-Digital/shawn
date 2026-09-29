@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { NewsletterBroadcastStatus } from "@prisma/client";
 import { db } from "@/lib/db";
-import { requireAdminApi, recordAuditLog } from "@/lib/admin-utils";
+import {requireAdminApi, recordAuditLog, requireFullAdminApi } from "@/lib/admin-utils";
 import {
   dedupeNewsletterRecipients,
   getNewsletterAudienceLeads,
 } from "@/lib/newsletter-audience";
 import { getNewsletterAdminData } from "@/lib/newsletter-admin-data";
 import { sendNewsletterEmail } from "@/lib/services/newsletter-email";
+import { isSmtpConfigured } from "@/lib/services/email";
 
 function getPublicSiteUrl(): string {
   return (
@@ -27,19 +28,29 @@ const sendSchema = z.object({
 });
 
 export async function GET() {
-  const auth = await requireAdminApi();
+  const auth = await requireFullAdminApi();
   if (auth.error) return auth.error;
 
   return NextResponse.json(await getNewsletterAdminData());
 }
 
 export async function POST(request: Request) {
-  const auth = await requireAdminApi();
+  const auth = await requireFullAdminApi();
   if (auth.error) return auth.error;
 
   const parsed = sendSchema.safeParse(await request.json());
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.errors[0]?.message }, { status: 400 });
+  }
+
+  if (!isSmtpConfigured()) {
+    return NextResponse.json(
+      {
+        error:
+          "Email is not configured on the server. Add SMTP_HOST, SMTP_USER, and SMTP_PASS in Vercel (same as forgot-password mail), then try again.",
+      },
+      { status: 503 }
+    );
   }
 
   const leads = await dedupeNewsletterRecipients(await getNewsletterAudienceLeads());

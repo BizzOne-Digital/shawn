@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/admin-utils";
+import {requireAdminApi, requireFullAdminApi } from "@/lib/admin-utils";
 import { getCmsPage } from "@/lib/content/cms-config";
 import {
   getPageContent,
@@ -12,7 +12,7 @@ interface RouteContext {
 }
 
 export async function GET(_request: Request, context: RouteContext) {
-  const { error } = await requireAdminApi();
+  const { error } = await requireFullAdminApi();
   if (error) return error;
 
   const { slug } = await context.params;
@@ -26,7 +26,7 @@ export async function GET(_request: Request, context: RouteContext) {
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
-  const { user, error } = await requireAdminApi();
+  const { user, error } = await requireFullAdminApi();
   if (error) return error;
 
   const { slug } = await context.params;

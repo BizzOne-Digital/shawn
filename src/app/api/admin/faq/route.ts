@@ -10,7 +10,7 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
-  const { user, error } = await requireAdminApi();
+  const { user, error } = await requireAdminApi(request);
   if (error) return error;
 
   const parsed = schema.safeParse(await request.json());

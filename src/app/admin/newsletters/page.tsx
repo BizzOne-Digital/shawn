@@ -5,7 +5,7 @@ import { getNewsletterAdminData } from "@/lib/newsletter-admin-data";
 export const dynamic = "force-dynamic";
 
 export default async function AdminNewslettersPage() {
-  const { audience, history } = await getNewsletterAdminData();
+  const { audience, history, smtpConfigured } = await getNewsletterAdminData();
 
   return (
     <div>
@@ -13,7 +13,11 @@ export default async function AdminNewslettersPage() {
         title="Newsletters"
         description="Email site updates to newsletter subscribers (SMTP required on production)."
       />
-      <NewsletterComposer initialAudience={audience} initialHistory={history} />
+      <NewsletterComposer
+        initialAudience={audience}
+        initialHistory={history}
+        smtpConfigured={smtpConfigured}
+      />
     </div>
   );
 }

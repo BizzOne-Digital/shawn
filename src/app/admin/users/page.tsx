@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/admin-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserFilters } from "@/components/admin/user-filters";
+import { UserDeleteButton } from "@/components/admin/user-delete-button";
 import { USER_NOT_DELETED } from "@/lib/prisma-mongo-filters";
 
 interface Props {
@@ -69,6 +70,7 @@ export default async function UsersPage({ searchParams }: Props) {
                 <TableHead>Businesses</TableHead>
                 <TableHead>Joined</TableHead>
                 <TableHead>Manage</TableHead>
+                <TableHead className="text-right">Remove</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -105,6 +107,9 @@ export default async function UsersPage({ searchParams }: Props) {
                       />
                       <AdminSetPasswordForm userId={user.id} userEmail={user.email} />
                     </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <UserDeleteButton userId={user.id} userEmail={user.email} />
                   </TableCell>
                 </TableRow>
               ))}

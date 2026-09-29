@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireAdminApi, recordAuditLog } from "@/lib/admin-utils";
+import {requireAdminApi, recordAuditLog, requireFullAdminApi } from "@/lib/admin-utils";
 
 const schema = z.object({
   ad_minimum_daily_bid: z.number().min(0).optional(),
@@ -22,7 +22,7 @@ const settingKeys = [
 ] as const;
 
 export async function GET() {
-  const { error } = await requireAdminApi();
+  const { error } = await requireFullAdminApi();
   if (error) return error;
 
   const settings = await db.siteSetting.findMany({
@@ -34,7 +34,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const { user, error } = await requireAdminApi();
+  const { user, error } = await requireFullAdminApi();
   if (error) return error;
 
   const body = await request.json();

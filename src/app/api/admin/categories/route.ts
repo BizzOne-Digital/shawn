@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireAdminApi, recordAuditLog, slugify } from "@/lib/admin-utils";
+import {requireAdminApi, recordAuditLog, slugify, requireFullAdminApi } from "@/lib/admin-utils";
 
 const createSchema = z.object({
   name: z.string().min(1),
@@ -13,7 +13,7 @@ const createSchema = z.object({
 });
 
 export async function GET() {
-  const { error } = await requireAdminApi();
+  const { error } = await requireFullAdminApi();
   if (error) return error;
 
   const categories = await db.category.findMany({
@@ -25,7 +25,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { user, error } = await requireAdminApi();
+  const { user, error } = await requireFullAdminApi();
   if (error) return error;
 
   const body = await request.json();

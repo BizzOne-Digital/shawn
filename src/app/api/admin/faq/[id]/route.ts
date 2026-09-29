@@ -14,7 +14,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { user, error } = await requireAdminApi();
+  const { user, error } = await requireAdminApi(request);
   if (error) return error;
 
   const { id } = await params;
@@ -45,10 +45,10 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { user, error } = await requireAdminApi();
+  const { user, error } = await requireAdminApi(request);
   if (error) return error;
 
   const { id } = await params;

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/admin-utils";
+import {requireAdminApi, requireFullAdminApi } from "@/lib/admin-utils";
 import {
   getStripeCheckoutBaseUrl,
   isStripeConfigured,
@@ -9,7 +9,7 @@ import {
 import { db } from "@/lib/db";
 
 export async function GET() {
-  const auth = await requireAdminApi();
+  const auth = await requireFullAdminApi();
   if (auth.error) return auth.error;
 
   const plans = await prismaPlans();
