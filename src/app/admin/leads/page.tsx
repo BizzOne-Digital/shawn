@@ -40,9 +40,24 @@ function getLgbEmailDetails(metadata: unknown) {
   const phone = typeof data.phone === "string" ? data.phone : null;
   const promoCode = typeof data.promoCode === "string" ? data.promoCode : null;
   const promoSummary = typeof data.promoSummary === "string" ? data.promoSummary : null;
+  const subscriptionPaid = Boolean(data.emailSubscriptionPaid || data.stripeSubscriptionId);
+  const billingInterval =
+    data.billingInterval === "MONTHLY" || data.billingInterval === "YEARLY"
+      ? data.billingInterval
+      : null;
 
-  if (!requestedAddress && !forwardTo) return null;
-  return { requestedAddress, backupAddress, forwardTo, businessName, phone, promoCode, promoSummary };
+  if (!requestedAddress && !forwardTo && !subscriptionPaid) return null;
+  return {
+    requestedAddress,
+    backupAddress,
+    forwardTo,
+    businessName,
+    phone,
+    promoCode,
+    promoSummary,
+    subscriptionPaid,
+    billingInterval,
+  };
 }
 
 export default async function LeadsPage({ searchParams }: Props) {
@@ -129,6 +144,15 @@ export default async function LeadsPage({ searchParams }: Props) {
                       <TableCell className="max-w-xs text-sm">
                         {lgbDetails ? (
                           <div className="space-y-1">
+                            {lgbDetails.subscriptionPaid && (
+                              <p className="font-medium text-green-700">
+                                Stripe subscription paid
+                                {lgbDetails.billingInterval
+                                  ? ` (${lgbDetails.billingInterval.toLowerCase()})`
+                                  : ""}
+                                — verify and provision email
+                              </p>
+                            )}
                             {lgbDetails.requestedAddress && (
                               <p>
                                 <span className="text-muted">First choice:</span>{" "}

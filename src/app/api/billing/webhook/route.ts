@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { headers } from "next/headers";
-import { BillingInterval } from "@prisma/client";
+import { BillingInterval, LeadSource } from "@prisma/client";
 import type Stripe from "stripe";
 import {
   getStripeClient,
@@ -125,6 +125,71 @@ export async function POST(request: Request) {
             } catch (emailError) {
               console.error("[stripe webhook] Subscription confirmation email failed:", emailError);
             }
+          }
+        }
+      } else if (session.metadata?.lgbEmailCheckout === "true" && planId) {
+        const contactEmail =
+          session.metadata.contactEmail?.trim().toLowerCase() ||
+          session.customer_email?.trim().toLowerCase() ||
+          null;
+        const contactName = session.metadata.contactName?.trim() || null;
+        const subscriptionId = session.subscription as string;
+
+        if (contactEmail && subscriptionId) {
+          const plan = await db.membershipPlan.findUnique({ where: { id: planId } });
+          const amount =
+            interval === BillingInterval.MONTHLY
+              ? Number(plan?.monthlyPrice ?? 0)
+              : Number(plan?.yearlyPrice ?? 0);
+
+          const existingLead = await db.lead.findFirst({
+            where: {
+              source: LeadSource.LGB_EMAIL,
+              email: contactEmail,
+            },
+            orderBy: { createdAt: "desc" },
+          });
+
+          const paidMetadata = {
+            stripeSubscriptionId: subscriptionId,
+            stripeCheckoutSessionId: session.id,
+            billingInterval: interval,
+            emailSubscriptionPaid: true,
+            paidAt: new Date().toISOString(),
+          };
+
+          if (existingLead) {
+            const prior = (existingLead.metadata as Record<string, unknown> | null) ?? {};
+            await db.lead.update({
+              where: { id: existingLead.id },
+              data: {
+                metadata: { ...prior, ...paidMetadata },
+              },
+            });
+          } else {
+            await db.lead.create({
+              data: {
+                name: contactName || "Custom email subscriber",
+                email: contactEmail,
+                source: LeadSource.LGB_EMAIL,
+                consent: true,
+                message:
+                  "Paid for @LetsGoBuffalo.com email subscription — awaiting address request and team verification.",
+                metadata: paidMetadata,
+              },
+            });
+          }
+
+          try {
+            const { sendLgbEmailSubscriptionConfirmationEmail } = await import("@/lib/services/email");
+            await sendLgbEmailSubscriptionConfirmationEmail({
+              to: contactEmail,
+              customerName: contactName,
+              amount,
+              interval,
+            });
+          } catch (emailError) {
+            console.error("[stripe webhook] LGB email subscription confirmation failed:", emailError);
           }
         }
       }

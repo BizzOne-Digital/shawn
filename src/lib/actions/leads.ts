@@ -246,27 +246,54 @@ export async function submitLgbEmailRequest(formData: FormData) {
     };
   }
 
+  const formMetadata = {
+    requestedAddress,
+    backupAddress,
+    forwardTo: request.forwardTo,
+    businessName: request.businessName ?? null,
+    phone,
+    primaryAvailable: primaryCheck.available,
+    backupAvailable: backupCheck.available,
+    ...promoMetadata,
+  };
+
   try {
-    await db.lead.create({
-      data: {
-        name: request.name,
-        email: request.email,
-        phone,
-        message: `Custom Email request: ${requestedAddress} (backup: ${backupAddress}) → forward to ${request.forwardTo}`,
+    const normalizedEmail = request.email.trim().toLowerCase();
+    const existingLead = await db.lead.findFirst({
+      where: {
         source: LeadSource.LGB_EMAIL,
-        consent: true,
-        metadata: {
-          requestedAddress,
-          backupAddress,
-          forwardTo: request.forwardTo,
-          businessName: request.businessName ?? null,
-          phone,
-          primaryAvailable: primaryCheck.available,
-          backupAvailable: backupCheck.available,
-          ...promoMetadata,
-        },
+        email: normalizedEmail,
       },
+      orderBy: { createdAt: "desc" },
     });
+
+    const priorMeta = (existingLead?.metadata as Record<string, unknown> | null) ?? {};
+    const paidViaStripe = Boolean(priorMeta.stripeSubscriptionId || priorMeta.emailSubscriptionPaid);
+    const hasAddressOnLead = Boolean(priorMeta.requestedAddress);
+
+    if (existingLead && paidViaStripe && !hasAddressOnLead) {
+      await db.lead.update({
+        where: { id: existingLead.id },
+        data: {
+          name: request.name,
+          phone,
+          message: `Custom Email request (paid): ${requestedAddress} (backup: ${backupAddress}) → forward to ${request.forwardTo}`,
+          metadata: { ...priorMeta, ...formMetadata },
+        },
+      });
+    } else {
+      await db.lead.create({
+        data: {
+          name: request.name,
+          email: normalizedEmail,
+          phone,
+          message: `Custom Email request: ${requestedAddress} (backup: ${backupAddress}) → forward to ${request.forwardTo}`,
+          source: LeadSource.LGB_EMAIL,
+          consent: true,
+          metadata: formMetadata,
+        },
+      });
+    }
 
     const { sendLgbEmailNotification } = await import("@/lib/services/email");
     await sendLgbEmailNotification({

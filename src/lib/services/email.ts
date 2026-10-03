@@ -225,6 +225,22 @@ export async function sendSubscriptionConfirmationEmail(options: {
   });
 }
 
+export async function sendLgbEmailSubscriptionConfirmationEmail(options: {
+  to: string;
+  customerName?: string | null;
+  amount: number;
+  interval: string;
+}): Promise<void> {
+  const intervalLabel = options.interval === "YEARLY" ? "year" : "month";
+  await sendPaymentConfirmationEmail({
+    to: options.to,
+    customerName: options.customerName,
+    title: "Custom @LetsGoBuffalo.com email subscription",
+    description: `Thank you — your subscription for a custom @LetsGoBuffalo.com email is active. You will be billed $${options.amount.toFixed(2)} per ${intervalLabel}. Submit your preferred address on the email enrollment page if you have not already; our team will verify and activate your inbox.`,
+    amount: options.amount,
+  });
+}
+
 export async function sendWalletTopUpConfirmationEmail(options: {
   to: string;
   customerName?: string | null;

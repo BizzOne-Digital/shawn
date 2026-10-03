@@ -1,6 +1,9 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowRight, Forward, Mail, ShieldCheck } from "lucide-react";
 import { LgbEmailRequestForm } from "@/components/forms/lgb-email-request-form";
+import { LgbEmailSubscribePanel } from "@/components/email/lgb-email-subscribe-panel";
+import { EmailEnrollmentStatusBanner } from "@/components/email/email-enrollment-status-banner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getPageContent, txt } from "@/lib/content/page-content";
@@ -48,6 +51,10 @@ export async function LgbEmailEnrollmentContent() {
         </div>
       </section>
 
+      <Suspense fallback={null}>
+        <EmailEnrollmentStatusBanner />
+      </Suspense>
+
       <div className="mx-auto max-w-5xl min-w-0 px-4 py-12 sm:px-6 md:py-16 lg:px-8">
         <div className="grid gap-6 md:grid-cols-3">
           {steps.map((step, index) => {
@@ -78,22 +85,7 @@ export async function LgbEmailEnrollmentContent() {
           ))}
         </ul>
 
-        <div className="mt-10 rounded-2xl border border-buffalo-red/25 bg-buffalo-red/5 p-6">
-          <h2 className="font-display text-xl font-bold text-navy">Subscribe for your @LetsGoBuffalo.com email</h2>
-          <p className="mt-2 text-sm text-muted">
-            Individual Pro includes a custom email address with forwarding —{" "}
-            <strong className="text-navy">$0.99/month</strong> or about{" "}
-            <strong className="text-navy">$10/year</strong> (annual plan shown at checkout).
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Link href="/login?callbackUrl=%2Fdashboard%2Fsubscribe">
-              <Button variant="accent">Log in to subscribe</Button>
-            </Link>
-            <Link href="/pricing">
-              <Button variant="outline">View pricing</Button>
-            </Link>
-          </div>
-        </div>
+        <LgbEmailSubscribePanel />
 
         <div className="mt-10" id="request-form">
           <h2 className="font-display text-2xl font-bold text-navy">
@@ -109,12 +101,13 @@ export async function LgbEmailEnrollmentContent() {
           <div>
             <p className="font-medium text-navy">{txt(content, "footer.text")}</p>
             <p className="mt-1 text-sm text-muted">
-              Pro business or Pro individual memberships include a custom @LetsGoBuffalo.com address.
+              Business memberships may also include email options. Custom email subscriptions do not require site
+              membership.
             </p>
           </div>
           <Link href="/pricing">
-            <Button variant="accent">
-              View membership plans
+            <Button variant="outline">
+              View all membership plans
               <ArrowRight className="size-4" />
             </Button>
           </Link>
