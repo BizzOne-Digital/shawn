@@ -236,7 +236,7 @@ export async function sendLgbEmailSubscriptionConfirmationEmail(options: {
     to: options.to,
     customerName: options.customerName,
     title: "Custom @LetsGoBuffalo.com email subscription",
-    description: `Thank you — your subscription for a custom @LetsGoBuffalo.com email is active. You will be billed $${options.amount.toFixed(2)} per ${intervalLabel}. Submit your preferred address on the email enrollment page if you have not already; our team will verify and activate your inbox.`,
+    description: `Thank you — your subscription for a custom @LetsGoBuffalo.com email is active. You will be billed $${options.amount.toFixed(2)} per ${intervalLabel}. Our team will verify your requested address and activate your inbox.`,
     amount: options.amount,
   });
 }

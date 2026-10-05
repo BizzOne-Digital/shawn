@@ -8,6 +8,7 @@ import { createLgbEmailCheckoutSession } from "@/lib/lgb-email-billing";
 const checkoutSchema = z.object({
   email: z.string().email("Enter a valid email address"),
   name: z.string().max(120).optional(),
+  leadId: z.string().min(1).optional(),
   interval: z.enum(["MONTHLY", "YEARLY"]),
   acceptTerms: z.literal(true, {
     errorMap: () => ({ message: "You must agree to the Terms & Conditions" }),
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
     const { url } = await createLgbEmailCheckoutSession({
       contactEmail: parsed.email.trim().toLowerCase(),
       contactName: parsed.name?.trim(),
+      leadId: parsed.leadId,
       interval: parsed.interval as BillingInterval,
       termsAcceptedAt,
     });

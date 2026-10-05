@@ -271,8 +271,10 @@ export async function submitLgbEmailRequest(formData: FormData) {
     const paidViaStripe = Boolean(priorMeta.stripeSubscriptionId || priorMeta.emailSubscriptionPaid);
     const hasAddressOnLead = Boolean(priorMeta.requestedAddress);
 
+    let leadId: string;
+
     if (existingLead && paidViaStripe && !hasAddressOnLead) {
-      await db.lead.update({
+      const updated = await db.lead.update({
         where: { id: existingLead.id },
         data: {
           name: request.name,
@@ -281,8 +283,9 @@ export async function submitLgbEmailRequest(formData: FormData) {
           metadata: { ...priorMeta, ...formMetadata },
         },
       });
+      leadId = updated.id;
     } else {
-      await db.lead.create({
+      const created = await db.lead.create({
         data: {
           name: request.name,
           email: normalizedEmail,
@@ -293,6 +296,7 @@ export async function submitLgbEmailRequest(formData: FormData) {
           metadata: formMetadata,
         },
       });
+      leadId = created.id;
     }
 
     const { sendLgbEmailNotification } = await import("@/lib/services/email");
@@ -303,7 +307,7 @@ export async function submitLgbEmailRequest(formData: FormData) {
       backupAddress,
     });
 
-    return { success: true };
+    return { success: true, leadId };
   } catch (error) {
     console.error("submitLgbEmailRequest failed:", error);
     return { success: false, error: "Unable to submit request right now." };

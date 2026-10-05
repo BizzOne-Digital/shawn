@@ -24,8 +24,8 @@ export function EmailEnrollmentStatusBanner() {
           <div>
             <p className="font-semibold">You&apos;re subscribed — thank you!</p>
             <p className="mt-1 text-sm text-green-800">
-              We received your payment. Complete the form below with your preferred @LetsGoBuffalo.com address and
-              forwarding details. Our team will verify everything and activate your email.
+              We received your payment and your address request. Our team will verify everything and activate your
+              @LetsGoBuffalo.com email.
             </p>
           </div>
         </div>
@@ -38,8 +38,8 @@ export function EmailEnrollmentStatusBanner() {
       <div className="flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
         <XCircle className="mt-0.5 size-5 shrink-0 text-amber-600" aria-hidden />
         <p className="text-sm">
-          Checkout was cancelled. You can try again anytime using the pay buttons below, or submit a request if you
-          already paid elsewhere.
+          Checkout was cancelled. Send your request above if you have not already, then use the pay buttons below to
+          try again.
         </p>
       </div>
     </div>

@@ -17,6 +17,7 @@ export async function getLgbEmailPlan() {
 export async function createLgbEmailCheckoutSession(options: {
   contactEmail: string;
   contactName?: string;
+  leadId?: string;
   interval: BillingInterval;
   termsAcceptedAt: Date;
 }): Promise<{ url: string | null }> {
@@ -83,6 +84,7 @@ export async function createLgbEmailCheckoutSession(options: {
       lgbEmailCheckout: "true",
       contactEmail: options.contactEmail,
       contactName: options.contactName ?? "",
+      leadId: options.leadId ?? "",
       planId: plan.id,
       planSlug: plan.slug,
       interval: options.interval,
@@ -93,6 +95,7 @@ export async function createLgbEmailCheckoutSession(options: {
       metadata: {
         lgbEmailCheckout: "true",
         contactEmail: options.contactEmail,
+        leadId: options.leadId ?? "",
         planId: plan.id,
       },
     },

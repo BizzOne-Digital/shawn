@@ -133,6 +133,7 @@ export async function POST(request: Request) {
           session.customer_email?.trim().toLowerCase() ||
           null;
         const contactName = session.metadata.contactName?.trim() || null;
+        const leadId = session.metadata.leadId?.trim() || null;
         const subscriptionId = session.subscription as string;
 
         if (contactEmail && subscriptionId) {
@@ -142,14 +143,6 @@ export async function POST(request: Request) {
               ? Number(plan?.monthlyPrice ?? 0)
               : Number(plan?.yearlyPrice ?? 0);
 
-          const existingLead = await db.lead.findFirst({
-            where: {
-              source: LeadSource.LGB_EMAIL,
-              email: contactEmail,
-            },
-            orderBy: { createdAt: "desc" },
-          });
-
           const paidMetadata = {
             stripeSubscriptionId: subscriptionId,
             stripeCheckoutSessionId: session.id,
@@ -157,6 +150,22 @@ export async function POST(request: Request) {
             emailSubscriptionPaid: true,
             paidAt: new Date().toISOString(),
           };
+
+          const leadById = leadId
+            ? await db.lead.findFirst({
+                where: { id: leadId, source: LeadSource.LGB_EMAIL },
+              })
+            : null;
+
+          const existingLead =
+            leadById ??
+            (await db.lead.findFirst({
+              where: {
+                source: LeadSource.LGB_EMAIL,
+                email: contactEmail,
+              },
+              orderBy: { createdAt: "desc" },
+            }));
 
           if (existingLead) {
             const prior = (existingLead.metadata as Record<string, unknown> | null) ?? {};

@@ -1,8 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowRight, Forward, Mail, ShieldCheck } from "lucide-react";
-import { LgbEmailRequestForm } from "@/components/forms/lgb-email-request-form";
-import { LgbEmailSubscribePanel } from "@/components/email/lgb-email-subscribe-panel";
+import { LgbEmailEnrollmentSection } from "@/components/email/lgb-email-enrollment-section";
 import { EmailEnrollmentStatusBanner } from "@/components/email/email-enrollment-status-banner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -85,15 +84,13 @@ export async function LgbEmailEnrollmentContent() {
           ))}
         </ul>
 
-        <LgbEmailSubscribePanel />
-
         <div className="mt-10" id="request-form">
           <h2 className="font-display text-2xl font-bold text-navy">
             {txt(content, "form.title")}
           </h2>
           <p className="mt-2 text-muted">{txt(content, "form.subtitle")}</p>
           <div className="mt-6">
-            <LgbEmailRequestForm />
+            <LgbEmailEnrollmentSection />
           </div>
         </div>
 

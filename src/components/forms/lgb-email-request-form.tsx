@@ -9,6 +9,9 @@ import { Label } from "@/components/ui/label";
 import { submitLgbEmailRequest } from "@/lib/actions/leads";
 import { LGB_EMAIL_DOMAIN } from "@/lib/lgb-email-utils";
 import { CaptchaField } from "@/components/forms/captcha-field";
+import { TermsAcceptanceCheckbox } from "@/components/forms/terms-acceptance-checkbox";
+import { redirectToLgbEmailCheckout } from "@/lib/lgb-email-checkout-client";
+import type { LgbEmailCheckoutContext } from "@/lib/lgb-email-enrollment-types";
 
 type AvailabilityState = "idle" | "checking" | "available" | "taken" | "unavailable" | "error";
 
@@ -60,8 +63,14 @@ function AvailabilityHint({
   return <p className="mt-1 text-xs text-buffalo-red">Could not check availability</p>;
 }
 
-export function LgbEmailRequestForm() {
+type Props = {
+  onRequestSuccess?: (context: LgbEmailCheckoutContext) => void;
+};
+
+export function LgbEmailRequestForm({ onRequestSuccess }: Props) {
   const [pending, startTransition] = useTransition();
+  const [payPending, setPayPending] = useState<"MONTHLY" | "YEARLY" | null>(null);
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [primaryLocalPart, setPrimaryLocalPart] = useState("");
   const [backupLocalPart, setBackupLocalPart] = useState("");
   const [primaryStatus, setPrimaryStatus] = useState<AvailabilityState>("idle");
@@ -163,39 +172,83 @@ export function LgbEmailRequestForm() {
     return () => clearTimeout(timer);
   }, [backupLocalPart, checkAvailability]);
 
-  function handleSubmit(formData: FormData) {
-    if (
-      primaryLocalPart.trim().toLowerCase() === backupLocalPart.trim().toLowerCase()
-    ) {
+  function validateBeforeSubmit(): boolean {
+    if (primaryLocalPart.trim().toLowerCase() === backupLocalPart.trim().toLowerCase()) {
       toast.error("Backup address must be different from your first choice");
-      return;
+      return false;
     }
 
     if (primaryStatus === "taken" && backupStatus === "taken") {
       toast.error("Both email choices are taken. Please try different names.");
-      return;
+      return false;
     }
 
     if (primaryStatus === "unavailable" || backupStatus === "unavailable") {
       toast.error("One or both email names are not available. Use at least 5 characters and avoid reserved names.");
-      return;
+      return false;
     }
+
+    return true;
+  }
+
+  function checkoutContextFromForm(formData: FormData): LgbEmailCheckoutContext | null {
+    const email = String(formData.get("email") ?? "").trim().toLowerCase();
+    const name = String(formData.get("name") ?? "").trim();
+    if (!email) return null;
+    return { email, name, leadId: "" };
+  }
+
+  function handleSubmit(formData: FormData) {
+    if (!validateBeforeSubmit()) return;
 
     startTransition(async () => {
       const result = await submitLgbEmailRequest(formData);
-      if (result.success) {
-        toast.success("Email request sent! We'll contact you when your address is ready.");
-        (document.getElementById("lgb-email-form") as HTMLFormElement | null)?.reset();
-        setPrimaryLocalPart("");
-        setBackupLocalPart("");
-        setPrimaryStatus("idle");
-        setBackupStatus("idle");
-        setPromoCode("");
-        setPromoSummary(null);
+      if (result.success && result.leadId) {
+        const email = String(formData.get("email") ?? "").trim().toLowerCase();
+        const name = String(formData.get("name") ?? "").trim();
+        toast.success("Request sent to our team! Complete payment below when you're ready.");
+        onRequestSuccess?.({ leadId: result.leadId, email, name });
       } else {
         toast.error(result.error ?? "Something went wrong.");
       }
     });
+  }
+
+  async function handleSubmitAndPay(formData: FormData, interval: "MONTHLY" | "YEARLY") {
+    if (!validateBeforeSubmit()) return;
+    if (!acceptTerms) {
+      toast.error("Please agree to the Terms & Conditions to pay.");
+      return;
+    }
+
+    setPayPending(interval);
+    try {
+      const result = await submitLgbEmailRequest(formData);
+      if (!result.success || !result.leadId) {
+        toast.error(result.error ?? "Something went wrong.");
+        return;
+      }
+
+      const ctx = checkoutContextFromForm(formData);
+      if (!ctx) {
+        toast.error("Enter your contact email before continuing.");
+        return;
+      }
+      ctx.leadId = result.leadId;
+      onRequestSuccess?.(ctx);
+
+      const checkout = await redirectToLgbEmailCheckout({
+        email: ctx.email,
+        name: ctx.name || undefined,
+        leadId: ctx.leadId,
+        interval,
+      });
+      if (!checkout.ok) {
+        toast.error(checkout.error);
+      }
+    } finally {
+      setPayPending(null);
+    }
   }
 
   return (
@@ -347,10 +400,58 @@ export function LgbEmailRequestForm() {
 
       <CaptchaField />
 
-      <Button type="submit" variant="accent" size="lg" disabled={pending} className="w-full sm:w-auto">
-        {pending ? <Loader2 className="animate-spin" /> : "Send Request"}
-        {!pending && <Mail className="size-4" />}
-      </Button>
+      <div className="rounded-xl border border-border bg-soft-gray/60 p-4">
+        <TermsAcceptanceCheckbox checked={acceptTerms} onCheckedChange={setAcceptTerms} />
+        <p className="mt-3 text-xs text-muted">
+          Required for payment. You can send the request first and pay in the next step, or use{" "}
+          <strong className="text-navy">Send request &amp; pay</strong> to do both at once.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <Button
+          type="submit"
+          variant="outline"
+          size="lg"
+          disabled={pending || payPending !== null}
+          className="w-full sm:w-auto"
+        >
+          {pending ? <Loader2 className="animate-spin" /> : "Send request"}
+        </Button>
+        <Button
+          type="button"
+          variant="accent"
+          size="lg"
+          disabled={pending || payPending !== null}
+          className="w-full sm:w-auto"
+          onClick={() => {
+            const form = document.getElementById("lgb-email-form") as HTMLFormElement | null;
+            if (!form || !form.reportValidity()) return;
+            const formData = new FormData(form);
+            void handleSubmitAndPay(formData, "MONTHLY");
+          }}
+        >
+          {payPending === "MONTHLY" ? <Loader2 className="animate-spin" /> : null}
+          Send request &amp; pay monthly
+        </Button>
+        <Button
+          type="button"
+          variant="accent"
+          size="lg"
+          disabled={pending || payPending !== null}
+          className="w-full sm:w-auto"
+          onClick={() => {
+            const form = document.getElementById("lgb-email-form") as HTMLFormElement | null;
+            if (!form || !form.reportValidity()) return;
+            const formData = new FormData(form);
+            void handleSubmitAndPay(formData, "YEARLY");
+          }}
+        >
+          {payPending === "YEARLY" ? <Loader2 className="animate-spin" /> : null}
+          Send request &amp; pay yearly
+        </Button>
+        {!pending && !payPending && <Mail className="hidden size-4 sm:inline text-muted" aria-hidden />}
+      </div>
     </form>
   );
 }
